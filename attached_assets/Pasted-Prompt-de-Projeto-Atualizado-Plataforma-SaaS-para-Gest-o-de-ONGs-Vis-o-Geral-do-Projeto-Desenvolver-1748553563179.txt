@@ -1,0 +1,475 @@
+Prompt de Projeto Atualizado: Plataforma SaaS para Gestão de ONGs
+Visão Geral do Projeto
+Desenvolver uma plataforma SaaS (Software as a Service) multi-tenant para gestão completa de ONGs, onde cada organização terá seu próprio ambiente isolado com usuários, permissões e dados segregados. A plataforma deve ser construída com React + TypeScript no frontend (Replit) e Supabase como backend, priorizando conformidade total com a LGPD.
+Arquitetura Multi-Tenant
+Modelo de Isolamento:
+
+Isolamento por Schema: Cada ONG terá tabelas com prefixo único ou schema dedicado
+Row Level Security (RLS): Políticas de segurança baseadas em organization_id
+Autenticação Hierárquica: Usuários pertencem a organizações específicas
+
+Estrutura de Organizações:
+sql-- Tabela principal de organizações
+organizations (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(100) UNIQUE NOT NULL, -- ong-exemplo.plataforma.com
+  cnpj VARCHAR(18) UNIQUE,
+  legal_representative_name VARCHAR(255),
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  address JSONB,
+  subscription_plan VARCHAR(50), -- 'free', 'basic', 'premium'
+  subscription_status VARCHAR(20), -- 'active', 'suspended', 'cancelled'
+  data_retention_policy INTEGER DEFAULT 730, -- dias
+  privacy_settings JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+Sistema de Usuários e Permissões
+Níveis de Acesso por ONG:
+
+Super Admin da Plataforma
+
+Acesso a todas as organizações
+Configurações globais da plataforma
+Gerenciamento de planos e cobrança
+
+
+Admin da ONG
+
+Acesso total aos dados da própria organização
+Gerenciamento de usuários da ONG
+Configurações de privacidade e LGPD
+
+
+Gestor de Projeto
+
+Acesso a projetos específicos
+Gerenciamento de beneficiários de seus projetos
+Relatórios de projetos sob sua responsabilidade
+
+
+Voluntário/Colaborador
+
+Acesso limitado a dados não sensíveis
+Visualização de projetos permitidos
+Cadastro básico de atividades
+
+
+Beneficiário
+
+Acesso apenas aos próprios dados
+Visualização de serviços recebidos
+Gerenciamento de consentimentos
+
+
+
+Estrutura de Permissões:
+sql-- Sistema de roles e permissões
+user_roles (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  organization_id UUID REFERENCES organizations(id),
+  role VARCHAR(50) NOT NULL, -- 'admin', 'manager', 'volunteer', 'beneficiary'
+  permissions JSONB, -- granular permissions
+  granted_by UUID REFERENCES auth.users(id),
+  granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT true
+);
+Módulos Principais - Sistema de Gestão Integrada
+1. Controle de Projetos
+Objetivo: Gerenciar e acompanhar os projetos da ONG, incluindo cronogramas, metas, orçamento e resultados.
+Funcionalidades:
+
+Criação e edição de projetos com templates personalizáveis
+Definição de cronogramas com marcos e prazos
+Estabelecimento de metas quantitativas e qualitativas
+Sistema de orçamento por projeto com controle de gastos
+Acompanhamento de resultados e indicadores de impacto
+Dashboard de status dos projetos (em andamento, concluído, atrasado)
+Relatórios de progresso automatizados
+Integração com sistema financeiro para prestação de contas
+
+sql-- Estrutura de projetos
+projects (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  start_date DATE,
+  end_date DATE,
+  budget DECIMAL(12,2),
+  spent_amount DECIMAL(12,2) DEFAULT 0,
+  status VARCHAR(50), -- 'planning', 'active', 'paused', 'completed', 'cancelled'
+  goals JSONB, -- metas estruturadas
+  milestones JSONB, -- marcos do projeto
+  manager_id UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+2. Cadastro de Doadores
+Objetivo: Registrar e manter informações sobre doadores para facilitar a comunicação e o relacionamento.
+Funcionalidades:
+
+Cadastro completo de pessoas físicas e jurídicas
+Histórico de doações por doador
+Segmentação de doadores (recorrentes, eventuais, corporativos)
+Sistema de comunicação personalizada
+Controle de preferências de contato (LGPD)
+Relatórios de relacionamento e engajamento
+Integração com campanhas de arrecadação
+Portal do doador para acompanhamento de impacto
+
+sql-- Gestão de doadores
+donors (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  type VARCHAR(20), -- 'individual', 'corporate'
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  phone VARCHAR(20),
+  document VARCHAR(20), -- CPF ou CNPJ
+  address JSONB,
+  donation_preferences JSONB,
+  communication_consent BOOLEAN DEFAULT false,
+  total_donated DECIMAL(12,2) DEFAULT 0,
+  first_donation_date DATE,
+  last_donation_date DATE,
+  donor_since DATE DEFAULT CURRENT_DATE,
+  status VARCHAR(20) DEFAULT 'active' -- 'active', 'inactive', 'opted_out'
+);
+3. Cadastro de Beneficiários (Conformidade LGPD)
+Objetivo: Registrar e manter informações sobre beneficiários para facilitar a comunicação e o relacionamento.
+Funcionalidades:
+
+Cadastro com controles de consentimento granular por finalidade
+Histórico completo de serviços prestados
+Documentos digitalizados com criptografia de ponta a ponta
+Sistema de agendamentos e atendimentos
+Anonimização automática após período de retenção
+Dashboard de direitos dos titulares (acesso, correção, exclusão)
+Relatórios de vulnerabilidade social
+Integração com projetos e programas sociais
+
+sql-- Beneficiários com conformidade LGPD
+beneficiaries (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  registration_number VARCHAR(50) UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  birth_date DATE,
+  document VARCHAR(20),
+  contact_info JSONB, -- criptografado
+  address JSONB, -- criptografado
+  social_vulnerability_data JSONB, -- criptografado
+  emergency_contact JSONB, -- criptografado
+  consent_records JSONB, -- consentimentos granulares
+  data_retention_until DATE,
+  anonymization_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+4. Cadastro de Voluntários
+Objetivo: Gerenciar os voluntários, incluindo dados pessoais, habilidades, disponibilidade e participação em atividades.
+Funcionalidades:
+
+Cadastro completo com habilidades e competências
+Sistema de triagem e aprovação
+Agenda pessoal de atividades
+Controle de horas trabalhadas e participação
+Avaliações de desempenho
+Certificados digitais de participação
+Sistema de comunicação interna
+Relatórios de engajamento voluntário
+
+sql-- Gestão de voluntários
+volunteers (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  user_id UUID REFERENCES auth.users(id),
+  volunteer_number VARCHAR(50) UNIQUE,
+  skills JSONB, -- habilidades e competências
+  availability JSONB, -- disponibilidade de horários
+  background_check_status VARCHAR(50),
+  emergency_contact JSONB,
+  total_hours DECIMAL(8,2) DEFAULT 0,
+  participation_score INTEGER DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'active', 'inactive', 'suspended'
+  joined_date DATE DEFAULT CURRENT_DATE
+);
+5. Processamento de Doações
+Objetivo: Automatizar o registro e a gestão de doações, garantindo transparência e controle financeiro.
+Funcionalidades:
+
+Integração com gateways de pagamento (PIX, cartão, boleto)
+Processamento automático de doações recorrentes
+Emissão automática de recibos e comprovantes
+Controle de campanhas de arrecadação
+Dashboard de performance de arrecadação
+Relatórios fiscais para doadores e ONG
+Sistema de metas de arrecadação
+Alertas para doações suspeitas ou em erro
+
+sql-- Sistema de doações
+donations (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  donor_id UUID REFERENCES donors(id),
+  project_id UUID REFERENCES projects(id), -- doação direcionada
+  amount DECIMAL(12,2) NOT NULL,
+  currency VARCHAR(3) DEFAULT 'BRL',
+  payment_method VARCHAR(50), -- 'pix', 'credit_card', 'bank_transfer', 'cash'
+  payment_status VARCHAR(50), -- 'pending', 'completed', 'failed', 'refunded'
+  transaction_id VARCHAR(255), -- ID do gateway de pagamento
+  campaign_source VARCHAR(100),
+  is_recurring BOOLEAN DEFAULT false,
+  recurring_frequency VARCHAR(20), -- 'monthly', 'quarterly', 'annually'
+  receipt_issued BOOLEAN DEFAULT false,
+  donation_date TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+6. Sistema Financeiro Integrado
+6.1 Exportação de Relatórios
+Objetivo: Gerar e exportar relatórios detalhados para análise de dados e prestação de contas.
+Funcionalidades:
+
+Relatórios financeiros por período personalizável
+Relatórios de impacto social por projeto
+Exportação em múltiplos formatos (PDF, Excel, CSV)
+Relatórios de compliance e auditoria
+Dashboard executivo com KPIs principais
+Relatórios automáticos para stakeholders
+Análise comparativa entre períodos
+Relatórios de transparência pública
+
+6.2 Contas a Receber
+Objetivo: Controlar receitas esperadas, como doações recorrentes e patrocínios.
+Funcionalidades:
+
+Gestão de doações recorrentes pendentes
+Controle de patrocínios e parcerias
+Lembretes automáticos para doadores
+Previsão de fluxo de caixa
+Relatórios de inadimplência
+Sistema de cobrança automatizada
+Dashboard de receitas por fonte
+
+sql-- Contas a receber
+accounts_receivable (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  donor_id UUID REFERENCES donors(id),
+  description TEXT NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  due_date DATE NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'overdue', 'received', 'cancelled'
+  invoice_number VARCHAR(100),
+  project_id UUID REFERENCES projects(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+6.3 Contas a Pagar
+Objetivo: Gerenciar despesas e pagamentos, garantindo o equilíbrio financeiro da ONG.
+Funcionalidades:
+
+Cadastro e categorização de despesas
+Agenda de pagamentos com lembretes
+Controle de aprovações para pagamentos
+Integração bancária para pagamentos
+Relatórios de gastos por categoria/projeto
+Sistema de aprovação hierárquica
+Controle de fluxo de caixa
+
+sql-- Contas a pagar
+accounts_payable (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  supplier_name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  due_date DATE NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'approved', 'paid', 'overdue', 'cancelled'
+  category VARCHAR(100), -- 'administrative', 'project', 'operational'
+  project_id UUID REFERENCES projects(id),
+  approved_by UUID REFERENCES auth.users(id),
+  paid_date DATE,
+  payment_method VARCHAR(50)
+);
+6.4 Prestação de Contas (Relatório Consolidado)
+Objetivo: Unificar dados financeiros e operacionais para demonstrar transparência e conformidade com exigências legais.
+Funcionalidades:
+
+Relatório consolidado anual automático
+Demonstrativo de origem e aplicação de recursos
+Relatório de atividades por projeto
+Comprovação de utilização de recursos públicos
+Auditoria interna automatizada
+Dashboard de transparência pública
+Conformidade com legislação do terceiro setor
+
+7. Contato com Financiadores
+Objetivo: Facilitar a comunicação com financiadores e parceiros, permitindo o envio de relatórios e atualizações sobre os projetos.
+Funcionalidades:
+
+CRM específico para financiadores institucionais
+Portal exclusivo para parceiros estratégicos
+Envio automatizado de relatórios de progresso
+Sistema de comunicação segura
+Gestão de contratos e convênios
+Calendário de prestações de contas obrigatórias
+Dashboard de relacionamento com investidores sociais
+Sistema de aprovação de relatórios antes do envio
+
+sql-- Gestão de financiadores
+funders (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50), -- 'government', 'foundation', 'corporate', 'international'
+  contact_person VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(20),
+  address JSONB,
+  funding_focus JSONB, -- áreas de interesse
+  relationship_status VARCHAR(50), -- 'prospect', 'active', 'inactive', 'lost'
+  total_funded DECIMAL(12,2) DEFAULT 0,
+  reporting_requirements JSONB,
+  next_report_due DATE
+);
+
+-- Relacionamento entre financiadores e projetos
+project_funding (
+  id UUID PRIMARY KEY,
+  project_id UUID REFERENCES projects(id),
+  funder_id UUID REFERENCES funders(id),
+  amount_funded DECIMAL(12,2) NOT NULL,
+  funding_start_date DATE,
+  funding_end_date DATE,
+  reporting_frequency VARCHAR(50), -- 'monthly', 'quarterly', 'biannual', 'annual'
+  contract_number VARCHAR(100),
+  status VARCHAR(50) DEFAULT 'active'
+);
+Funcionalidades de Conformidade LGPD
+Privacy by Design:
+typescript// Exemplo de componente de consentimento
+interface ConsentSettings {
+  dataProcessing: {
+    socialServices: boolean;
+    communications: boolean;
+    analytics: boolean;
+    thirdPartySharing: boolean;
+  };
+  retentionPeriod: number; // em meses
+  dataMinimization: boolean;
+  automaticAnonymization: boolean;
+}
+
+const ConsentManagement: React.FC = () => {
+  const [consents, setConsents] = useState<ConsentSettings>();
+  
+  const updateConsent = async (category: string, granted: boolean) => {
+    // Implementar lógica de atualização de consentimento
+    // com auditoria automática
+  };
+};
+Recursos LGPD Obrigatórios:
+
+Módulo de Consentimento: Interface clara para consentimentos específicos
+Portal do Titular: Acesso, correção, portabilidade e exclusão de dados
+Relatórios de Impacto: Avaliação de impacto para dados sensíveis
+Incidente Response: Sistema para notificação de vazamentos
+DPO Dashboard: Ferramentas para o Encarregado de Dados
+
+Especificações Técnicas
+Frontend (Replit + React + TypeScript):
+typescript// Estrutura de tipos para multi-tenancy
+interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  subscriptionPlan: 'free' | 'basic' | 'premium';
+  settings: OrganizationSettings;
+}
+
+interface User {
+  id: string;
+  email: string;
+  organizations: UserRole[];
+  currentOrganization: string;
+}
+
+interface UserRole {
+  organizationId: string;
+  role: 'admin' | 'manager' | 'volunteer' | 'beneficiary';
+  permissions: Permission[];
+}
+Backend (Supabase):
+sql-- Política RLS para isolamento multi-tenant
+CREATE POLICY "organization_isolation" ON beneficiaries
+FOR ALL USING (
+  organization_id IN (
+    SELECT organization_id FROM user_roles 
+    WHERE user_id = auth.uid() AND is_active = true
+  )
+);
+
+-- Função para soft delete com auditoria LGPD
+CREATE OR REPLACE FUNCTION soft_delete_with_audit(
+  table_name TEXT,
+  record_id UUID,
+  reason TEXT DEFAULT 'user_request'
+)
+RETURNS void AS $$
+BEGIN
+  -- Implementar soft delete com log de auditoria
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+Planos de Assinatura SaaS
+Plano Gratuito:
+
+1 organização
+Até 50 beneficiários
+2 usuários admin
+Recursos básicos de LGPD
+Suporte por email
+
+Plano Básico (R$ 99/mês):
+
+1 organização
+Até 500 beneficiários
+10 usuários
+Recursos completos de LGPD
+Relatórios básicos
+Suporte prioritário
+
+Plano Premium (R$ 299/mês):
+
+Múltiplas organizações
+Beneficiários ilimitados
+Usuários ilimitados
+APIs personalizadas
+Relatórios avançados
+Suporte 24/7
+
+Requisitos de Segurança e Performance
+Segurança:
+
+Autenticação multi-fator obrigatória para admins
+Criptografia AES-256 para dados sensíveis
+Backup automático com retenção de 30 dias
+Monitoramento de tentativas de acesso suspeitas
+Certificação SSL/TLS 1.3
+
+Performance:
+
+Tempo de resposta < 2s para operações comuns
+Disponibilidade de 99.9%
+CDN para assets estáticos
+Cache inteligente de consultas frequentes
+Otimização de imagens automática
+
+Monitoramento:
+
+Dashboard de métricas de uso por organização
+Alertas automáticos para violações de política
+Relatórios de performance mensais
+Logs de auditoria com retenção de 7 anos
