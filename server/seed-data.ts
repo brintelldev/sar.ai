@@ -11,12 +11,6 @@ export async function seedTestData() {
       slug: 'instituto-esperanca',
       cnpj: '12.345.678/0001-90',
       email: 'contato@institutoesperanca.org.br',
-      address: {
-        street: 'Rua das Flores, 123',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01234-567'
-      },
       subscriptionPlan: 'premium',
       subscriptionStatus: 'active'
     });
@@ -27,22 +21,19 @@ export async function seedTestData() {
     const adminUser = await storage.createUser({
       email: 'admin@institutoesperanca.org.br',
       passwordHash: await bcrypt.hash('admin123', 10),
-      name: 'Maria Silva Santos',
-      phone: '(11) 99999-1111'
+      name: 'Maria Silva Santos'
     });
 
     const managerUser = await storage.createUser({
       email: 'gerente@institutoesperanca.org.br',
       passwordHash: await bcrypt.hash('gerente123', 10),
-      name: 'João Carlos Oliveira',
-      phone: '(11) 99999-2222'
+      name: 'João Carlos Oliveira'
     });
 
     const volunteerUser = await storage.createUser({
       email: 'voluntario@institutoesperanca.org.br',
       passwordHash: await bcrypt.hash('voluntario123', 10),
-      name: 'Ana Paula Costa',
-      phone: '(11) 99999-3333'
+      name: 'Ana Paula Costa'
     });
 
     console.log('✅ Usuários criados');
@@ -52,24 +43,21 @@ export async function seedTestData() {
       userId: adminUser.id,
       organizationId: testOrg.id,
       role: 'admin',
-      permissions: ['read', 'write', 'delete', 'admin'],
-      status: 'active'
+      permissions: ['read', 'write', 'delete', 'admin']
     });
 
     await storage.createUserRole({
       userId: managerUser.id,
       organizationId: testOrg.id,
       role: 'project_manager',
-      permissions: ['read', 'write'],
-      status: 'active'
+      permissions: ['read', 'write']
     });
 
     await storage.createUserRole({
       userId: volunteerUser.id,
       organizationId: testOrg.id,
       role: 'volunteer',
-      permissions: ['read'],
-      status: 'active'
+      permissions: ['read']
     });
 
     console.log('✅ Roles atribuídos');
@@ -80,9 +68,9 @@ export async function seedTestData() {
       name: 'Alfabetização Digital',
       description: 'Projeto para ensinar informática básica para crianças e adultos da comunidade',
       status: 'active',
-      startDate: new Date('2024-01-15'),
-      endDate: new Date('2024-12-15'),
-      budget: 50000,
+      startDate: '2024-01-15',
+      endDate: '2024-12-15',
+      budget: '50000',
       location: 'Centro Comunitário - Vila Nova',
       beneficiaryTarget: 'Crianças e adultos de 8 a 60 anos',
       expectedResults: 'Capacitar 200 pessoas em informática básica',
@@ -94,9 +82,9 @@ export async function seedTestData() {
       name: 'Saúde na Comunidade',
       description: 'Campanhas de saúde preventiva e atendimento básico',
       status: 'active',
-      startDate: new Date('2024-02-01'),
-      endDate: new Date('2024-11-30'),
-      budget: 75000,
+      startDate: '2024-02-01',
+      endDate: '2024-11-30',
+      budget: '75000',
       location: 'UBS - Jardim das Flores',
       beneficiaryTarget: 'Famílias em situação de vulnerabilidade',
       expectedResults: 'Atender 500 famílias com serviços de saúde preventiva',
@@ -109,32 +97,30 @@ export async function seedTestData() {
     const corporateDonor = await storage.createDonor({
       organizationId: testOrg.id,
       name: 'Empresa ABC Ltda',
+      type: 'corporate',
       email: 'doacao@empresaabc.com.br',
       phone: '(11) 3333-4444',
-      donorType: 'corporate',
-      document: '98.765.432/0001-10',
-      address: 'Av. Paulista, 1000',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '01310-100',
-      donationPreferences: ['educacao', 'saude'],
-      communicationPreferences: ['email', 'telefone'],
+      address: {
+        street: 'Av. Paulista, 1000',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '01310-100'
+      },
       status: 'active'
     });
 
     const individualDonor = await storage.createDonor({
       organizationId: testOrg.id,
       name: 'Carlos Eduardo Ferreira',
+      type: 'individual',
       email: 'carlos.ferreira@email.com',
       phone: '(11) 99888-7777',
-      donorType: 'individual',
-      document: '123.456.789-00',
-      address: 'Rua das Palmeiras, 456',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '02345-678',
-      donationPreferences: ['educacao'],
-      communicationPreferences: ['email'],
+      address: {
+        street: 'Rua das Palmeiras, 456',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '02345-678'
+      },
       status: 'active'
     });
 
@@ -146,19 +132,15 @@ export async function seedTestData() {
       name: 'Fernanda Santos',
       cpf: '987.654.321-00',
       rg: '12.345.678-9',
-      birthDate: new Date('1985-03-15'),
+      birthDate: '1985-03-15',
       email: 'fernanda.santos@email.com',
       phone: '(11) 98765-4321',
-      address: 'Rua das Acácias, 789',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '03456-789',
-      familyIncome: 2500,
-      familySize: 4,
-      housingSituation: 'propria',
-      education: 'ensino_medio_completo',
-      profession: 'Auxiliar de limpeza',
-      specialNeeds: '',
+      address: {
+        street: 'Rua das Acácias, 789',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '03456-789'
+      },
       status: 'active'
     });
 
@@ -167,19 +149,15 @@ export async function seedTestData() {
       name: 'Roberto da Silva',
       cpf: '456.789.123-00',
       rg: '98.765.432-1',
-      birthDate: new Date('1978-08-22'),
+      birthDate: '1978-08-22',
       email: 'roberto.silva@email.com',
       phone: '(11) 91234-5678',
-      address: 'Rua dos Lírios, 321',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '04567-890',
-      familyIncome: 1800,
-      familySize: 3,
-      housingSituation: 'alugada',
-      education: 'ensino_fundamental_completo',
-      profession: 'Pedreiro',
-      specialNeeds: '',
+      address: {
+        street: 'Rua dos Lírios, 321',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '04567-890'
+      },
       status: 'active'
     });
 
@@ -193,19 +171,10 @@ export async function seedTestData() {
       skills: ['Tecnologia', 'Educação', 'Comunicação'],
       availability: ['monday_morning', 'wednesday_afternoon', 'saturday_morning'],
       backgroundCheckStatus: 'approved',
-      status: 'active',
       emergencyContact: {
         name: 'Pedro Costa',
         relationship: 'Esposo',
         phone: '(11) 99888-5555'
-      },
-      personalInfo: {
-        name: 'Ana Paula Costa',
-        email: 'voluntario@institutoesperanca.org.br',
-        phone: '(11) 99999-3333',
-        profession: 'Professora',
-        experience: 'Experiência em projetos educacionais e ensino de informática',
-        motivation: 'Desejo ajudar a comunidade através da educação e tecnologia'
       }
     });
 
@@ -216,19 +185,10 @@ export async function seedTestData() {
       skills: ['Saúde', 'Psicologia', 'Serviço Social'],
       availability: ['tuesday_morning', 'thursday_afternoon', 'friday_morning'],
       backgroundCheckStatus: 'approved',
-      status: 'active',
       emergencyContact: {
         name: 'Lucia Mendes',
         relationship: 'Mãe',
         phone: '(11) 98765-1111'
-      },
-      personalInfo: {
-        name: 'Rafael Mendes',
-        email: 'rafael.mendes@email.com',
-        phone: '(11) 97654-3210',
-        profession: 'Psicólogo',
-        experience: 'Trabalho voluntário em hospitais e ONGs de saúde mental',
-        motivation: 'Contribuir para o bem-estar psicológico da comunidade'
       }
     });
 
@@ -239,7 +199,7 @@ export async function seedTestData() {
       organizationId: testOrg.id,
       donorId: corporateDonor.id,
       projectId: educationProject.id,
-      amount: 10000,
+      amount: '10000',
       paymentMethod: 'bank_transfer',
       paymentStatus: 'completed',
       transactionId: 'TXN-001-2024',
@@ -253,7 +213,7 @@ export async function seedTestData() {
       organizationId: testOrg.id,
       donorId: individualDonor.id,
       projectId: healthProject.id,
-      amount: 500,
+      amount: '500',
       paymentMethod: 'pix',
       paymentStatus: 'completed',
       transactionId: 'PIX-002-2024',
@@ -267,7 +227,7 @@ export async function seedTestData() {
       organizationId: testOrg.id,
       donorId: null,
       projectId: null,
-      amount: 250,
+      amount: '250',
       paymentMethod: 'pix',
       paymentStatus: 'completed',
       transactionId: 'PIX-003-2024',
