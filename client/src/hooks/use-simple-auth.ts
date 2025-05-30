@@ -31,7 +31,12 @@ export function useSimpleAuth() {
       login(email, password),
     onSuccess: (data) => {
       setAuthState(data);
+      setIsLoading(false);
       queryClient.setQueryData(['/api/auth/me'], data);
+      // Force a brief delay to ensure state is updated
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     },
   });
 
