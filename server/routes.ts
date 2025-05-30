@@ -166,6 +166,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (req.session.organizationId) {
         currentOrganization = await storage.getOrganization(req.session.organizationId);
+      } else if (organizations.length > 0) {
+        // If no organization is set in session, use the first one
+        currentOrganization = organizations[0];
+        req.session.organizationId = organizations[0].id;
       }
 
       res.json({ 

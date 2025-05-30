@@ -154,7 +154,7 @@ export default function OrganizationSetup() {
               </div>
 
               <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" onClick={() => setLocation('/')}>
+                <Button type="button" variant="outline" onClick={() => window.location.href = '/'}>
                   Pular por agora
                 </Button>
                 <Button type="submit" disabled={isLoading}>
