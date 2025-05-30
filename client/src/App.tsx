@@ -16,7 +16,12 @@ import Financials from "@/pages/financials";
 import OrganizationSetup from "@/pages/organization-setup";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, currentOrganization } = useAuth();
+  const { isAuthenticated, isLoading, currentOrganization, error } = useAuth();
+
+  // If there's an authentication error (401), show login immediately
+  if (error || (!isLoading && !isAuthenticated)) {
+    return <Login />;
+  }
 
   if (isLoading) {
     return (
@@ -27,10 +32,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return <Login />;
   }
 
   if (!currentOrganization) {
