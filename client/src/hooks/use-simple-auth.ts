@@ -1,46 +1,37 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { login, register, logout, getCurrentUser, switchOrganization } from '@/lib/auth';
 import type { AuthState } from '@/lib/auth';
-import { useState, useEffect } from 'react';
 
-export function useAuth() {
+export function useSimpleAuth() {
   const queryClient = useQueryClient();
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [authState, setAuthState] = useState<AuthState | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasChecked, setHasChecked] = useState(false);
 
-  // Check authentication status only once
+  // Check authentication only once on mount
   useEffect(() => {
-    if (!sessionChecked) {
+    if (!hasChecked) {
       getCurrentUser()
         .then((data) => {
           setAuthState(data);
-          setSessionChecked(true);
+          setIsLoading(false);
+          setHasChecked(true);
         })
         .catch(() => {
           setAuthState(null);
-          setSessionChecked(true);
+          setIsLoading(false);
+          setHasChecked(true);
         });
     }
-  }, [sessionChecked]);
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['/api/auth/me'],
-    queryFn: getCurrentUser,
-    retry: false,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    enabled: false, // Completely disable auto-fetch
-  });
+  }, [hasChecked]);
 
   const loginMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       login(email, password),
     onSuccess: (data) => {
+      setAuthState(data);
       queryClient.setQueryData(['/api/auth/me'], data);
-      // Enable the auth query after successful login
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
   });
 
@@ -53,6 +44,7 @@ export function useAuth() {
       organizationSlug: string;
     }) => register(data),
     onSuccess: (data) => {
+      setAuthState(data);
       queryClient.setQueryData(['/api/auth/me'], data);
     },
   });
@@ -60,6 +52,7 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
+      setAuthState(null);
       queryClient.setQueryData(['/api/auth/me'], null);
       queryClient.clear();
     },
@@ -68,19 +61,14 @@ export function useAuth() {
   const switchOrgMutation = useMutation({
     mutationFn: switchOrganization,
     onSuccess: (response) => {
-      // Update the current organization in the cache
-      const currentData = queryClient.getQueryData<AuthState>(['/api/auth/me']);
-      if (currentData) {
-        queryClient.setQueryData(['/api/auth/me'], {
-          ...currentData,
+      if (authState) {
+        const updatedState = {
+          ...authState,
           currentOrganization: response.organization,
-        });
+        };
+        setAuthState(updatedState);
+        queryClient.setQueryData(['/api/auth/me'], updatedState);
       }
-      // Invalidate all organization-specific queries
-      queryClient.invalidateQueries({ predicate: (query) => {
-        const key = query.queryKey[0] as string;
-        return key.startsWith('/api/') && !key.startsWith('/api/auth/');
-      }});
     },
   });
 
@@ -88,9 +76,9 @@ export function useAuth() {
     user: authState?.user || null,
     organizations: authState?.organizations || [],
     currentOrganization: authState?.currentOrganization || null,
-    isLoading: !sessionChecked,
+    isLoading,
     isAuthenticated: !!authState?.user,
-    error: sessionChecked && !authState ? new Error('Not authenticated') : null,
+    error: hasChecked && !authState ? new Error('Not authenticated') : null,
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
