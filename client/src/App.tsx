@@ -16,7 +16,15 @@ import Financials from "@/pages/financials";
 import OrganizationSetup from "@/pages/organization-setup";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, currentOrganization } = useAuth();
+  const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
+
+  // Debug logging
+  console.log('ProtectedRoute debug:', { 
+    isAuthenticated, 
+    isLoading, 
+    currentOrganization, 
+    organizationsCount: organizations?.length 
+  });
 
   if (isLoading) {
     return (
@@ -33,7 +41,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Login />;
   }
 
-  if (!currentOrganization) {
+  // If user has organizations but no current organization is set, show dashboard anyway
+  if (!currentOrganization && organizations && organizations.length === 0) {
     return <OrganizationSetup />;
   }
 
