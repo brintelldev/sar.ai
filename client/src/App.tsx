@@ -41,8 +41,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Login />;
   }
 
-  // If user has organizations but no current organization is set, show dashboard anyway
-  if (!currentOrganization && organizations && organizations.length === 0) {
+  // Only show organization setup if user has NO organizations at all
+  if (organizations && organizations.length === 0) {
     return <OrganizationSetup />;
   }
 

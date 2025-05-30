@@ -14,11 +14,13 @@ export function useSimpleAuth() {
     if (!hasChecked) {
       getCurrentUser()
         .then((data) => {
+          console.log('Auth data received:', data); // Debug log
           setAuthState(data);
           setIsLoading(false);
           setHasChecked(true);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('Auth error:', error); // Debug log
           setAuthState(null);
           setIsLoading(false);
           setHasChecked(true);

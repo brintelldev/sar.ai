@@ -38,7 +38,7 @@ export default function OrganizationSetup() {
       
       // Redirect to dashboard after successful save
       setTimeout(() => {
-        setLocation('/');
+        window.location.href = '/';
       }, 1500);
     } catch (error) {
       toast({
