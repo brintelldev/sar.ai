@@ -130,12 +130,20 @@ export class MemStorage implements IStorage {
   }
 
   async getUserOrganizations(userId: string): Promise<Organization[]> {
+    console.log(`[DEBUG] Getting organizations for user: ${userId}`);
+    
     const userRolesList = Array.from(this.userRoles.values())
       .filter(role => role.userId === userId && role.isActive);
+    console.log(`[DEBUG] Found ${userRolesList.length} active user roles:`, userRolesList);
     
     const organizationIds = userRolesList.map(role => role.organizationId);
-    return Array.from(this.organizations.values())
+    console.log(`[DEBUG] Organization IDs:`, organizationIds);
+    
+    const organizations = Array.from(this.organizations.values())
       .filter(org => organizationIds.includes(org.id));
+    console.log(`[DEBUG] Found ${organizations.length} organizations:`, organizations);
+    
+    return organizations;
   }
 
   // User roles

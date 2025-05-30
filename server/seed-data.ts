@@ -5,6 +5,13 @@ export async function seedTestData() {
   try {
     console.log('🌱 Iniciando população de dados de teste...');
 
+    // Verificar se já existem dados
+    const existingOrg = await storage.getOrganizationBySlug('instituto-esperanca');
+    if (existingOrg) {
+      console.log('✅ Dados de teste já existem, pulando população');
+      return;
+    }
+
     // 1. Criar primeira organização (ONG)
     const testOrg = await storage.createOrganization({
       name: 'Instituto Esperança',
