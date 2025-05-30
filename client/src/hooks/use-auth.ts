@@ -21,6 +21,8 @@ export function useAuth() {
       login(email, password),
     onSuccess: (data) => {
       queryClient.setQueryData(['/api/auth/me'], data);
+      // Enable the auth query after successful login
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
   });
 
