@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 export default function OrganizationSetup() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   
   const [form, setForm] = useState({
@@ -33,6 +35,11 @@ export default function OrganizationSetup() {
         title: 'Organização atualizada',
         description: 'As informações da sua organização foram salvas com sucesso.',
       });
+      
+      // Redirect to dashboard after successful save
+      setTimeout(() => {
+        setLocation('/');
+      }, 1500);
     } catch (error) {
       toast({
         title: 'Erro ao salvar',
@@ -147,7 +154,7 @@ export default function OrganizationSetup() {
               </div>
 
               <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" onClick={() => setLocation('/')}>
                   Pular por agora
                 </Button>
                 <Button type="submit" disabled={isLoading}>
