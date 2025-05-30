@@ -5,15 +5,14 @@ import type { AuthState } from '@/lib/auth';
 export function useAuth() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery<AuthState>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: getCurrentUser,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchInterval: false,
-    enabled: true,
   });
 
   const loginMutation = useMutation({
