@@ -13,7 +13,7 @@ export function useAuth() {
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchInterval: false,
-    enabled: false, // Temporarily disable to stop the loop
+    enabled: true,
   });
 
   const loginMutation = useMutation({
