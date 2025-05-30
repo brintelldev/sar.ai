@@ -16,29 +16,8 @@ import Financials from "@/pages/financials";
 import OrganizationSetup from "@/pages/organization-setup";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, currentOrganization, error } = useAuth();
-
-  // If there's an authentication error (401), show login immediately
-  if (error || (!isLoading && !isAuthenticated)) {
-    return <Login />;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentOrganization) {
-    return <OrganizationSetup />;
-  }
-
-  return <>{children}</>;
+  // Temporarily show login directly to stop the infinite loop
+  return <Login />;
 }
 
 function Router() {
