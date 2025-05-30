@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useSimpleAuth as useAuth } from '@/hooks/use-simple-auth';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { slugify } from '@/lib/utils';
