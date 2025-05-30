@@ -50,21 +50,24 @@ export async function seedTestData() {
       userId: adminUser.id,
       organizationId: testOrg.id,
       role: 'admin',
-      permissions: ['read', 'write', 'delete', 'admin']
+      permissions: ['read', 'write', 'delete', 'admin'],
+      isActive: true
     });
 
     await storage.createUserRole({
       userId: managerUser.id,
       organizationId: testOrg.id,
       role: 'project_manager',
-      permissions: ['read', 'write']
+      permissions: ['read', 'write'],
+      isActive: true
     });
 
     await storage.createUserRole({
       userId: volunteerUser.id,
       organizationId: testOrg.id,
       role: 'volunteer',
-      permissions: ['read']
+      permissions: ['read'],
+      isActive: true
     });
 
     console.log('✅ Roles atribuídos');

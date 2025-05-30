@@ -158,7 +158,10 @@ export class MemStorage implements IStorage {
       ...insertRole,
       id,
       grantedAt: new Date(),
-      expiresAt: insertRole.expiresAt || null
+      expiresAt: insertRole.expiresAt || null,
+      isActive: insertRole.isActive ?? true,
+      permissions: insertRole.permissions || [],
+      grantedBy: insertRole.grantedBy || null
     };
     this.userRoles.set(id, role);
     return role;
