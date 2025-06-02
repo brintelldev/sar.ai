@@ -253,6 +253,18 @@ export class MemStorage implements IStorage {
     const beneficiary: Beneficiary = {
       ...insertBeneficiary,
       id,
+      status: insertBeneficiary.status || 'active',
+      needs: insertBeneficiary.needs || null,
+      servicesReceived: insertBeneficiary.servicesReceived || null,
+      address: insertBeneficiary.address || null,
+      contactInfo: insertBeneficiary.contactInfo || null,
+      emergencyContact: insertBeneficiary.emergencyContact || null,
+      document: insertBeneficiary.document || null,
+      birthDate: insertBeneficiary.birthDate || null,
+      socialVulnerabilityData: null,
+      consentRecords: null,
+      dataRetentionUntil: null,
+      anonymizationDate: null,
       createdAt: new Date(),
       updatedAt: new Date()
     };

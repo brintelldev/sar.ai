@@ -92,10 +92,13 @@ export const beneficiaries = pgTable("beneficiaries", {
   name: text("name").notNull(),
   birthDate: date("birth_date"),
   document: text("document"),
-  contactInfo: jsonb("contact_info"), // encrypted
-  address: jsonb("address"), // encrypted
+  contactInfo: text("contact_info"), // encrypted contact information
+  address: text("address"), // encrypted address information
+  emergencyContact: text("emergency_contact"), // encrypted emergency contact
+  status: text("status").notNull().default("active"), // 'active', 'inactive', 'completed'
+  needs: text("needs"), // types of support needed
+  servicesReceived: text("services_received"), // history of services
   socialVulnerabilityData: jsonb("social_vulnerability_data"), // encrypted
-  emergencyContact: jsonb("emergency_contact"), // encrypted
   consentRecords: jsonb("consent_records"), // granular consents
   dataRetentionUntil: date("data_retention_until"),
   anonymizationDate: date("anonymization_date"),
