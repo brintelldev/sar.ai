@@ -372,6 +372,7 @@ export default function Beneficiaries() {
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
                 {beneficiaries.filter(b => {
+                  if (!b.createdAt) return false;
                   const createdAt = new Date(b.createdAt);
                   const now = new Date();
                   return createdAt.getMonth() === now.getMonth() && createdAt.getFullYear() === now.getFullYear();
@@ -523,7 +524,7 @@ export default function Beneficiaries() {
 
                   <div className="pt-4">
                     <p className="text-xs text-muted-foreground">
-                      Cadastro criado em {formatDate(selectedBeneficiary.createdAt)}
+                      Cadastro criado em {selectedBeneficiary.createdAt ? formatDate(selectedBeneficiary.createdAt) : 'Data não disponível'}
                     </p>
                     {selectedBeneficiary.updatedAt && selectedBeneficiary.updatedAt !== selectedBeneficiary.createdAt && (
                       <p className="text-xs text-muted-foreground">
