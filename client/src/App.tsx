@@ -15,6 +15,7 @@ import Donations from "@/pages/donations";
 import AccountsReceivable from "@/pages/accounts-receivable";
 import AccountsPayable from "@/pages/accounts-payable";
 import FinancialReports from "@/pages/financial-reports";
+import Funders from "@/pages/funders";
 import Financials from "@/pages/financials";
 import OrganizationSetup from "@/pages/organization-setup";
 
@@ -103,7 +104,7 @@ function Router() {
       </Route>
       <Route path="/funders">
         <ProtectedRoute>
-          <Financials />
+          <Funders />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

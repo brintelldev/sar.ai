@@ -9,7 +9,8 @@ import {
   ArrowUp, 
   FileText, 
   Handshake,
-  Shield
+  Shield,
+  BarChart3
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Visão Geral', href: '/financials', icon: FileText },
 ];
 
 const managementNav = [
