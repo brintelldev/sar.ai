@@ -13,32 +13,32 @@
   --card-foreground: 220 14% 14%; /* #1e293b */
   --border: 220 13% 91%; /* #e2e8f0 */
   --input: 220 13% 91%; /* #e2e8f0 */
-  --primary: 215 78% 53%; /* #2563eb */
-  --primary-foreground: 211 100% 99%; /* #f0f9ff */
+  --primary: 265 35% 36%; /* #583D7E */
+  --primary-foreground: 0 0% 100%; /* #ffffff */
   --secondary: 210 11% 95%; /* #f1f5f9 */
   --secondary-foreground: 220 14% 14%; /* #1e293b */
   --accent: 210 11% 95%; /* #f1f5f9 */
   --accent-foreground: 220 14% 14%; /* #1e293b */
   --destructive: 0 84% 60%; /* #ef4444 */
   --destructive-foreground: 0 0% 98%; /* #fafafa */
-  --ring: 215 78% 53%; /* #2563eb */
+  --ring: 265 35% 36%; /* #583D7E */
   --radius: 0.5rem;
-  
+
   /* Custom colors for NGO platform */
   --success: 142 76% 36%; /* #10b981 */
   --success-foreground: 0 0% 100%; /* #ffffff */
   --warning: 32 95% 44%; /* #f59e0b */
   --warning-foreground: 0 0% 100%; /* #ffffff */
-  
+
   /* Sidebar specific colors */
   --sidebar-background: 0 0% 100%; /* #ffffff */
   --sidebar-foreground: 220 14% 14%; /* #1e293b */
-  --sidebar-primary: 215 78% 53%; /* #2563eb */
-  --sidebar-primary-foreground: 211 100% 99%; /* #f0f9ff */
+  --sidebar-primary: 265 35% 36%; /* #583D7E */
+  --sidebar-primary-foreground: 0 0% 100%; /* #ffffff */
   --sidebar-accent: 210 11% 95%; /* #f1f5f9 */
   --sidebar-accent-foreground: 220 14% 14%; /* #1e293b */
   --sidebar-border: 220 13% 91%; /* #e2e8f0 */
-  --sidebar-ring: 215 78% 53%; /* #2563eb */
+  --sidebar-ring: 265 35% 36%; /* #583D7E */
 }
 
 .dark {
@@ -52,43 +52,43 @@
   --card-foreground: 210 11% 98%; /* #f8fafc */
   --border: 220 17% 20%; /* #334155 */
   --input: 220 17% 20%; /* #334155 */
-  --primary: 215 78% 53%; /* #2563eb */
-  --primary-foreground: 211 100% 99%; /* #f0f9ff */
+  --primary: 265 35% 36%; /* #583D7E */
+  --primary-foreground: 0 0% 100%; /* #ffffff */
   --secondary: 220 17% 20%; /* #334155 */
   --secondary-foreground: 210 11% 98%; /* #f8fafc */
   --accent: 220 17% 20%; /* #334155 */
   --accent-foreground: 210 11% 98%; /* #f8fafc */
   --destructive: 0 62% 51%; /* #dc2626 */
   --destructive-foreground: 0 0% 98%; /* #fafafa */
-  --ring: 215 78% 53%; /* #2563eb */
-  
+  --ring: 265 35% 36%; /* #583D7E */
+
   /* Dark mode custom colors */
   --success: 142 76% 36%; /* #10b981 */
   --success-foreground: 0 0% 100%; /* #ffffff */
   --warning: 32 95% 44%; /* #f59e0b */
   --warning-foreground: 0 0% 100%; /* #ffffff */
-  
+
   /* Dark sidebar colors */
   --sidebar-background: 220 14% 14%; /* #1e293b */
   --sidebar-foreground: 210 11% 98%; /* #f8fafc */
-  --sidebar-primary: 215 78% 53%; /* #2563eb */
-  --sidebar-primary-foreground: 211 100% 99%; /* #f0f9ff */
+  --sidebar-primary: 265 35% 36%; /* #583D7E */
+  --sidebar-primary-foreground: 0 0% 100%; /* #ffffff */
   --sidebar-accent: 220 17% 20%; /* #334155 */
   --sidebar-accent-foreground: 210 11% 98%; /* #f8fafc */
   --sidebar-border: 220 17% 20%; /* #334155 */
-  --sidebar-ring: 215 78% 53%; /* #2563eb */
+  --sidebar-ring: 265 35% 36%; /* #583D7E */
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
   }
@@ -98,31 +98,31 @@
   .metric-card {
     @apply bg-white dark:bg-card rounded-xl shadow-sm border border-border p-6 transition-all hover:shadow-md;
   }
-  
+
   .sidebar-nav-item {
     @apply flex items-center space-x-3 px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors;
   }
-  
+
   .sidebar-nav-item-active {
     @apply bg-primary/10 text-primary font-medium;
   }
-  
+
   .status-badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
-  
+
   .status-active {
     @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400;
   }
-  
+
   .status-warning {
     @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400;
   }
-  
+
   .status-pending {
     @apply bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400;
   }
-  
+
   .status-completed {
     @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400;
   }

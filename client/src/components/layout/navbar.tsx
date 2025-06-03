@@ -30,10 +30,12 @@ export function Navbar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Heart className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">ONGConnect</span>
+            <img 
+              src="/logo_sarai.png" 
+              alt="Sar.ai Logo" 
+              className="w-8 h-8 object-contain"
+            />
+            <span className="text-xl font-bold text-foreground">Sar.ai</span>
           </div>
           
           {currentOrganization && (
