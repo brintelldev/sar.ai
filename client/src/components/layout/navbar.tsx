@@ -31,13 +31,12 @@ export function Navbar() {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
             <img 
-              src="/logo_sarai.png" 
-              alt="Sar.ai Logo" 
-              className="w-8 h-8 object-contain"
+              src="/logo-sarai.png" 
+              alt="Sar.ai" 
+              className="h-8 w-auto"
             />
-            <span className="text-xl font-bold text-foreground">Sar.ai</span>
           </div>
-          
+
           {currentOrganization && (
             <div className="flex items-center space-x-2 ml-8">
               <span className="text-sm text-muted-foreground">Organização:</span>
