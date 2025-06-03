@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { getInitials } from '@/lib/utils';
+import logoSarai from '@/assets/logo_sarai.png';
 
 export function Navbar() {
   const { user, organizations, currentOrganization, logout, switchOrganization } = useAuth();

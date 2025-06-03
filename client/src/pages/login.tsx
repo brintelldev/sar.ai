@@ -9,6 +9,7 @@ import { useSimpleAuth as useAuth } from '@/hooks/use-simple-auth';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { slugify } from '@/lib/utils';
+import logoSarai from '@/assets/logo_sarai.png';
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -80,11 +81,12 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <Heart className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <h1 className="text-3xl font-bold text-foreground">ONGConnect</h1>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src={logoSarai} 
+              alt="SAR.AI" 
+              className="h-16 w-auto"
+            />
           </div>
           <p className="text-muted-foreground">
             Plataforma de gestão para organizações não governamentais
