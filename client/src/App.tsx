@@ -12,6 +12,9 @@ import Donors from "@/pages/donors";
 import Beneficiaries from "@/pages/beneficiaries";
 import Volunteers from "@/pages/volunteers";
 import Donations from "@/pages/donations";
+import AccountsReceivable from "@/pages/accounts-receivable";
+import AccountsPayable from "@/pages/accounts-payable";
+import FinancialReports from "@/pages/financial-reports";
 import Financials from "@/pages/financials";
 import OrganizationSetup from "@/pages/organization-setup";
 
@@ -83,19 +86,19 @@ function Router() {
           <Donations />
         </ProtectedRoute>
       </Route>
-      <Route path="/accounts-receivable" nest>
+      <Route path="/accounts-receivable">
         <ProtectedRoute>
-          <Financials />
+          <AccountsReceivable />
         </ProtectedRoute>
       </Route>
-      <Route path="/accounts-payable" nest>
+      <Route path="/accounts-payable">
         <ProtectedRoute>
-          <Financials />
+          <AccountsPayable />
         </ProtectedRoute>
       </Route>
-      <Route path="/reports" nest>
+      <Route path="/reports">
         <ProtectedRoute>
-          <Financials />
+          <FinancialReports />
         </ProtectedRoute>
       </Route>
       <Route path="/funders">
