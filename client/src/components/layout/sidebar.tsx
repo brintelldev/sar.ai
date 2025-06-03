@@ -22,7 +22,7 @@ const navigation = [
 const managementNav = [
   { name: 'Projetos', href: '/projects', icon: FolderKanban, count: 12 },
   { name: 'Doadores', href: '/donors', icon: Heart, count: 284 },
-  { name: 'Beneficiários', href: '/beneficiaries', icon: Users, count: 156 },
+  { name: 'Pessoas Atendidas', href: '/beneficiaries', icon: Users, count: 156 },
   { name: 'Voluntários', href: '/volunteers', icon: UserCheck, count: 43 },
 ];
 
@@ -54,14 +54,12 @@ export function Sidebar() {
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
-              <Link key={item.name} href={item.href}>
-                <a className={cn(
-                  'sidebar-nav-item',
-                  isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                )}>
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </a>
+              <Link key={item.name} href={item.href} className={cn(
+                'sidebar-nav-item',
+                isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+              )}>
+                <Icon className="h-4 w-4" />
+                <span>{item.name}</span>
               </Link>
             );
           })}
@@ -74,22 +72,20 @@ export function Sidebar() {
               {managementNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <a className={cn(
-                      'sidebar-nav-item',
-                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                    )}>
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                      {item.count && (
-                        <Badge 
-                          variant="secondary" 
-                          className="ml-auto bg-muted text-muted-foreground text-xs"
-                        >
-                          {item.count}
-                        </Badge>
-                      )}
-                    </a>
+                  <Link key={item.name} href={item.href} className={cn(
+                    'sidebar-nav-item',
+                    isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                  )}>
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                    {item.count && (
+                      <Badge 
+                        variant="secondary" 
+                        className="ml-auto bg-muted text-muted-foreground text-xs"
+                      >
+                        {item.count}
+                      </Badge>
+                    )}
                   </Link>
                 );
               })}
@@ -104,14 +100,12 @@ export function Sidebar() {
               {financialNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <a className={cn(
-                      'sidebar-nav-item',
-                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                    )}>
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </a>
+                  <Link key={item.name} href={item.href} className={cn(
+                    'sidebar-nav-item',
+                    isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                  )}>
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
                   </Link>
                 );
               })}
@@ -126,14 +120,12 @@ export function Sidebar() {
               {partnershipsNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <a className={cn(
-                      'sidebar-nav-item',
-                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                    )}>
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </a>
+                  <Link key={item.name} href={item.href} className={cn(
+                    'sidebar-nav-item',
+                    isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                  )}>
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
                   </Link>
                 );
               })}
