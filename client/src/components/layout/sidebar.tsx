@@ -12,7 +12,7 @@ import {
   Shield,
   BarChart3
 } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useRouter } from 'wouter';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -40,13 +40,17 @@ const partnershipsNav = [
 ];
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
 
   const isActive = (href: string) => {
     if (href === '/') {
       return location === '/';
     }
     return location.startsWith(href);
+  };
+
+  const handleNavigation = (href: string) => {
+    navigate(href);
   };
 
   return (
@@ -56,13 +60,17 @@ export function Sidebar() {
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
-              <Link key={item.name} href={item.href} className={cn(
-                'sidebar-nav-item',
-                isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-              )}>
+              <button 
+                key={item.name} 
+                onClick={() => handleNavigation(item.href)}
+                className={cn(
+                  'sidebar-nav-item w-full text-left',
+                  isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                )}
+              >
                 <Icon className="h-4 w-4" />
                 <span>{item.name}</span>
-              </Link>
+              </button>
             );
           })}
           
@@ -74,10 +82,14 @@ export function Sidebar() {
               {managementNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href} className={cn(
-                    'sidebar-nav-item',
-                    isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                  )}>
+                  <button 
+                    key={item.name} 
+                    onClick={() => handleNavigation(item.href)}
+                    className={cn(
+                      'sidebar-nav-item w-full text-left',
+                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                    )}
+                  >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
                     {item.count && (
@@ -88,7 +100,7 @@ export function Sidebar() {
                         {item.count}
                       </Badge>
                     )}
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -102,13 +114,17 @@ export function Sidebar() {
               {financialNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href} className={cn(
-                    'sidebar-nav-item',
-                    isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                  )}>
+                  <button 
+                    key={item.name} 
+                    onClick={() => handleNavigation(item.href)}
+                    className={cn(
+                      'sidebar-nav-item w-full text-left',
+                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                    )}
+                  >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -122,13 +138,17 @@ export function Sidebar() {
               {partnershipsNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href} className={cn(
-                    'sidebar-nav-item',
-                    isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                  )}>
+                  <button 
+                    key={item.name} 
+                    onClick={() => handleNavigation(item.href)}
+                    className={cn(
+                      'sidebar-nav-item w-full text-left',
+                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                    )}
+                  >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                  </Link>
+                  </button>
                 );
               })}
             </div>
