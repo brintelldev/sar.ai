@@ -139,6 +139,7 @@ export async function seedTestData() {
     // 6. Criar beneficiários
     await storage.createBeneficiary({
       organizationId: testOrg.id,
+      registrationNumber: 'BEN-001',
       name: 'Fernanda Santos',
       cpf: '987.654.321-00',
       rg: '12.345.678-9',
@@ -156,6 +157,7 @@ export async function seedTestData() {
 
     await storage.createBeneficiary({
       organizationId: testOrg.id,
+      registrationNumber: 'BEN-002',
       name: 'Roberto da Silva',
       cpf: '456.789.123-00',
       rg: '98.765.432-1',
