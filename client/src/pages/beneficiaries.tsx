@@ -385,56 +385,79 @@ export default function Beneficiaries() {
         </div>
 
         {/* Beneficiaries List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pessoas em Acompanhamento</CardTitle>
-            <CardDescription>
-              Lista confidencial de pessoas acolhidas em nossos programas
-            </CardDescription>
+        <Card className="bg-white shadow-sm">
+          <CardHeader className="border-b bg-gray-50/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Pessoas em Acompanhamento</CardTitle>
+                <CardDescription className="text-sm text-gray-600 mt-1">
+                  Lista confidencial de pessoas acolhidas em nossos programas
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {filteredBeneficiaries.length} registros
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
-              <div className="text-center py-4">Carregando...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground mt-2">Carregando...</p>
+              </div>
             ) : filteredBeneficiaries.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchTerm ? 'Nenhuma pessoa encontrada.' : 'Nenhum acolhimento registrado ainda.'}
+              <div className="text-center py-12 px-4">
+                <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {searchTerm ? 'Nenhuma pessoa encontrada' : 'Nenhum acolhimento registrado'}
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                  {searchTerm ? 'Tente ajustar os termos da busca.' : 'Quando houver novos acolhimentos, eles aparecerão aqui.'}
+                </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="divide-y divide-gray-100">
                 {filteredBeneficiaries.map((beneficiary) => (
-                  <div key={beneficiary.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-pink-100 text-pink-700">
-                          {getInitials(beneficiary.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-medium">{beneficiary.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Código: {beneficiary.registrationNumber}
-                        </p>
-                        {beneficiary.createdAt && (
-                          <p className="text-xs text-muted-foreground">
-                            Acolhimento iniciado {formatRelativeTime(beneficiary.createdAt)}
+                  <div key={beneficiary.id} className="p-4 hover:bg-gray-50/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1 min-w-0">
+                        <Avatar className="h-12 w-12 flex-shrink-0">
+                          <AvatarFallback className="bg-pink-100 text-pink-700 font-medium">
+                            {getInitials(beneficiary.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="font-medium text-gray-900 truncate">{beneficiary.name}</h3>
+                            <Badge variant={
+                              beneficiary.status === 'active' ? 'default' :
+                              beneficiary.status === 'completed' ? 'secondary' : 'outline'
+                            } className={
+                              beneficiary.status === 'active' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200' :
+                              beneficiary.status === 'completed' ? 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200' : ''
+                            }>
+                              {beneficiary.status === 'active' ? 'Em Atendimento' :
+                               beneficiary.status === 'completed' ? 'Concluído' : 'Pausado'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Código: {beneficiary.registrationNumber}
                           </p>
-                        )}
+                          {beneficiary.createdAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Acolhimento iniciado {formatRelativeTime(beneficiary.createdAt)}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={
-                        beneficiary.status === 'active' ? 'default' :
-                        beneficiary.status === 'completed' ? 'secondary' : 'outline'
-                      } className={
-                        beneficiary.status === 'active' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
-                        beneficiary.status === 'completed' ? 'bg-green-100 text-green-700 hover:bg-green-200' : ''
-                      }>
-                        {beneficiary.status === 'active' ? 'Em Atendimento' :
-                         beneficiary.status === 'completed' ? 'Concluído' : 'Pausado'}
-                      </Badge>
-                      <Button variant="ghost" size="sm" onClick={() => handleViewDetails(beneficiary)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(beneficiary)} className="h-8 w-8 p-0">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
