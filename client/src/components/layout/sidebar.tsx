@@ -24,7 +24,7 @@ const navigation = [
 const managementNav = [
   { name: 'Projetos', href: '/projects', icon: FolderKanban, count: 12 },
   { name: 'Doadores', href: '/donors', icon: Heart, count: 284 },
-  { name: 'Pessoas Atendidas', href: '/beneficiaries', icon: Users, count: 156 },
+  { name: 'Beneficiários', href: '/beneficiaries', icon: Users, count: 156 },
   { name: 'Voluntários', href: '/volunteers', icon: UserCheck, count: 43 },
 ];
 
