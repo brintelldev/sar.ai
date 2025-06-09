@@ -6,22 +6,22 @@ import { Plus, Building2, TrendingUp, Users, DollarSign } from 'lucide-react';
 export default function Funders() {
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Financiadores</h1>
-            <p className="text-muted-foreground">
+      <div className="container mx-auto px-4 py-6 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Financiadores</h1>
+            <p className="text-base text-muted-foreground">
               Gerencie parcerias e financiamentos institucionais
             </p>
           </div>
-          <Button>
+          <Button className="bg-primary hover:bg-primary/90">
             <Plus className="h-4 w-4 mr-2" />
             Novo Financiador
           </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Financiadores Ativos</CardTitle>
