@@ -12,7 +12,7 @@ import {
   Shield,
   BarChart3
 } from 'lucide-react';
-import { Link, useLocation, useRouter } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -40,17 +40,13 @@ const partnershipsNav = [
 ];
 
 export function Sidebar() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
 
   const isActive = (href: string) => {
     if (href === '/') {
       return location === '/';
     }
     return location.startsWith(href);
-  };
-
-  const handleNavigation = (href: string) => {
-    navigate(href);
   };
 
   return (
@@ -60,17 +56,17 @@ export function Sidebar() {
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
-              <button 
+              <Link 
                 key={item.name} 
-                onClick={() => handleNavigation(item.href)}
+                href={item.href}
                 className={cn(
-                  'sidebar-nav-item w-full text-left',
+                  'sidebar-nav-item',
                   isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
                 )}
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.name}</span>
-              </button>
+              </Link>
             );
           })}
           
@@ -82,11 +78,11 @@ export function Sidebar() {
               {managementNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button 
+                  <Link 
                     key={item.name} 
-                    onClick={() => handleNavigation(item.href)}
+                    href={item.href}
                     className={cn(
-                      'sidebar-nav-item w-full text-left',
+                      'sidebar-nav-item',
                       isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
                     )}
                   >
@@ -100,7 +96,7 @@ export function Sidebar() {
                         {item.count}
                       </Badge>
                     )}
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -114,17 +110,17 @@ export function Sidebar() {
               {financialNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button 
+                  <Link 
                     key={item.name} 
-                    onClick={() => handleNavigation(item.href)}
+                    href={item.href}
                     className={cn(
-                      'sidebar-nav-item w-full text-left',
+                      'sidebar-nav-item',
                       isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
                     )}
                   >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -138,17 +134,17 @@ export function Sidebar() {
               {partnershipsNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button 
+                  <Link 
                     key={item.name} 
-                    onClick={() => handleNavigation(item.href)}
+                    href={item.href}
                     className={cn(
-                      'sidebar-nav-item w-full text-left',
+                      'sidebar-nav-item',
                       isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
                     )}
                   >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
