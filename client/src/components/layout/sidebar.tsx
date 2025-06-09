@@ -18,7 +18,6 @@ import { Badge } from '@/components/ui/badge';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Visão Geral', href: '/financials', icon: FileText },
 ];
 
 const managementNav = [
