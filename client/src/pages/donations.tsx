@@ -21,6 +21,9 @@ export default function Donations() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedDonation, setSelectedDonation] = useState<any>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const createDonationMutation = useCreateDonation();
 
@@ -82,6 +85,36 @@ export default function Donations() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleViewDonation = (donation: any) => {
+    setSelectedDonation(donation);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditDonation = (donation: any) => {
+    setSelectedDonation(donation);
+    setFormData({
+      amount: donation.amount,
+      paymentMethod: donation.paymentMethod || 'pix',
+      paymentStatus: donation.paymentStatus || 'completed',
+      campaignSource: donation.campaignSource || '',
+      donationDate: new Date(donation.donationDate).toISOString().split('T')[0],
+      notes: donation.notes || '',
+      donorId: donation.donorId || '',
+      projectId: donation.projectId || '',
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const getDonorName = (donorId: string) => {
+    const donor = donors?.find((d: any) => d.id === donorId);
+    return donor ? donor.name : 'Doador anônimo';
+  };
+
+  const getProjectName = (projectId: string) => {
+    const project = projects?.find((p: any) => p.id === projectId);
+    return project ? project.name : 'Doação geral';
   };
 
   const getPaymentMethodLabel = (method: string) => {
@@ -445,10 +478,18 @@ export default function Donations() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleViewDonation(donation)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditDonation(donation)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
@@ -458,6 +499,229 @@ export default function Donations() {
             )}
           </CardContent>
         </Card>
+
+        {/* View Donation Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detalhes da Doação</DialogTitle>
+              <DialogDescription>
+                Informações completas da doação selecionada
+              </DialogDescription>
+            </DialogHeader>
+            {selectedDonation && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Valor</Label>
+                    <p className="text-lg font-semibold">{formatCurrency(parseFloat(selectedDonation.amount))}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                    <div className="mt-1">
+                      {getStatusBadge(selectedDonation.paymentStatus)}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Data</Label>
+                    <p>{formatDate(selectedDonation.donationDate)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Método de Pagamento</Label>
+                    <p>{getPaymentMethodLabel(selectedDonation.paymentMethod)}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Doador</Label>
+                  <p>{selectedDonation.donorId ? getDonorName(selectedDonation.donorId) : 'Doador anônimo'}</p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Projeto</Label>
+                  <p>{selectedDonation.projectId ? getProjectName(selectedDonation.projectId) : 'Doação geral'}</p>
+                </div>
+
+                {selectedDonation.campaignSource && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Fonte da Campanha</Label>
+                    <p>{selectedDonation.campaignSource}</p>
+                  </div>
+                )}
+
+                {selectedDonation.transactionId && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">ID da Transação</Label>
+                    <p className="text-xs font-mono">{selectedDonation.transactionId}</p>
+                  </div>
+                )}
+
+                {selectedDonation.notes && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Observações</Label>
+                    <p className="text-sm">{selectedDonation.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Donation Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Doação</DialogTitle>
+              <DialogDescription>
+                Modifique as informações da doação
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // TODO: Implement update functionality
+              toast({
+                title: "Funcionalidade em desenvolvimento",
+                description: "A edição de doações será implementada em breve.",
+              });
+            }}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-amount">Valor (R$)</Label>
+                    <Input
+                      id="edit-amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                      placeholder="0,00"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-date">Data da Doação</Label>
+                    <Input
+                      id="edit-date"
+                      type="date"
+                      value={formData.donationDate}
+                      onChange={(e) => setFormData({...formData, donationDate: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-payment-method">Método de Pagamento</Label>
+                    <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({...formData, paymentMethod: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                        <SelectItem value="debit_card">Cartão de Débito</SelectItem>
+                        <SelectItem value="bank_transfer">Transferência Bancária</SelectItem>
+                        <SelectItem value="cash">Dinheiro</SelectItem>
+                        <SelectItem value="check">Cheque</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select value={formData.paymentStatus} onValueChange={(value) => setFormData({...formData, paymentStatus: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="completed">Concluída</SelectItem>
+                        <SelectItem value="failed">Falhou</SelectItem>
+                        <SelectItem value="refunded">Reembolsada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-donor">Doador</Label>
+                  <Select value={formData.donorId} onValueChange={(value) => setFormData({...formData, donorId: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um doador (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Doador anônimo</SelectItem>
+                      {donors?.map((donor: any) => (
+                        <SelectItem key={donor.id} value={donor.id}>
+                          {donor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-project">Projeto</Label>
+                  <Select value={formData.projectId} onValueChange={(value) => setFormData({...formData, projectId: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um projeto (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Doação geral</SelectItem>
+                      {projects?.map((project: any) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-campaign">Fonte da Campanha</Label>
+                  <Input
+                    id="edit-campaign"
+                    value={formData.campaignSource}
+                    onChange={(e) => setFormData({...formData, campaignSource: e.target.value})}
+                    placeholder="Website, Instagram, etc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-notes">Observações</Label>
+                  <Input
+                    id="edit-notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    placeholder="Informações adicionais sobre a doação"
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter className="mt-6">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Salvar Alterações
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
