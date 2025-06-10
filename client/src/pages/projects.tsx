@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Calendar, DollarSign, Users, Target } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, DollarSign, Users, Target, Edit, Eye, X } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { useProjects, useCreateProject } from '@/hooks/use-organization';
+import { useProjects, useCreateProject, useUpdateProject } from '@/hooks/use-organization';
 import { insertProjectSchema } from '@/../../shared/schema';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,8 +21,14 @@ export default function Projects() {
   const { data: projects, isLoading } = useProjects();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
   const createProjectMutation = useCreateProject();
+  const updateProjectMutation = useUpdateProject();
 
   const form = useForm({
     resolver: zodResolver(insertProjectSchema),
@@ -92,10 +98,33 @@ export default function Projects() {
     return Math.round((parseFloat(project.spentAmount) / parseFloat(project.budget)) * 100);
   };
 
-  const filteredProjects = Array.isArray(projects) ? projects.filter((project: any) =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  const openDetailDialog = (project: any) => {
+    setSelectedProject(project);
+    setIsDetailDialogOpen(true);
+  };
+
+  const openEditDialog = (project: any) => {
+    setSelectedProject(project);
+    form.reset({
+      name: project.name,
+      description: project.description || '',
+      status: project.status,
+      startDate: project.startDate || '',
+      endDate: project.endDate || '',
+      budget: project.budget || '',
+      spentAmount: project.spentAmount || '0',
+      goals: project.goals || '',
+      milestones: project.milestones || '',
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const filteredProjects = Array.isArray(projects) ? projects.filter((project: any) => {
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  }) : [];
 
   return (
     <MainLayout>
@@ -274,20 +303,56 @@ export default function Projects() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar projetos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        <div className="space-y-4 mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar projetos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros
+              {showFilters && <X className="h-4 w-4 ml-2" />}
+            </Button>
           </div>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </Button>
+          
+          {showFilters && (
+            <Card className="p-4">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium">Status:</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="planning">Planejamento</SelectItem>
+                      <SelectItem value="active">Em Andamento</SelectItem>
+                      <SelectItem value="paused">Pausado</SelectItem>
+                      <SelectItem value="completed">Concluído</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setSearchTerm('');
+                  }}
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Projects Grid */}
@@ -376,10 +441,12 @@ export default function Projects() {
                   </div>
                   
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => openDetailDialog(project)}>
+                      <Eye className="h-4 w-4 mr-2" />
                       Ver Detalhes
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(project)}>
+                      <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </Button>
                   </div>
@@ -388,6 +455,251 @@ export default function Projects() {
             ))}
           </div>
         )}
+
+        {/* Project Details Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedProject?.name}</DialogTitle>
+              <DialogDescription>
+                Detalhes completos do projeto
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedProject && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Status</h4>
+                    <Badge className={`status-badge ${getStatusVariant(selectedProject.status)}`}>
+                      {getStatusLabel(selectedProject.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Progresso</h4>
+                    <div className="flex items-center space-x-2">
+                      <Progress value={calculateProgress(selectedProject)} className="flex-1" />
+                      <span className="text-sm font-medium">{calculateProgress(selectedProject)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Descrição</h4>
+                  <p className="text-sm">{selectedProject.description || 'Sem descrição'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Início</h4>
+                    <p className="text-sm">{selectedProject.startDate ? formatDate(selectedProject.startDate) : 'Não definida'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Término</h4>
+                    <p className="text-sm">{selectedProject.endDate ? formatDate(selectedProject.endDate) : 'Não definida'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Orçamento</h4>
+                    <p className="text-sm">{selectedProject.budget ? formatCurrency(selectedProject.budget) : 'Não definido'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Valor Utilizado</h4>
+                    <p className="text-sm">{selectedProject.spentAmount ? formatCurrency(selectedProject.spentAmount) : 'R$ 0,00'}</p>
+                  </div>
+                </div>
+
+                {selectedProject.goals && (
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Objetivos e Metas</h4>
+                    <p className="text-sm whitespace-pre-wrap">{selectedProject.goals}</p>
+                  </div>
+                )}
+
+                {selectedProject.milestones && (
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Marcos e Etapas</h4>
+                    <p className="text-sm whitespace-pre-wrap">{selectedProject.milestones}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                  <div>
+                    <span>Criado em: {selectedProject.createdAt ? formatDate(selectedProject.createdAt) : 'Data não disponível'}</span>
+                  </div>
+                  <div>
+                    <span>Última atualização: {selectedProject.updatedAt ? formatDate(selectedProject.updatedAt) : 'Data não disponível'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                Fechar
+              </Button>
+              <Button onClick={() => {
+                setIsDetailDialogOpen(false);
+                openEditDialog(selectedProject);
+              }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Projeto
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Project Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Projeto</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do projeto.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Nome do Projeto</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Digite o nome do projeto" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} placeholder="Descreva os objetivos e escopo do projeto" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="planning">Planejamento</SelectItem>
+                            <SelectItem value="active">Em Andamento</SelectItem>
+                            <SelectItem value="paused">Pausado</SelectItem>
+                            <SelectItem value="completed">Concluído</SelectItem>
+                            <SelectItem value="cancelled">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Orçamento (R$)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" step="0.01" placeholder="0,00" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Início</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Término</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="goals"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Objetivos e Metas</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} placeholder="Descreva os objetivos específicos do projeto" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="milestones"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Marcos e Etapas</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} placeholder="Liste os principais marcos do projeto" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createProjectMutation.isPending}>
+                    {createProjectMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
