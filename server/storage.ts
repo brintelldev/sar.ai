@@ -54,6 +54,7 @@ export interface IStorage {
   getDonations(organizationId: string): Promise<Donation[]>;
   getDonation(id: string, organizationId: string): Promise<Donation | undefined>;
   createDonation(donation: InsertDonation): Promise<Donation>;
+  updateDonation(id: string, organizationId: string, updates: Partial<Donation>): Promise<Donation | undefined>;
   
   // Dashboard metrics
   getDashboardMetrics(organizationId: string): Promise<{
@@ -348,6 +349,17 @@ export class MemStorage implements IStorage {
     };
     this.donations.set(id, donation);
     return donation;
+  }
+
+  async updateDonation(id: string, organizationId: string, updates: Partial<Donation>): Promise<Donation | undefined> {
+    const donation = this.donations.get(id);
+    if (!donation || donation.organizationId !== organizationId) {
+      return undefined;
+    }
+    
+    const updatedDonation = { ...donation, ...updates };
+    this.donations.set(id, updatedDonation);
+    return updatedDonation;
   }
 
   // Dashboard metrics

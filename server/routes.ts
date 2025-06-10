@@ -372,6 +372,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/donations/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = {
+        ...req.body,
+        organizationId: req.session.organizationId!
+      };
+      
+      const donation = await storage.updateDonation(id, req.session.organizationId!, updateData);
+      if (!donation) {
+        return res.status(404).json({ message: "Donation not found" });
+      }
+      
+      res.json(donation);
+    } catch (error) {
+      console.error("Update donation error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Accounts Receivable routes
   app.get("/api/accounts-receivable", requireAuth, requireOrganization, async (req, res) => {
     try {

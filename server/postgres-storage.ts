@@ -238,6 +238,15 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async updateDonation(id: string, organizationId: string, updates: Partial<Donation>): Promise<Donation | undefined> {
+    const result = await db
+      .update(donations)
+      .set(updates)
+      .where(and(eq(donations.id, id), eq(donations.organizationId, organizationId)))
+      .returning();
+    return result[0];
+  }
+
   // Dashboard metrics
   async getDashboardMetrics(organizationId: string): Promise<{
     activeProjects: number;

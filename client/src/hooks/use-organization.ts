@@ -127,3 +127,16 @@ export function useCreateDonation() {
     },
   });
 }
+
+export function useUpdateDonation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => 
+      apiRequest('PATCH', `/api/donations/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/donations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+    },
+  });
+}
