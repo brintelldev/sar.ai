@@ -1,17 +1,61 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, DollarSign, Users, Target } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { useProjects } from '@/hooks/use-organization';
+import { useProjects, useCreateProject } from '@/hooks/use-organization';
+import { insertProjectSchema } from '@/../../shared/schema';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Projects() {
   const { data: projects, isLoading } = useProjects();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const createProjectMutation = useCreateProject();
+
+  const form = useForm({
+    resolver: zodResolver(insertProjectSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      status: 'planning',
+      startDate: '',
+      endDate: '',
+      budget: '',
+      spentAmount: '0',
+      goals: '',
+      milestones: '',
+    }
+  });
+
+  const onSubmit = async (data: any) => {
+    try {
+      await createProjectMutation.mutateAsync(data);
+      toast({
+        title: "Projeto criado com sucesso",
+        description: "O novo projeto foi adicionado ao sistema.",
+      });
+      setIsDialogOpen(false);
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Erro ao criar projeto",
+        description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -48,10 +92,10 @@ export default function Projects() {
     return Math.round((parseFloat(project.spentAmount) / parseFloat(project.budget)) * 100);
   };
 
-  const filteredProjects = projects?.filter((project: any) =>
+  const filteredProjects = Array.isArray(projects) ? projects.filter((project: any) =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   return (
     <MainLayout>
@@ -64,10 +108,169 @@ export default function Projects() {
               Gerencie todos os projetos da sua organização
             </p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Projeto
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Projeto
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Projeto</DialogTitle>
+                <DialogDescription>
+                  Adicione um novo projeto para gerenciar as atividades da organização.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Nome do Projeto</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Digite o nome do projeto" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Descrição</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="Descreva os objetivos e escopo do projeto" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="planning">Planejamento</SelectItem>
+                              <SelectItem value="active">Em Andamento</SelectItem>
+                              <SelectItem value="paused">Pausado</SelectItem>
+                              <SelectItem value="completed">Concluído</SelectItem>
+                              <SelectItem value="cancelled">Cancelado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="budget"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Orçamento (R$)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.01" placeholder="0,00" />
+                          </FormControl>
+                          <FormDescription>
+                            Valor total previsto para o projeto
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Início</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Término</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="goals"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Objetivos e Metas</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="Descreva os objetivos específicos do projeto" />
+                          </FormControl>
+                          <FormDescription>
+                            Defina claramente o que o projeto pretende alcançar
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="milestones"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Marcos e Etapas</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="Liste os principais marcos do projeto" />
+                          </FormControl>
+                          <FormDescription>
+                            Principais entregas e pontos de controle
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={createProjectMutation.isPending}>
+                      {createProjectMutation.isPending ? 'Criando...' : 'Criar Projeto'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Filters */}
@@ -111,7 +314,7 @@ export default function Projects() {
                 }
               </p>
               {!searchTerm && (
-                <Button>
+                <Button onClick={() => setIsDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Primeiro Projeto
                 </Button>
