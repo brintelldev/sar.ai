@@ -1,4 +1,4 @@
-import { eq, and, count, desc } from 'drizzle-orm';
+import { eq, and, count, desc, sql } from 'drizzle-orm';
 import { db } from './db';
 import { 
   organizations, 
@@ -261,8 +261,7 @@ export class PostgresStorage implements IStorage {
 
     const [totalDonatedResult] = await db
       .select({ 
-        total: count(),
-        sum: count() // Placeholder - would need SQL function for actual sum
+        total: sql<string>`COALESCE(SUM(CAST(${donations.amount} AS DECIMAL)), 0)`
       })
       .from(donations)
       .where(eq(donations.organizationId, organizationId));
@@ -279,7 +278,7 @@ export class PostgresStorage implements IStorage {
 
     return {
       activeProjects: activeProjectsResult?.count || 0,
-      totalDonated: 45231.80, // Placeholder - would calculate from donations
+      totalDonated: parseFloat(totalDonatedResult?.total || '0'),
       beneficiariesServed: beneficiariesResult?.count || 0,
       activeVolunteers: volunteersResult?.count || 0,
     };
