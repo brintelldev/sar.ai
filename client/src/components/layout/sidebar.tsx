@@ -21,10 +21,10 @@ const navigation = [
 ];
 
 const managementNav = [
-  { name: 'Projetos', href: '/projects', icon: FolderKanban, count: 12 },
-  { name: 'Doadores', href: '/donors', icon: Heart, count: 284 },
-  { name: 'Beneficiários', href: '/beneficiaries', icon: Users, count: 156 },
-  { name: 'Voluntários', href: '/volunteers', icon: UserCheck, count: 43 },
+  { name: 'Projetos', href: '/projects', icon: FolderKanban },
+  { name: 'Doadores', href: '/donors', icon: Heart },
+  { name: 'Beneficiários', href: '/beneficiaries', icon: Users },
+  { name: 'Voluntários', href: '/volunteers', icon: UserCheck },
 ];
 
 const financialNav = [
@@ -87,14 +87,6 @@ export function Sidebar() {
                   >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
-                    {item.count && (
-                      <Badge 
-                        variant="secondary" 
-                        className="ml-auto bg-muted text-muted-foreground text-xs"
-                      >
-                        {item.count}
-                      </Badge>
-                    )}
                   </Link>
                 );
               })}
