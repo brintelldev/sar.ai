@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatDate } from '@/lib/utils';
-import { useVolunteers, useCreateVolunteer } from '@/hooks/use-organization';
+import { useVolunteers, useCreateVolunteer, useUpdateVolunteer } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 
 const skillsOptions = [
@@ -38,9 +38,13 @@ const availabilityOptions = [
 export default function Volunteers() {
   const { data: volunteers, isLoading } = useVolunteers();
   const createVolunteer = useCreateVolunteer();
+  const updateVolunteer = useUpdateVolunteer();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
 
   const [newVolunteer, setNewVolunteer] = useState({
     userId: '', // In real app, this would be created during user registration
@@ -109,6 +113,50 @@ export default function Volunteers() {
       toast({
         title: 'Erro ao cadastrar voluntário',
         description: 'Não foi possível cadastrar o voluntário. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewVolunteer = (volunteer: any) => {
+    setSelectedVolunteer(volunteer);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditVolunteer = (volunteer: any) => {
+    setSelectedVolunteer(volunteer);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateVolunteer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVolunteer) return;
+
+    try {
+      await updateVolunteer.mutateAsync({
+        id: selectedVolunteer.id,
+        data: {
+          name: selectedVolunteer.name,
+          email: selectedVolunteer.email,
+          phone: selectedVolunteer.phone,
+          skills: selectedVolunteer.skills,
+          availability: selectedVolunteer.availability,
+          backgroundCheckStatus: selectedVolunteer.backgroundCheckStatus,
+          emergencyContact: selectedVolunteer.emergencyContact,
+          status: selectedVolunteer.status,
+        }
+      });
+
+      toast({
+        title: 'Voluntário atualizado',
+        description: 'As informações do voluntário foram atualizadas com sucesso.',
+      });
+      setIsEditModalOpen(false);
+      setSelectedVolunteer(null);
+    } catch (error) {
+      toast({
+        title: 'Erro ao atualizar voluntário',
+        description: 'Não foi possível atualizar o voluntário. Tente novamente.',
         variant: 'destructive',
       });
     }
@@ -545,10 +593,10 @@ export default function Volunteers() {
                   </div>
                   
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleViewVolunteer(volunteer)}>
                       Ver Perfil
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditVolunteer(volunteer)}>
                       Editar
                     </Button>
                   </div>

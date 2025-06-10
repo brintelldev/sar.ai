@@ -346,6 +346,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/volunteers/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = {
+        ...req.body,
+        organizationId: req.session.organizationId!
+      };
+      
+      const volunteer = await storage.updateVolunteer(id, req.session.organizationId!, updateData);
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      
+      res.json(volunteer);
+    } catch (error) {
+      console.error("Update volunteer error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Donations routes
   app.get("/api/donations", requireAuth, requireOrganization, async (req, res) => {
     try {
