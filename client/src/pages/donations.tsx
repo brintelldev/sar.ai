@@ -52,6 +52,7 @@ export default function Donations() {
       setIsDialogOpen(false);
       form.reset();
     } catch (error) {
+      console.error('Error submitting donation:', error);
       toast({
         title: "Erro ao registrar doação",
         description: "Ocorreu um erro ao salvar a doação. Tente novamente.",

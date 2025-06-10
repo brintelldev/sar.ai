@@ -255,7 +255,6 @@ export const insertVolunteerSchema = createInsertSchema(volunteers).omit({
 
 export const insertDonationSchema = createInsertSchema(donations).omit({
   id: true,
-  donationDate: true,
   createdAt: true
 });
 
