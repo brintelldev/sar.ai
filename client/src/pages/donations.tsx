@@ -44,7 +44,13 @@ export default function Donations() {
 
   const onSubmit = async (data: any) => {
     try {
-      await createDonationMutation.mutateAsync(data);
+      // Converter a string da data para objeto Date
+      const submissionData = {
+        ...data,
+        donationDate: new Date(data.donationDate)
+      };
+      
+      await createDonationMutation.mutateAsync(submissionData);
       toast({
         title: "Doação registrada com sucesso",
         description: "A nova doação foi adicionada ao sistema.",
