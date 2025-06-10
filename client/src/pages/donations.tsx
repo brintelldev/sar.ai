@@ -43,14 +43,16 @@ export default function Donations() {
   });
 
   const onSubmit = async (data: any) => {
+    console.log('=== DONATION FORM SUBMIT ===');
+    console.log('Form data:', data);
+    console.log('Form errors:', form.formState.errors);
+    console.log('Form is valid:', form.formState.isValid);
+    
     try {
-      // Converter a string da data para objeto Date
-      const submissionData = {
-        ...data,
-        donationDate: new Date(data.donationDate)
-      };
+      console.log('Calling createDonationMutation.mutateAsync...');
+      const result = await createDonationMutation.mutateAsync(data);
+      console.log('Mutation success, result:', result);
       
-      await createDonationMutation.mutateAsync(submissionData);
       toast({
         title: "Doação registrada com sucesso",
         description: "A nova doação foi adicionada ao sistema.",
@@ -58,10 +60,14 @@ export default function Donations() {
       setIsDialogOpen(false);
       form.reset();
     } catch (error) {
-      console.error('Error submitting donation:', error);
+      console.error('=== DONATION FORM ERROR ===');
+      console.error('Full error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response?.data);
+      
       toast({
         title: "Erro ao registrar doação",
-        description: "Ocorreu um erro ao salvar a doação. Tente novamente.",
+        description: `Erro: ${error?.message || 'Tente novamente'}`,
         variant: "destructive",
       });
     }
