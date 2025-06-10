@@ -43,8 +43,15 @@ export default function Donations() {
   });
 
   const onSubmit = async (data: any) => {
+    console.log('Form submission started with data:', data);
+    console.log('Form validation state:', form.formState);
+    console.log('Form errors:', form.formState.errors);
+    
     try {
-      await createDonationMutation.mutateAsync(data);
+      console.log('Calling mutation...');
+      const result = await createDonationMutation.mutateAsync(data);
+      console.log('Mutation successful:', result);
+      
       toast({
         title: "Doação registrada com sucesso",
         description: "A nova doação foi adicionada ao sistema.",
@@ -52,6 +59,7 @@ export default function Donations() {
       setIsDialogOpen(false);
       form.reset();
     } catch (error: any) {
+      console.error('Mutation failed:', error);
       toast({
         title: "Erro ao registrar doação",
         description: "Ocorreu um erro ao salvar a doação. Tente novamente.",
