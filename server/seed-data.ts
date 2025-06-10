@@ -136,7 +136,52 @@ export async function seedTestData() {
 
     console.log('✅ Doadores criados');
 
-    // 6. Criar beneficiários
+    // 6. Criar doações
+    await storage.createDonation({
+      organizationId: testOrg.id,
+      donorId: corporateDonor.id,
+      projectId: educationProject.id,
+      amount: '15000.00',
+      currency: 'BRL',
+      paymentMethod: 'bank_transfer',
+      paymentStatus: 'completed',
+      campaignSource: 'Website corporativo',
+      isRecurring: false,
+      donationDate: '2024-03-01',
+      notes: 'Doação direcionada para projeto de alfabetização digital'
+    });
+
+    await storage.createDonation({
+      organizationId: testOrg.id,
+      donorId: individualDonor.id,
+      amount: '500.00',
+      currency: 'BRL',
+      paymentMethod: 'pix',
+      paymentStatus: 'completed',
+      campaignSource: 'Instagram',
+      isRecurring: true,
+      recurringFrequency: 'monthly',
+      donationDate: '2024-02-15',
+      notes: 'Doação mensal via PIX'
+    });
+
+    await storage.createDonation({
+      organizationId: testOrg.id,
+      donorId: corporateDonor.id,
+      projectId: healthProject.id,
+      amount: '25000.00',
+      currency: 'BRL',
+      paymentMethod: 'bank_transfer',
+      paymentStatus: 'completed',
+      campaignSource: 'Evento corporativo',
+      isRecurring: false,
+      donationDate: '2024-01-20',
+      notes: 'Doação para projeto de saúde comunitária'
+    });
+
+    console.log('✅ Doações criadas');
+
+    // 7. Criar beneficiários
     await storage.createBeneficiary({
       organizationId: testOrg.id,
       registrationNumber: 'BEN-001',
