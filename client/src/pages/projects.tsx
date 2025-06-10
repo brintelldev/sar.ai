@@ -208,7 +208,19 @@ export default function Projects() {
               </DialogHeader>
               
               <Form {...createForm}>
-                <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  console.log('Create form submit triggered');
+                  const formData = createForm.getValues();
+                  console.log('Form data:', formData);
+                  console.log('Form validation state:', createForm.formState.isValid);
+                  console.log('Form errors:', createForm.formState.errors);
+                  if (createForm.formState.isValid) {
+                    onCreateSubmit(formData);
+                  } else {
+                    console.log('Form has validation errors, not submitting');
+                  }
+                }} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={createForm.control}
@@ -602,7 +614,19 @@ export default function Projects() {
             </DialogHeader>
             
             <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                console.log('Edit form submit triggered');
+                const formData = editForm.getValues();
+                console.log('Edit form data:', formData);
+                console.log('Edit form validation state:', editForm.formState.isValid);
+                console.log('Edit form errors:', editForm.formState.errors);
+                if (editForm.formState.isValid) {
+                  onEditSubmit(formData);
+                } else {
+                  console.log('Edit form has validation errors, not submitting');
+                }
+              }} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={editForm.control}
