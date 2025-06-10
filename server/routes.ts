@@ -380,6 +380,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizationId: req.session.organizationId!
       };
       
+      // Convert donationDate string to Date object if present
+      if (updateData.donationDate && typeof updateData.donationDate === 'string') {
+        updateData.donationDate = new Date(updateData.donationDate);
+      }
+      
       const donation = await storage.updateDonation(id, req.session.organizationId!, updateData);
       if (!donation) {
         return res.status(404).json({ message: "Donation not found" });
