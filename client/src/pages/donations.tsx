@@ -101,8 +101,8 @@ export default function Donations() {
       campaignSource: donation.campaignSource || '',
       donationDate: new Date(donation.donationDate).toISOString().split('T')[0],
       notes: donation.notes || '',
-      donorId: donation.donorId || '',
-      projectId: donation.projectId || '',
+      donorId: donation.donorId || 'anonymous',
+      projectId: donation.projectId || 'general',
     });
     setIsEditDialogOpen(true);
   };
@@ -659,7 +659,7 @@ export default function Donations() {
                       <SelectValue placeholder="Selecione um doador (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Doador anônimo</SelectItem>
+                      <SelectItem value="anonymous">Doador anônimo</SelectItem>
                       {donors?.map((donor: any) => (
                         <SelectItem key={donor.id} value={donor.id}>
                           {donor.name}
@@ -676,7 +676,7 @@ export default function Donations() {
                       <SelectValue placeholder="Selecione um projeto (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Doação geral</SelectItem>
+                      <SelectItem value="general">Doação geral</SelectItem>
                       {projects?.map((project: any) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
