@@ -33,7 +33,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/projects', data),
+    mutationFn: (data: any) => apiRequest('/api/projects', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
@@ -64,7 +64,7 @@ export function useCreateDonor() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/donors', data),
+    mutationFn: (data: any) => apiRequest('/api/donors', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/donors'] });
     },
@@ -82,7 +82,7 @@ export function useCreateBeneficiary() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/beneficiaries', data),
+    mutationFn: (data: any) => apiRequest('/api/beneficiaries', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/beneficiaries'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
@@ -101,7 +101,7 @@ export function useCreateVolunteer() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/volunteers', data),
+    mutationFn: (data: any) => apiRequest('/api/volunteers', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/volunteers'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
@@ -120,7 +120,7 @@ export function useCreateDonation() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/donations', data),
+    mutationFn: (data: any) => apiRequest('/api/donations', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/donations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
