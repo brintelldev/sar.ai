@@ -1,4 +1,4 @@
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, desc } from 'drizzle-orm';
 import { db } from './db';
 import { 
   organizations, 
@@ -9,6 +9,9 @@ import {
   beneficiaries, 
   volunteers, 
   donations,
+  accountsReceivable,
+  accountsPayable,
+  funders,
   type Organization,
   type User,
   type UserRole,
@@ -17,6 +20,9 @@ import {
   type Beneficiary,
   type Volunteer,
   type Donation,
+  type AccountsReceivable,
+  type AccountsPayable,
+  type Funder,
   type InsertOrganization,
   type InsertUser,
   type InsertUserRole,
