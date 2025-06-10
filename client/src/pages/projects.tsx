@@ -62,6 +62,7 @@ export default function Projects() {
 
   const onCreateSubmit = async (data: any) => {
     try {
+      console.log('Creating project with data:', data);
       await createProjectMutation.mutateAsync(data);
       toast({
         title: "Projeto criado com sucesso",
@@ -70,6 +71,7 @@ export default function Projects() {
       setIsDialogOpen(false);
       createForm.reset();
     } catch (error) {
+      console.error('Error creating project:', error);
       toast({
         title: "Erro ao criar projeto",
         description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
@@ -80,6 +82,7 @@ export default function Projects() {
 
   const onEditSubmit = async (data: any) => {
     try {
+      console.log('Updating project with data:', data, 'project id:', selectedProject?.id);
       await updateProjectMutation.mutateAsync({ id: selectedProject.id, data });
       toast({
         title: "Projeto atualizado com sucesso",
@@ -89,6 +92,7 @@ export default function Projects() {
       editForm.reset();
       setSelectedProject(null);
     } catch (error) {
+      console.error('Error updating project:', error);
       toast({
         title: "Erro ao atualizar projeto",
         description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
