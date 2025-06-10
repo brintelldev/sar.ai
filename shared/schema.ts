@@ -139,6 +139,7 @@ export const donations = pgTable("donations", {
   isRecurring: boolean("is_recurring").default(false),
   recurringFrequency: text("recurring_frequency"), // 'monthly', 'quarterly', 'annually'
   receiptIssued: boolean("receipt_issued").default(false),
+  notes: text("notes"), // additional notes about the donation
   donationDate: timestamp("donation_date", { withTimezone: true }).defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
 });

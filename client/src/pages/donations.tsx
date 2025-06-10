@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useDonations, useCreateDonation, useDonors, useProjects } from '@/hooks/use-organization';
-import { insertDonationSchema } from '@/../../shared/schema';
+import { insertDonationSchema } from '../../../shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, DollarSign, TrendingUp, Calendar, Heart, Search, Filter, Eye, Edit } from 'lucide-react';
 
@@ -43,31 +43,18 @@ export default function Donations() {
   });
 
   const onSubmit = async (data: any) => {
-    console.log('=== DONATION FORM SUBMIT ===');
-    console.log('Form data:', data);
-    console.log('Form errors:', form.formState.errors);
-    console.log('Form is valid:', form.formState.isValid);
-    
     try {
-      console.log('Calling createDonationMutation.mutateAsync...');
-      const result = await createDonationMutation.mutateAsync(data);
-      console.log('Mutation success, result:', result);
-      
+      await createDonationMutation.mutateAsync(data);
       toast({
         title: "Doação registrada com sucesso",
         description: "A nova doação foi adicionada ao sistema.",
       });
       setIsDialogOpen(false);
       form.reset();
-    } catch (error) {
-      console.error('=== DONATION FORM ERROR ===');
-      console.error('Full error:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response?.data);
-      
+    } catch (error: any) {
       toast({
         title: "Erro ao registrar doação",
-        description: `Erro: ${error?.message || 'Tente novamente'}`,
+        description: "Ocorreu um erro ao salvar a doação. Tente novamente.",
         variant: "destructive",
       });
     }
