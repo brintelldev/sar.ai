@@ -256,6 +256,8 @@ export const insertVolunteerSchema = createInsertSchema(volunteers).omit({
 export const insertDonationSchema = createInsertSchema(donations).omit({
   id: true,
   createdAt: true
+}).extend({
+  donationDate: z.string().optional().transform((val) => val ? new Date(val) : new Date())
 });
 
 // Types
