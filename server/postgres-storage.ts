@@ -269,4 +269,55 @@ export class PostgresStorage implements IStorage {
       activeVolunteers: volunteersResult?.count || 0,
     };
   }
+
+  // Accounts Receivable methods
+  async getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]> {
+    return await db
+      .select()
+      .from(accountsReceivable)
+      .where(eq(accountsReceivable.organizationId, organizationId))
+      .orderBy(desc(accountsReceivable.createdAt));
+  }
+
+  async createAccountReceivable(account: any): Promise<AccountsReceivable> {
+    const [result] = await db
+      .insert(accountsReceivable)
+      .values(account)
+      .returning();
+    return result;
+  }
+
+  // Accounts Payable methods
+  async getAccountsPayable(organizationId: string): Promise<AccountsPayable[]> {
+    return await db
+      .select()
+      .from(accountsPayable)
+      .where(eq(accountsPayable.organizationId, organizationId))
+      .orderBy(desc(accountsPayable.createdAt));
+  }
+
+  async createAccountPayable(account: any): Promise<AccountsPayable> {
+    const [result] = await db
+      .insert(accountsPayable)
+      .values(account)
+      .returning();
+    return result;
+  }
+
+  // Funders methods
+  async getFunders(organizationId: string): Promise<Funder[]> {
+    return await db
+      .select()
+      .from(funders)
+      .where(eq(funders.organizationId, organizationId))
+      .orderBy(desc(funders.createdAt));
+  }
+
+  async createFunder(funder: any): Promise<Funder> {
+    const [result] = await db
+      .insert(funders)
+      .values(funder)
+      .returning();
+    return result;
+  }
 }

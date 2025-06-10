@@ -372,6 +372,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accounts Receivable routes
+  app.get("/api/accounts-receivable", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const accounts = await storage.getAccountsReceivable(req.session.organizationId!);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Get accounts receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/accounts-receivable", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const accountData = {
+        ...req.body,
+        organizationId: req.session.organizationId!
+      };
+      
+      const account = await storage.createAccountReceivable(accountData);
+      res.status(201).json(account);
+    } catch (error) {
+      console.error("Create account receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Accounts Payable routes
+  app.get("/api/accounts-payable", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const accounts = await storage.getAccountsPayable(req.session.organizationId!);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Get accounts payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/accounts-payable", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const accountData = {
+        ...req.body,
+        organizationId: req.session.organizationId!
+      };
+      
+      const account = await storage.createAccountPayable(accountData);
+      res.status(201).json(account);
+    } catch (error) {
+      console.error("Create account payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Funders routes
+  app.get("/api/funders", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const funders = await storage.getFunders(req.session.organizationId!);
+      res.json(funders);
+    } catch (error) {
+      console.error("Get funders error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/funders", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const funderData = {
+        ...req.body,
+        organizationId: req.session.organizationId!
+      };
+      
+      const funder = await storage.createFunder(funderData);
+      res.status(201).json(funder);
+    } catch (error) {
+      console.error("Create funder error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

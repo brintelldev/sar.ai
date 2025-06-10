@@ -4,7 +4,8 @@ import {
   type User, type InsertUser, type Organization, type InsertOrganization,
   type UserRole, type InsertUserRole, type Project, type InsertProject,
   type Donor, type InsertDonor, type Beneficiary, type InsertBeneficiary,
-  type Volunteer, type InsertVolunteer, type Donation, type InsertDonation
+  type Volunteer, type InsertVolunteer, type Donation, type InsertDonation,
+  type AccountsReceivable, type AccountsPayable, type Funder
 } from "@shared/schema";
 
 export interface IStorage {
@@ -61,6 +62,18 @@ export interface IStorage {
     beneficiariesServed: number;
     activeVolunteers: number;
   }>;
+  
+  // Accounts Receivable
+  getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]>;
+  createAccountReceivable(account: any): Promise<AccountsReceivable>;
+  
+  // Accounts Payable
+  getAccountsPayable(organizationId: string): Promise<AccountsPayable[]>;
+  createAccountPayable(account: any): Promise<AccountsPayable>;
+  
+  // Funders
+  getFunders(organizationId: string): Promise<Funder[]>;
+  createFunder(funder: any): Promise<Funder>;
 }
 
 export class MemStorage implements IStorage {
