@@ -30,7 +30,7 @@ export default function Projects() {
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
 
-  const form = useForm({
+  const createForm = useForm({
     resolver: zodResolver(insertProjectSchema),
     defaultValues: {
       name: '',
@@ -45,30 +45,52 @@ export default function Projects() {
     }
   });
 
-  const onSubmit = async (data: any) => {
+  const editForm = useForm({
+    resolver: zodResolver(insertProjectSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      status: 'planning',
+      startDate: '',
+      endDate: '',
+      budget: '',
+      spentAmount: '0',
+      goals: '',
+      milestones: '',
+    }
+  });
+
+  const onCreateSubmit = async (data: any) => {
     try {
-      if (selectedProject && isEditDialogOpen) {
-        // Editando projeto existente
-        await updateProjectMutation.mutateAsync({ id: selectedProject.id, data });
-        toast({
-          title: "Projeto atualizado com sucesso",
-          description: "As alterações foram salvas no sistema.",
-        });
-        setIsEditDialogOpen(false);
-      } else {
-        // Criando novo projeto
-        await createProjectMutation.mutateAsync(data);
-        toast({
-          title: "Projeto criado com sucesso",
-          description: "O novo projeto foi adicionado ao sistema.",
-        });
-        setIsDialogOpen(false);
-      }
-      form.reset();
+      await createProjectMutation.mutateAsync(data);
+      toast({
+        title: "Projeto criado com sucesso",
+        description: "O novo projeto foi adicionado ao sistema.",
+      });
+      setIsDialogOpen(false);
+      createForm.reset();
+    } catch (error) {
+      toast({
+        title: "Erro ao criar projeto",
+        description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const onEditSubmit = async (data: any) => {
+    try {
+      await updateProjectMutation.mutateAsync({ id: selectedProject.id, data });
+      toast({
+        title: "Projeto atualizado com sucesso",
+        description: "As alterações foram salvas no sistema.",
+      });
+      setIsEditDialogOpen(false);
+      editForm.reset();
       setSelectedProject(null);
     } catch (error) {
       toast({
-        title: selectedProject && isEditDialogOpen ? "Erro ao atualizar projeto" : "Erro ao criar projeto",
+        title: "Erro ao atualizar projeto",
         description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
         variant: "destructive",
       });
@@ -117,7 +139,7 @@ export default function Projects() {
 
   const openEditDialog = (project: any) => {
     setSelectedProject(project);
-    form.reset({
+    editForm.reset({
       name: project.name,
       description: project.description || '',
       status: project.status,
@@ -137,6 +159,23 @@ export default function Projects() {
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) : [];
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="p-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-64 bg-muted rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -164,11 +203,11 @@ export default function Projects() {
                 </DialogDescription>
               </DialogHeader>
               
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <Form {...createForm}>
+                <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
@@ -182,7 +221,7 @@ export default function Projects() {
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
@@ -196,7 +235,7 @@ export default function Projects() {
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="status"
                       render={({ field }) => (
                         <FormItem>
@@ -221,7 +260,7 @@ export default function Projects() {
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="budget"
                       render={({ field }) => (
                         <FormItem>
@@ -229,16 +268,13 @@ export default function Projects() {
                           <FormControl>
                             <Input {...field} type="number" step="0.01" placeholder="0,00" />
                           </FormControl>
-                          <FormDescription>
-                            Valor total previsto para o projeto
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="startDate"
                       render={({ field }) => (
                         <FormItem>
@@ -252,7 +288,7 @@ export default function Projects() {
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="endDate"
                       render={({ field }) => (
                         <FormItem>
@@ -266,16 +302,16 @@ export default function Projects() {
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="goals"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
-                          <FormLabel>Objetivos e Metas</FormLabel>
+                          <FormLabel>Objetivos</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={3} placeholder="Descreva os objetivos específicos do projeto" />
+                            <Textarea {...field} rows={3} placeholder="Defina os objetivos principais do projeto" />
                           </FormControl>
                           <FormDescription>
-                            Defina claramente o que o projeto pretende alcançar
+                            Descreva os resultados esperados do projeto
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -283,7 +319,7 @@ export default function Projects() {
                     />
 
                     <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="milestones"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
@@ -314,11 +350,11 @@ export default function Projects() {
           </Dialog>
         </div>
 
-        {/* Filters */}
-        <div className="space-y-4 mb-6">
-          <div className="flex items-center space-x-4">
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
+          <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Buscar projetos..."
                 value={searchTerm}
@@ -326,77 +362,68 @@ export default function Projects() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="h-4 w-4 mr-2" />
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
               Filtros
-              {showFilters && <X className="h-4 w-4 ml-2" />}
             </Button>
           </div>
-          
+
           {showFilters && (
-            <Card className="p-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium">Status:</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="planning">Planejamento</SelectItem>
-                      <SelectItem value="active">Em Andamento</SelectItem>
-                      <SelectItem value="paused">Pausado</SelectItem>
-                      <SelectItem value="completed">Concluído</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => {
-                    setStatusFilter('all');
-                    setSearchTerm('');
-                  }}
-                >
-                  Limpar Filtros
-                </Button>
+            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Status:</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="planning">Planejamento</SelectItem>
+                    <SelectItem value="active">Em Andamento</SelectItem>
+                    <SelectItem value="paused">Pausado</SelectItem>
+                    <SelectItem value="completed">Concluído</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </Card>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setSearchTerm('');
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
+            </div>
           )}
         </div>
 
         {/* Projects Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-32 bg-muted rounded"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {searchTerm ? 'Nenhum projeto encontrado' : 'Nenhum projeto cadastrado'}
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                {searchTerm 
-                  ? 'Tente ajustar os termos de busca ou filtros.'
-                  : 'Comece criando seu primeiro projeto para gerenciar as atividades da organização.'
-                }
-              </p>
-              {!searchTerm && (
-                <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeiro Projeto
-                </Button>
-              )}
-            </CardContent>
+        {filteredProjects.length === 0 ? (
+          <Card className="p-12 text-center">
+            <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {searchTerm || statusFilter !== 'all' ? 'Nenhum projeto encontrado' : 'Nenhum projeto criado'}
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              {searchTerm || statusFilter !== 'all' 
+                ? 'Tente ajustar os filtros para encontrar o que procura.' 
+                : 'Comece criando seu primeiro projeto para gerenciar as atividades da organização.'
+              }
+            </p>
+            {!searchTerm && statusFilter === 'all' && (
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Primeiro Projeto
+              </Button>
+            )}
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -498,53 +525,50 @@ export default function Projects() {
 
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground mb-2">Descrição</h4>
-                  <p className="text-sm">{selectedProject.description || 'Sem descrição'}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Início</h4>
-                    <p className="text-sm">{selectedProject.startDate ? formatDate(selectedProject.startDate) : 'Não definida'}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Término</h4>
-                    <p className="text-sm">{selectedProject.endDate ? formatDate(selectedProject.endDate) : 'Não definida'}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Orçamento</h4>
-                    <p className="text-sm">{selectedProject.budget ? formatCurrency(selectedProject.budget) : 'Não definido'}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Valor Utilizado</h4>
-                    <p className="text-sm">{selectedProject.spentAmount ? formatCurrency(selectedProject.spentAmount) : 'R$ 0,00'}</p>
-                  </div>
+                  <p className="text-sm">{selectedProject.description}</p>
                 </div>
 
                 {selectedProject.goals && (
                   <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Objetivos e Metas</h4>
-                    <p className="text-sm whitespace-pre-wrap">{selectedProject.goals}</p>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Objetivos</h4>
+                    <p className="text-sm">{selectedProject.goals}</p>
                   </div>
                 )}
 
                 {selectedProject.milestones && (
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-2">Marcos e Etapas</h4>
-                    <p className="text-sm whitespace-pre-wrap">{selectedProject.milestones}</p>
+                    <p className="text-sm">{selectedProject.milestones}</p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                  <div>
-                    <span>Criado em: {selectedProject.createdAt ? formatDate(selectedProject.createdAt) : 'Data não disponível'}</span>
-                  </div>
-                  <div>
-                    <span>Última atualização: {selectedProject.updatedAt ? formatDate(selectedProject.updatedAt) : 'Data não disponível'}</span>
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedProject.startDate && (
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Início</h4>
+                      <p className="text-sm">{formatDate(selectedProject.startDate)}</p>
+                    </div>
+                  )}
+                  {selectedProject.endDate && (
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Término</h4>
+                      <p className="text-sm">{formatDate(selectedProject.endDate)}</p>
+                    </div>
+                  )}
                 </div>
+
+                {selectedProject.budget && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Orçamento</h4>
+                      <p className="text-sm font-medium">{formatCurrency(selectedProject.budget)}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Valor Gasto</h4>
+                      <p className="text-sm">{formatCurrency(selectedProject.spentAmount || 0)}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -573,11 +597,11 @@ export default function Projects() {
               </DialogDescription>
             </DialogHeader>
             
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
@@ -591,7 +615,7 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
@@ -605,7 +629,7 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="status"
                     render={({ field }) => (
                       <FormItem>
@@ -630,7 +654,7 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="budget"
                     render={({ field }) => (
                       <FormItem>
@@ -644,7 +668,7 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
@@ -658,7 +682,7 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
@@ -672,13 +696,13 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="goals"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
-                        <FormLabel>Objetivos e Metas</FormLabel>
+                        <FormLabel>Objetivos</FormLabel>
                         <FormControl>
-                          <Textarea {...field} rows={3} placeholder="Descreva os objetivos específicos do projeto" />
+                          <Textarea {...field} rows={3} placeholder="Defina os objetivos principais do projeto" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -686,7 +710,7 @@ export default function Projects() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={editForm.control}
                     name="milestones"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
@@ -704,8 +728,8 @@ export default function Projects() {
                   <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={createProjectMutation.isPending || updateProjectMutation.isPending}>
-                    {(createProjectMutation.isPending || updateProjectMutation.isPending) ? 'Salvando...' : 'Salvar Alterações'}
+                  <Button type="submit" disabled={updateProjectMutation.isPending}>
+                    {updateProjectMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
                 </DialogFooter>
               </form>
