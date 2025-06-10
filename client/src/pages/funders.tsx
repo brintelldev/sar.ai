@@ -20,14 +20,13 @@ import { Plus, Building2, DollarSign, Users, Calendar, Search, Filter, Eye, Edit
 const insertFunderSchema = z.object({
   name: z.string().min(1, 'Nome do financiador é obrigatório'),
   type: z.string().min(1, 'Tipo é obrigatório'),
-  contactEmail: z.string().email('Email válido é obrigatório'),
-  contactPhone: z.string().optional(),
-  focusAreas: z.string().optional(),
-  requirements: z.string().optional(),
-  totalFunding: z.string().min(1, 'Valor total de financiamento é obrigatório'),
-  status: z.string().default('active'),
-  partnershipStart: z.string().optional(),
-  contractPeriod: z.string().optional(),
+  email: z.string().email('Email válido é obrigatório'),
+  phone: z.string().optional(),
+  fundingFocus: z.string().optional(),
+  reportingRequirements: z.string().optional(),
+  totalFunded: z.string().min(1, 'Valor total de financiamento é obrigatório'),
+  relationshipStatus: z.string().default('active'),
+  contactPerson: z.string().optional(),
 });
 
 export default function Funders() {
@@ -70,14 +69,13 @@ export default function Funders() {
     defaultValues: {
       name: '',
       type: '',
-      contactEmail: '',
-      contactPhone: '',
-      focusAreas: '',
-      requirements: '',
-      totalFunding: '',
-      status: 'active',
-      partnershipStart: '',
-      contractPeriod: '',
+      email: '',
+      phone: '',
+      fundingFocus: '',
+      reportingRequirements: '',
+      totalFunded: '',
+      relationshipStatus: 'active',
+      contactPerson: '',
     }
   });
 
@@ -89,12 +87,12 @@ export default function Funders() {
     switch (status) {
       case 'active':
         return 'default';
-      case 'pending':
+      case 'prospect':
         return 'secondary';
-      case 'suspended':
-        return 'destructive';
-      case 'expired':
+      case 'inactive':
         return 'outline';
+      case 'lost':
+        return 'destructive';
       default:
         return 'secondary';
     }
@@ -103,9 +101,9 @@ export default function Funders() {
   const getStatusLabel = (status: string) => {
     const labels = {
       'active': 'Ativo',
-      'pending': 'Pendente',
-      'suspended': 'Suspenso',
-      'expired': 'Expirado'
+      'prospect': 'Prospect',
+      'inactive': 'Inativo',
+      'lost': 'Perdido'
     };
     return labels[status as keyof typeof labels] || status;
   };
@@ -123,19 +121,19 @@ export default function Funders() {
 
   const filteredFunders = Array.isArray(funders) ? funders.filter((funder: any) => {
     const matchesSearch = funder.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      funder.focusAreas?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || funder.status === statusFilter;
+      funder.fundingFocus?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || funder.relationshipStatus === statusFilter;
     const matchesType = typeFilter === 'all' || funder.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   }) : [];
 
   const totalFunding = filteredFunders.reduce((sum: number, funder: any) => 
-    sum + parseFloat(funder.totalFunding || 0), 0
+    sum + parseFloat(funder.totalFunded || 0), 0
   );
 
-  const activeFunders = filteredFunders.filter((f: any) => f.status === 'active');
-  const pendingFunders = filteredFunders.filter((f: any) => f.status === 'pending');
-  const expiredFunders = filteredFunders.filter((f: any) => f.status === 'expired');
+  const activeFunders = filteredFunders.filter((f: any) => f.relationshipStatus === 'active');
+  const prospectFunders = filteredFunders.filter((f: any) => f.relationshipStatus === 'prospect');
+  const inactiveFunders = filteredFunders.filter((f: any) => f.relationshipStatus === 'inactive');
 
   if (isLoading) {
     return (
@@ -223,7 +221,7 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="contactEmail"
+                      name="email"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email de Contato</FormLabel>
@@ -237,7 +235,7 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="contactPhone"
+                      name="phone"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Telefone</FormLabel>
@@ -251,7 +249,7 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="totalFunding"
+                      name="totalFunded"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Valor Total de Financiamento (R$)</FormLabel>
@@ -265,7 +263,7 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="status"
+                      name="relationshipStatus"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
@@ -277,9 +275,9 @@ export default function Funders() {
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="active">Ativo</SelectItem>
-                              <SelectItem value="pending">Pendente</SelectItem>
-                              <SelectItem value="suspended">Suspenso</SelectItem>
-                              <SelectItem value="expired">Expirado</SelectItem>
+                              <SelectItem value="prospect">Prospect</SelectItem>
+                              <SelectItem value="inactive">Inativo</SelectItem>
+                              <SelectItem value="lost">Perdido</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -289,12 +287,12 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="partnershipStart"
+                      name="contactPerson"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Início da Parceria</FormLabel>
+                        <FormItem className="col-span-2">
+                          <FormLabel>Pessoa de Contato</FormLabel>
                           <FormControl>
-                            <Input {...field} type="date" />
+                            <Input {...field} placeholder="Nome da pessoa responsável" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -303,21 +301,7 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="contractPeriod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Período do Contrato</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Ex: 12 meses, 2 anos" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="focusAreas"
+                      name="fundingFocus"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
                           <FormLabel>Áreas de Foco</FormLabel>
@@ -331,12 +315,12 @@ export default function Funders() {
 
                     <FormField
                       control={form.control}
-                      name="requirements"
+                      name="reportingRequirements"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
-                          <FormLabel>Requisitos e Critérios</FormLabel>
+                          <FormLabel>Requisitos de Relatórios</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="Requisitos específicos para recebimento de financiamento" />
+                            <Textarea {...field} placeholder="Requisitos específicos para relatórios e prestação de contas" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
