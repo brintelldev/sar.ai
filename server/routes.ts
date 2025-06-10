@@ -307,10 +307,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/beneficiaries", requireAuth, requireOrganization, async (req, res) => {
     try {
-      const beneficiaryData = insertBeneficiarySchema.parse({
-        ...req.body,
+      const validatedData = insertBeneficiarySchema.parse(req.body);
+      const beneficiaryData = {
+        ...validatedData,
         organizationId: req.session.organizationId!
-      });
+      };
       
       const beneficiary = await storage.createBeneficiary(beneficiaryData);
       res.status(201).json(beneficiary);

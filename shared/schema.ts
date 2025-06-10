@@ -246,6 +246,7 @@ export const insertDonorSchema = createInsertSchema(donors).omit({
 
 export const insertBeneficiarySchema = createInsertSchema(beneficiaries).omit({
   id: true,
+  organizationId: true,
   createdAt: true,
   updatedAt: true
 });
