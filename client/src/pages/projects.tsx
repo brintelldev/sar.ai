@@ -47,16 +47,28 @@ export default function Projects() {
 
   const onSubmit = async (data: any) => {
     try {
-      await createProjectMutation.mutateAsync(data);
-      toast({
-        title: "Projeto criado com sucesso",
-        description: "O novo projeto foi adicionado ao sistema.",
-      });
-      setIsDialogOpen(false);
+      if (selectedProject && isEditDialogOpen) {
+        // Editando projeto existente
+        await updateProjectMutation.mutateAsync({ id: selectedProject.id, data });
+        toast({
+          title: "Projeto atualizado com sucesso",
+          description: "As alterações foram salvas no sistema.",
+        });
+        setIsEditDialogOpen(false);
+      } else {
+        // Criando novo projeto
+        await createProjectMutation.mutateAsync(data);
+        toast({
+          title: "Projeto criado com sucesso",
+          description: "O novo projeto foi adicionado ao sistema.",
+        });
+        setIsDialogOpen(false);
+      }
       form.reset();
+      setSelectedProject(null);
     } catch (error) {
       toast({
-        title: "Erro ao criar projeto",
+        title: selectedProject && isEditDialogOpen ? "Erro ao atualizar projeto" : "Erro ao criar projeto",
         description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
         variant: "destructive",
       });
@@ -692,8 +704,8 @@ export default function Projects() {
                   <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={createProjectMutation.isPending}>
-                    {createProjectMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  <Button type="submit" disabled={createProjectMutation.isPending || updateProjectMutation.isPending}>
+                    {(createProjectMutation.isPending || updateProjectMutation.isPending) ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
                 </DialogFooter>
               </form>

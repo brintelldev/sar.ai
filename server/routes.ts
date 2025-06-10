@@ -254,6 +254,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/projects/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const project = await storage.updateProject(req.params.id, req.session.organizationId!, req.body);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      res.json(project);
+    } catch (error) {
+      console.error("Update project error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Donors routes
   app.get("/api/donors", requireAuth, requireOrganization, async (req, res) => {
     try {
