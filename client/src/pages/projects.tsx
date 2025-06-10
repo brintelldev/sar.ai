@@ -62,8 +62,10 @@ export default function Projects() {
 
   const onCreateSubmit = async (data: any) => {
     try {
-      console.log('Creating project with data:', data);
-      await createProjectMutation.mutateAsync(data);
+      // Remove organizationId from data since it's added automatically by the backend
+      const { organizationId, ...projectData } = data;
+      console.log('Creating project with data:', projectData);
+      await createProjectMutation.mutateAsync(projectData);
       toast({
         title: "Projeto criado com sucesso",
         description: "O novo projeto foi adicionado ao sistema.",
