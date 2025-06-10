@@ -37,10 +37,7 @@ export default function AccountsPayable() {
   });
 
   const createAccountMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/accounts-payable', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: any) => apiRequest('/api/accounts-payable', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/accounts-payable'] });
       toast({

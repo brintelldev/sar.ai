@@ -42,10 +42,7 @@ export default function Funders() {
   });
 
   const createFunderMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/funders', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: any) => apiRequest('/api/funders', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/funders'] });
       toast({
@@ -372,26 +369,26 @@ export default function Funders() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+              <CardTitle className="text-sm font-medium">Prospects</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pendingFunders.length}</div>
+              <div className="text-2xl font-bold">{prospectFunders.length}</div>
               <p className="text-xs text-muted-foreground">
-                Aguardando aprovação
+                Potenciais parceiros
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expirados</CardTitle>
+              <CardTitle className="text-sm font-medium">Inativos</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{expiredFunders.length}</div>
+              <div className="text-2xl font-bold">{inactiveFunders.length}</div>
               <p className="text-xs text-muted-foreground">
-                Contratos vencidos
+                Parcerias encerradas
               </p>
             </CardContent>
           </Card>
@@ -429,9 +426,9 @@ export default function Funders() {
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="active">Ativos</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="suspended">Suspensos</SelectItem>
-                <SelectItem value="expired">Expirados</SelectItem>
+                <SelectItem value="prospect">Prospects</SelectItem>
+                <SelectItem value="inactive">Inativos</SelectItem>
+                <SelectItem value="lost">Perdidos</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" size="icon">
@@ -478,9 +475,9 @@ export default function Funders() {
                       <tr key={funder.id} className="border-b hover:bg-muted/50">
                         <td className="py-3 px-4">
                           <div className="font-medium">{funder.name}</div>
-                          {funder.partnershipStart && (
+                          {funder.contactPerson && (
                             <div className="text-xs text-muted-foreground">
-                              Desde {formatDate(funder.partnershipStart)}
+                              Contato: {funder.contactPerson}
                             </div>
                           )}
                         </td>
@@ -490,22 +487,22 @@ export default function Funders() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium">{formatCurrency(parseFloat(funder.totalFunding))}</div>
+                          <div className="font-medium">{formatCurrency(parseFloat(funder.totalFunded || 0))}</div>
                         </td>
                         <td className="py-3 px-4">
-                          <Badge variant={getStatusVariant(funder.status)}>
-                            {getStatusLabel(funder.status)}
+                          <Badge variant={getStatusVariant(funder.relationshipStatus)}>
+                            {getStatusLabel(funder.relationshipStatus)}
                           </Badge>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="text-sm">{funder.contactEmail}</div>
-                          {funder.contactPhone && (
-                            <div className="text-xs text-muted-foreground">{funder.contactPhone}</div>
+                          <div className="text-sm">{funder.email}</div>
+                          {funder.phone && (
+                            <div className="text-xs text-muted-foreground">{funder.phone}</div>
                           )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="max-w-32 truncate text-sm">
-                            {funder.focusAreas || '-'}
+                            {funder.fundingFocus || '-'}
                           </div>
                         </td>
                         <td className="py-3 px-4">

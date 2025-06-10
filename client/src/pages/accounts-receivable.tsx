@@ -37,10 +37,7 @@ export default function AccountsReceivable() {
   });
 
   const createAccountMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/accounts-receivable', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: any) => apiRequest('/api/accounts-receivable', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/accounts-receivable'] });
       toast({
