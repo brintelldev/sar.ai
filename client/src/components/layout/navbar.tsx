@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Bell, ChevronDown, Heart } from 'lucide-react';
+import { Bell, ChevronDown, Heart, User, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -17,13 +18,19 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { getInitials } from '@/lib/utils';
+import { useLocation } from 'wouter';
 import logoSarai from '@/assets/logo_sarai.png';
 
 export function Navbar() {
   const { user, organizations, currentOrganization, logout, switchOrganization } = useAuth();
+  const [location, setLocation] = useLocation();
 
   const handleOrganizationChange = (organizationId: string) => {
     switchOrganization(organizationId);
+  };
+
+  const handleMenuItemClick = (path: string) => {
+    setLocation(path);
   };
 
   return (
@@ -89,10 +96,21 @@ export function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configurações</DropdownMenuItem>
-              <DropdownMenuItem>Suporte</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleMenuItemClick('/profile')}>
+                <User className="h-4 w-4 mr-2" />
+                Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleMenuItemClick('/settings')}>
+                <Settings className="h-4 w-4 mr-2" />
+                Configurações
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleMenuItemClick('/support')}>
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Suporte
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => logout()}>
+                <LogOut className="h-4 w-4 mr-2" />
                 Sair
               </DropdownMenuItem>
             </DropdownMenuContent>

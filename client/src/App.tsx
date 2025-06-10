@@ -18,6 +18,9 @@ import FinancialReports from "@/pages/financial-reports";
 import Funders from "@/pages/funders";
 import Financials from "@/pages/financials";
 import OrganizationSetup from "@/pages/organization-setup";
+import Profile from "@/pages/profile";
+import Settings from "@/pages/settings";
+import Support from "@/pages/support";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -105,6 +108,21 @@ function Router() {
       <Route path="/funders">
         <ProtectedRoute>
           <Funders />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/support">
+        <ProtectedRoute>
+          <Support />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />
