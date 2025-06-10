@@ -63,8 +63,10 @@ export function useSimpleAuth() {
       queryClient.setQueryData(['/api/auth/me'], null);
       queryClient.clear();
       setHasChecked(false);
-      // Force redirect to login page
-      window.location.href = '/login';
+      // Force redirect to login page with reload
+      setTimeout(() => {
+        window.location.replace('/login');
+      }, 100);
     },
   });
 

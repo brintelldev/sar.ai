@@ -33,6 +33,21 @@ export function Navbar() {
     setLocation(path);
   };
 
+  const handleLogout = async () => {
+    try {
+      // Call logout function
+      logout();
+      // Force immediate redirect as backup
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 500);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <nav className="bg-white dark:bg-card border-b border-border px-6 py-3">
       <div className="flex items-center justify-between">
@@ -109,7 +124,7 @@ export function Navbar() {
                 Suporte
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => logout()}>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
               </DropdownMenuItem>
