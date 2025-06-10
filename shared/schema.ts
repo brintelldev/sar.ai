@@ -110,8 +110,11 @@ export const beneficiaries = pgTable("beneficiaries", {
 export const volunteers = pgTable("volunteers", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: uuid("user_id").references(() => users.id),
   volunteerNumber: text("volunteer_number").unique().notNull(),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
   skills: jsonb("skills"), // skills and competencies
   availability: jsonb("availability"), // schedule availability
   backgroundCheckStatus: text("background_check_status"),

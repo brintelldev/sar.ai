@@ -73,7 +73,10 @@ export default function Volunteers() {
       await createVolunteer.mutateAsync({
         ...newVolunteer,
         volunteerNumber,
-        userId: crypto.randomUUID(), // In real app, this would be the actual user ID
+        name: newVolunteer.personalInfo.name,
+        email: newVolunteer.personalInfo.email,
+        phone: newVolunteer.personalInfo.phone,
+        userId: null, // No user account associated
       });
       
       toast({
