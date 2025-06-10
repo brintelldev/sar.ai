@@ -249,13 +249,13 @@ export default function Donations() {
                   <Label htmlFor="donorId">Doador (Opcional)</Label>
                   <Select 
                     value={formData.donorId} 
-                    onValueChange={(value) => setFormData({ ...formData, donorId: value })}
+                    onValueChange={(value) => setFormData({ ...formData, donorId: value === 'none' ? '' : value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um doador" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum doador específico</SelectItem>
+                      <SelectItem value="none">Nenhum doador específico</SelectItem>
                       {donors?.map((donor: any) => (
                         <SelectItem key={donor.id} value={donor.id}>
                           {donor.name}
@@ -269,13 +269,13 @@ export default function Donations() {
                   <Label htmlFor="projectId">Projeto (Opcional)</Label>
                   <Select 
                     value={formData.projectId} 
-                    onValueChange={(value) => setFormData({ ...formData, projectId: value })}
+                    onValueChange={(value) => setFormData({ ...formData, projectId: value === 'none' ? '' : value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um projeto" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Doação geral</SelectItem>
+                      <SelectItem value="none">Doação geral</SelectItem>
                       {projects?.map((project: any) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
