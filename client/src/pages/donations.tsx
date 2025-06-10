@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { useDonations, useCreateDonation, useDonors, useProjects } from '@/hooks/use-organization';
+import { useDonations, useCreateDonation, useUpdateDonation, useDonors, useProjects } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, DollarSign, TrendingUp, Calendar, Heart, Search, Filter, Eye, Edit } from 'lucide-react';
 
@@ -26,6 +26,7 @@ export default function Donations() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const createDonationMutation = useCreateDonation();
+  const updateDonationMutation = useUpdateDonation();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -584,13 +585,36 @@ export default function Donations() {
                 Modifique as informações da doação
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
-              // TODO: Implement update functionality
-              toast({
-                title: "Funcionalidade em desenvolvimento",
-                description: "A edição de doações será implementada em breve.",
-              });
+              try {
+                await updateDonationMutation.mutateAsync({
+                  id: selectedDonation.id,
+                  data: {
+                    amount: formData.amount,
+                    paymentMethod: formData.paymentMethod,
+                    paymentStatus: formData.paymentStatus,
+                    campaignSource: formData.campaignSource || null,
+                    donationDate: new Date(formData.donationDate),
+                    notes: formData.notes || null,
+                    donorId: formData.donorId === 'anonymous' ? null : formData.donorId,
+                    projectId: formData.projectId === 'general' ? null : formData.projectId,
+                  }
+                });
+                
+                toast({
+                  title: "Doação atualizada com sucesso!",
+                  description: "As informações da doação foram atualizadas.",
+                });
+                
+                setIsEditDialogOpen(false);
+              } catch (error: any) {
+                toast({
+                  title: "Erro ao atualizar doação",
+                  description: "Ocorreu um erro ao atualizar a doação. Tente novamente.",
+                  variant: "destructive",
+                });
+              }
             }}>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -715,8 +739,8 @@ export default function Donations() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  Salvar Alterações
+                <Button type="submit" disabled={updateDonationMutation.isPending}>
+                  {updateDonationMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </DialogFooter>
             </form>
