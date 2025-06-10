@@ -605,6 +605,182 @@ export default function Volunteers() {
             ))}
           </div>
         )}
+
+        {/* View Volunteer Modal */}
+        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Perfil do Voluntário</DialogTitle>
+            </DialogHeader>
+            {selectedVolunteer && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Nome</Label>
+                    <p className="text-sm text-muted-foreground">{selectedVolunteer.name || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Número</Label>
+                    <p className="text-sm text-muted-foreground">{selectedVolunteer.volunteerNumber}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Email</Label>
+                    <p className="text-sm text-muted-foreground">{selectedVolunteer.email || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Telefone</Label>
+                    <p className="text-sm text-muted-foreground">{selectedVolunteer.phone || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Status</Label>
+                    <Badge className={`status-badge ${getStatusVariant(selectedVolunteer.status)}`}>
+                      {getStatusLabel(selectedVolunteer.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Verificação</Label>
+                    <Badge className={`status-badge ${getBackgroundCheckVariant(selectedVolunteer.backgroundCheckStatus)}`}>
+                      {getBackgroundCheckLabel(selectedVolunteer.backgroundCheckStatus)}
+                    </Badge>
+                  </div>
+                </div>
+
+                {selectedVolunteer.skills && selectedVolunteer.skills.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium">Habilidades</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedVolunteer.skills.map((skill: string) => (
+                        <Badge key={skill} variant="secondary">{skill}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedVolunteer.availability && selectedVolunteer.availability.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium">Disponibilidade</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedVolunteer.availability.map((slot: string) => (
+                        <Badge key={slot} variant="outline">{availabilityOptions.find(opt => opt.id === slot)?.label || slot}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedVolunteer.emergencyContact && (
+                  <div>
+                    <Label className="text-sm font-medium">Contato de Emergência</Label>
+                    <div className="space-y-1 mt-2">
+                      <p className="text-sm text-muted-foreground">Nome: {selectedVolunteer.emergencyContact.name}</p>
+                      <p className="text-sm text-muted-foreground">Relacionamento: {selectedVolunteer.emergencyContact.relationship}</p>
+                      <p className="text-sm text-muted-foreground">Telefone: {selectedVolunteer.emergencyContact.phone}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <Button onClick={() => setIsViewModalOpen(false)}>Fechar</Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Volunteer Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Voluntário</DialogTitle>
+            </DialogHeader>
+            {selectedVolunteer && (
+              <form onSubmit={handleUpdateVolunteer} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-name">Nome *</Label>
+                    <Input
+                      id="edit-name"
+                      value={selectedVolunteer.name || ''}
+                      onChange={(e) => setSelectedVolunteer({...selectedVolunteer, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-email">Email</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={selectedVolunteer.email || ''}
+                      onChange={(e) => setSelectedVolunteer({...selectedVolunteer, email: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-phone">Telefone</Label>
+                    <Input
+                      id="edit-phone"
+                      value={selectedVolunteer.phone || ''}
+                      onChange={(e) => setSelectedVolunteer({...selectedVolunteer, phone: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select 
+                      value={selectedVolunteer.status || 'pending'} 
+                      onValueChange={(value) => setSelectedVolunteer({...selectedVolunteer, status: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                        <SelectItem value="suspended">Suspenso</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Habilidades</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                    {skillsOptions.map((skill) => (
+                      <div key={skill} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`edit-skill-${skill}`}
+                          checked={selectedVolunteer.skills?.includes(skill) || false}
+                          onCheckedChange={(checked) => {
+                            const currentSkills = selectedVolunteer.skills || [];
+                            if (checked) {
+                              setSelectedVolunteer({
+                                ...selectedVolunteer,
+                                skills: [...currentSkills, skill]
+                              });
+                            } else {
+                              setSelectedVolunteer({
+                                ...selectedVolunteer,
+                                skills: currentSkills.filter((s: string) => s !== skill)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`edit-skill-${skill}`} className="text-sm">{skill}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={updateVolunteer.isPending}>
+                    {updateVolunteer.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
