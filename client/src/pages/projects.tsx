@@ -208,14 +208,15 @@ export default function Projects() {
               </DialogHeader>
               
               <Form {...createForm}>
-                <form onSubmit={(e) => {
+                <form onSubmit={async (e) => {
                   e.preventDefault();
                   console.log('Create form submit triggered');
-                  const formData = createForm.getValues();
-                  console.log('Form data:', formData);
-                  console.log('Form validation state:', createForm.formState.isValid);
+                  const isValid = await createForm.trigger();
+                  console.log('Form validation result:', isValid);
                   console.log('Form errors:', createForm.formState.errors);
-                  if (createForm.formState.isValid) {
+                  if (isValid) {
+                    const formData = createForm.getValues();
+                    console.log('Form data:', formData);
                     onCreateSubmit(formData);
                   } else {
                     console.log('Form has validation errors, not submitting');
@@ -614,14 +615,15 @@ export default function Projects() {
             </DialogHeader>
             
             <Form {...editForm}>
-              <form onSubmit={(e) => {
+              <form onSubmit={async (e) => {
                 e.preventDefault();
                 console.log('Edit form submit triggered');
-                const formData = editForm.getValues();
-                console.log('Edit form data:', formData);
-                console.log('Edit form validation state:', editForm.formState.isValid);
+                const isValid = await editForm.trigger();
+                console.log('Edit form validation result:', isValid);
                 console.log('Edit form errors:', editForm.formState.errors);
-                if (editForm.formState.isValid) {
+                if (isValid) {
+                  const formData = editForm.getValues();
+                  console.log('Edit form data:', formData);
                   onEditSubmit(formData);
                 } else {
                   console.log('Edit form has validation errors, not submitting');
