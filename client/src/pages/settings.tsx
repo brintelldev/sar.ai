@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,11 +21,22 @@ export default function Settings() {
   const queryClient = useQueryClient();
   
   const [accountForm, setAccountForm] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     phone: '',
     position: 'Administrador'
   });
+
+  // Update form when user data loads
+  React.useEffect(() => {
+    if (user) {
+      setAccountForm(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user]);
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -42,15 +53,20 @@ export default function Settings() {
   });
 
   const updateAccountMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/user/update', 'PATCH', data),
-    onSuccess: () => {
+    mutationFn: async (data: any) => {
+      console.log('Enviando dados:', data);
+      return apiRequest('/api/user/update', 'PATCH', data);
+    },
+    onSuccess: (response) => {
+      console.log('Sucesso:', response);
       toast({
         title: "Sucesso",
         description: "Informações da conta atualizadas com sucesso",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Erro ao salvar:', error);
       toast({
         title: "Erro",
         description: "Erro ao atualizar informações da conta",
