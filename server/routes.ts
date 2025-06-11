@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       req.session.organizationId = organization.id;
 
-      res.json({ user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt }, organization });
+      res.json({ user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt }, organization });
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -135,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ 
-        user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt },
+        user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
         organizations,
         currentOrganization: organizations[0] || null
       });
@@ -173,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ 
-        user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt },
+        user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
         organizations,
         currentOrganization
       });
@@ -192,7 +192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData: any = {};
       if (name) updateData.name = name;
       if (email) updateData.email = email;
-      // Note: phone and position would need to be added to user schema
+      if (phone !== undefined) updateData.phone = phone;
+      if (position) updateData.position = position;
       
       const updatedUser = await storage.updateUser(userId, updateData);
       if (!updatedUser) {
@@ -204,6 +205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: updatedUser.id, 
           email: updatedUser.email, 
           name: updatedUser.name,
+          phone: updatedUser.phone,
+          position: updatedUser.position,
           createdAt: updatedUser.createdAt 
         } 
       });
