@@ -10,10 +10,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Bell, Shield, Database, Users, Mail, Globe, Palette } from 'lucide-react';
 
 export default function Settings() {
   const { user, currentOrganization } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [accountForm, setAccountForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    position: 'Administrador'
+  });
+
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,
@@ -27,6 +40,49 @@ export default function Settings() {
     theme: 'light',
     currency: 'BRL',
   });
+
+  const updateAccountMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/user/update', 'PATCH', data),
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Informações da conta atualizadas com sucesso",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar informações da conta",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/user/preferences', 'PATCH', data),
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Preferências atualizadas com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar preferências",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSaveAccount = () => {
+    updateAccountMutation.mutate(accountForm);
+  };
+
+  const handleSavePreferences = () => {
+    updatePreferencesMutation.mutate({ notifications, preferences });
+  };
 
   return (
     <MainLayout>
@@ -63,26 +119,48 @@ export default function Settings() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="account-name">Nome Completo</Label>
-                    <Input id="account-name" defaultValue={user?.name || ''} />
+                    <Input 
+                      id="account-name" 
+                      value={accountForm.name}
+                      onChange={(e) => setAccountForm({...accountForm, name: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="account-email">Email</Label>
-                    <Input id="account-email" defaultValue={user?.email || ''} />
+                    <Input 
+                      id="account-email" 
+                      value={accountForm.email}
+                      onChange={(e) => setAccountForm({...accountForm, email: e.target.value})}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="account-phone">Telefone</Label>
-                    <Input id="account-phone" placeholder="(11) 99999-9999" />
+                    <Input 
+                      id="account-phone" 
+                      placeholder="(11) 99999-9999"
+                      value={accountForm.phone}
+                      onChange={(e) => setAccountForm({...accountForm, phone: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="account-position">Cargo</Label>
-                    <Input id="account-position" placeholder="Administrador" />
+                    <Input 
+                      id="account-position" 
+                      value={accountForm.position}
+                      onChange={(e) => setAccountForm({...accountForm, position: e.target.value})}
+                    />
                   </div>
                 </div>
                 <Separator />
                 <div className="flex justify-end">
-                  <Button>Salvar Alterações</Button>
+                  <Button 
+                    onClick={handleSaveAccount}
+                    disabled={updateAccountMutation.isPending}
+                  >
+                    {updateAccountMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -350,7 +428,12 @@ export default function Settings() {
                 </div>
                 <Separator />
                 <div className="flex justify-end">
-                  <Button>Salvar Preferências</Button>
+                  <Button 
+                    onClick={handleSavePreferences}
+                    disabled={updatePreferencesMutation.isPending}
+                  >
+                    {updatePreferencesMutation.isPending ? 'Salvando...' : 'Salvar Preferências'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
