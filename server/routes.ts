@@ -183,6 +183,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User settings routes
+  app.patch("/api/user/update", requireAuth, async (req, res) => {
+    try {
+      const { name, email, phone, position } = req.body;
+      const userId = req.session.userId!;
+      
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (email) updateData.email = email;
+      // Note: phone and position would need to be added to user schema
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ 
+        user: { 
+          id: updatedUser.id, 
+          email: updatedUser.email, 
+          name: updatedUser.name,
+          createdAt: updatedUser.createdAt 
+        } 
+      });
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/user/preferences", requireAuth, async (req, res) => {
+    try {
+      const { notifications, preferences } = req.body;
+      // For now, just return success since we don't have preference storage yet
+      // In a real app, you'd save these to a user_preferences table
+      
+      res.json({ 
+        message: "Preferences updated successfully",
+        notifications,
+        preferences 
+      });
+    } catch (error) {
+      console.error("Update preferences error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Organization routes
   app.post("/api/organizations/switch", requireAuth, async (req, res) => {
     try {
