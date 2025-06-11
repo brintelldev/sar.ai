@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       req.session.organizationId = organization.id;
 
-      res.json({ user: { id: user.id, email: user.email, name: user.name }, organization });
+      res.json({ user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt }, organization });
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -135,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ 
-        user: { id: user.id, email: user.email, name: user.name },
+        user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt },
         organizations,
         currentOrganization: organizations[0] || null
       });
@@ -173,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ 
-        user: { id: user.id, email: user.email, name: user.name },
+        user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt },
         organizations,
         currentOrganization
       });

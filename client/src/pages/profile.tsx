@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { getInitials } from '@/lib/utils';
 import { User, Mail, Phone, MapPin, Calendar, Shield } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function Profile() {
   const { user, currentOrganization } = useAuth();
@@ -57,7 +59,9 @@ export default function Profile() {
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Membro desde 2024</span>
+                <span>
+                  Membro desde {user?.createdAt ? format(new Date(user.createdAt), 'MMMM yyyy', { locale: ptBR }) : '2024'}
+                </span>
               </div>
             </CardContent>
           </Card>
