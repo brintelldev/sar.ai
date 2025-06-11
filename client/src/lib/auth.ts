@@ -13,6 +13,7 @@ export interface Organization {
   id: string;
   name: string;
   slug: string;
+  cnpj?: string;
   email: string;
   subscriptionPlan: string;
   subscriptionStatus: string;
