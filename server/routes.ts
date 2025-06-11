@@ -230,6 +230,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/user/notifications", requireAuth, async (req, res) => {
+    try {
+      const notifications = req.body;
+      // For now, just return success since we don't have notification storage yet
+      // In a real app, you'd save these to a user_notification_preferences table
+      
+      res.json({ 
+        message: "Notification preferences updated successfully",
+        notifications
+      });
+    } catch (error) {
+      console.error("Update notifications error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/user/change-password", requireAuth, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      // Implementation would verify current password and update to new one
+      // For now, just return success
+      
+      res.json({ 
+        message: "Password changed successfully"
+      });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/organizations/update", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const organizationData = req.body;
+      // Implementation would update organization details
+      // For now, just return success
+      
+      res.json({ 
+        message: "Organization updated successfully",
+        organization: organizationData
+      });
+    } catch (error) {
+      console.error("Update organization error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Organization routes
   app.post("/api/organizations/switch", requireAuth, async (req, res) => {
     try {

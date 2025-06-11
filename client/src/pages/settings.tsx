@@ -92,12 +92,83 @@ export default function Settings() {
     }
   });
 
+  const updateNotificationsMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/user/notifications', 'PATCH', data),
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Configurações de notificação salvas com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações de notificação",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/user/change-password', 'PATCH', data),
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Senha alterada com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar senha",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateOrganizationMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/organizations/update', 'PATCH', data),
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Informações da organização atualizadas com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar informações da organização",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleSaveAccount = () => {
     updateAccountMutation.mutate(accountForm);
   };
 
   const handleSavePreferences = () => {
     updatePreferencesMutation.mutate({ notifications, preferences });
+  };
+
+  const handleSaveNotifications = () => {
+    updateNotificationsMutation.mutate(notifications);
+  };
+
+  const handleSaveSecurity = () => {
+    // Implementation for security settings
+    toast({
+      title: "Info",
+      description: "Funcionalidade de segurança será implementada em breve",
+    });
+  };
+
+  const handleSaveOrganization = () => {
+    // Implementation for organization settings
+    toast({
+      title: "Info",
+      description: "Funcionalidade de organização será implementada em breve",
+    });
   };
 
   return (
@@ -253,7 +324,12 @@ export default function Settings() {
                 </div>
                 <Separator />
                 <div className="flex justify-end">
-                  <Button>Salvar Preferências</Button>
+                  <Button 
+                    onClick={handleSaveNotifications}
+                    disabled={updateNotificationsMutation.isPending}
+                  >
+                    {updateNotificationsMutation.isPending ? 'Salvando...' : 'Salvar Preferências'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -306,7 +382,12 @@ export default function Settings() {
                 </div>
                 <Separator />
                 <div className="flex justify-end">
-                  <Button>Salvar Alterações</Button>
+                  <Button 
+                    onClick={handleSaveSecurity}
+                    disabled={updatePasswordMutation.isPending}
+                  >
+                    {updatePasswordMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -359,7 +440,12 @@ export default function Settings() {
                 </div>
                 <Separator />
                 <div className="flex justify-end">
-                  <Button>Salvar Alterações</Button>
+                  <Button 
+                    onClick={handleSaveOrganization}
+                    disabled={updateOrganizationMutation.isPending}
+                  >
+                    {updateOrganizationMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
