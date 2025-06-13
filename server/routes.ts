@@ -189,11 +189,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { name, email, phone, position } = req.body;
       const userId = req.session.userId!;
       
+      console.log("Update request body:", req.body);
+      
       const updateData: any = {};
-      if (name) updateData.name = name;
-      if (email) updateData.email = email;
+      if (name !== undefined) updateData.name = name;
+      if (email !== undefined) updateData.email = email;
       if (phone !== undefined) updateData.phone = phone;
-      if (position) updateData.position = position;
+      if (position !== undefined) updateData.position = position;
+      
+      console.log("Update data:", updateData);
       
       const updatedUser = await storage.updateUser(userId, updateData);
       if (!updatedUser) {
