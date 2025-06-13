@@ -27,11 +27,11 @@ export function useAuth() {
     queryKey: ['/api/auth/me'],
     queryFn: getCurrentUser,
     retry: false,
-    staleTime: Infinity,
+    staleTime: 5000, // 5 seconds
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
-    enabled: false, // Completely disable auto-fetch
+    enabled: sessionChecked && authState !== null, // Enable when session is checked and user is logged in
   });
 
   const loginMutation = useMutation({
@@ -84,13 +84,16 @@ export function useAuth() {
     },
   });
 
+  // Use React Query data if available, otherwise use local state
+  const currentData = data || authState;
+
   return {
-    user: authState?.user || null,
-    organizations: authState?.organizations || [],
-    currentOrganization: authState?.currentOrganization || null,
-    isLoading: !sessionChecked,
-    isAuthenticated: !!authState?.user,
-    error: sessionChecked && !authState ? new Error('Not authenticated') : null,
+    user: currentData?.user || null,
+    organizations: currentData?.organizations || [],
+    currentOrganization: currentData?.currentOrganization || null,
+    isLoading: !sessionChecked || isLoading,
+    isAuthenticated: !!currentData?.user,
+    error: sessionChecked && !currentData ? new Error('Not authenticated') : null,
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
