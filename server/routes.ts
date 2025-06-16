@@ -714,8 +714,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to deactivate/activate course
+  app.patch("/api/courses/:id/status", requireAuth, async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!['active', 'inactive', 'draft', 'published'].includes(status)) {
+        return res.status(400).json({ message: "Status inválido" });
+      }
+
+      const course = await storage.updateCourse(req.params.id, req.session.organizationId!, { status });
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      res.json(course);
+    } catch (error) {
+      console.error("Update course status error:", error);
+      res.status(500).json({ message: "Erro ao atualizar status do curso" });
+    }
+  });
+
   app.delete("/api/courses/:id", requireAuth, async (req, res) => {
     try {
+      const { confirmation } = req.body;
+      
+      // Require explicit confirmation for deletion
+      if (confirmation !== "DELETE") {
+        return res.status(400).json({ 
+          message: "Confirmação obrigatória. Envie 'DELETE' no campo confirmation para confirmar a exclusão." 
+        });
+      }
+
       const success = await storage.deleteCourse(req.params.id, req.session.organizationId!);
       if (!success) {
         return res.status(404).json({ message: "Curso não encontrado" });
