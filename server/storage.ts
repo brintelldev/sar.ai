@@ -424,7 +424,9 @@ import { PostgresStorage } from './postgres-storage';
 import { eq, and } from 'drizzle-orm';
 
 export class PostgresStorage implements IStorage {
-  constructor(private db: any) {}
+  constructor(private db: any) {
+    this.db = db;
+  }
 
   // User operations
   async getUser(id: string): Promise<User | undefined> {
@@ -696,5 +698,6 @@ export class PostgresStorage implements IStorage {
 }
 
 import { inArray } from 'drizzle-orm';
+import { db } from './db';
 
-export const storage = new PostgresStorage();
+export const storage = new PostgresStorage(db);
