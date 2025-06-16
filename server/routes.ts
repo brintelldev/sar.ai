@@ -780,62 +780,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/courses/:id/progress", requireAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const courseId = req.params.id;
+      const userId = req.session.userId!;
       
-      const progress = {
-        id: "p-1",
-        courseId: id,
-        status: "in_progress",
-        progress: 50,
-        completedModules: ["1-1"],
-        startedAt: new Date().toISOString(),
-        timeSpent: 30
-      };
+      const progress = await storage.getUserCourseProgress(userId, courseId);
+      if (!progress) {
+        return res.status(404).json({ message: "Progresso não encontrado" });
+      }
       
       res.json(progress);
     } catch (error) {
       console.error("Get individual course progress error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
   app.post("/api/courses/:id/start", requireAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const courseId = req.params.id;
+      const userId = req.session.userId!;
       
-      const progress = {
-        id: `p-${id}`,
-        courseId: id,
-        status: "in_progress",
-        progress: 0,
-        completedModules: [],
-        startedAt: new Date().toISOString(),
-        timeSpent: 0
-      };
+      // Check if progress already exists
+      let progress = await storage.getUserCourseProgress(userId, courseId);
+      
+      if (!progress) {
+        // Create new progress
+        progress = await storage.updateUserCourseProgress(userId, courseId, {
+          status: "in_progress",
+          progress: 0,
+          completedModules: [],
+          currentModuleId: null,
+          startedAt: new Date().toISOString(),
+          timeSpent: 0,
+          lastAccessedAt: new Date().toISOString(),
+          certificateGenerated: false
+        });
+      }
       
       res.json(progress);
     } catch (error) {
       console.error("Start course error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
+  // Complete module endpoint
   app.post("/api/courses/:courseId/modules/:moduleId/complete", requireAuth, async (req, res) => {
     try {
       const { courseId, moduleId } = req.params;
+      const userId = req.session.userId!;
       
-      const result = {
-        success: true,
-        message: "Módulo concluído com sucesso",
-        newProgress: 75
-      };
+      // Get current progress
+      let progress = await storage.getUserCourseProgress(userId, courseId);
       
-      res.json(result);
+      if (!progress) {
+        // Create initial progress if it doesn't exist
+        progress = await storage.updateUserCourseProgress(userId, courseId, {
+          status: "in_progress",
+          progress: 0,
+          completedModules: [],
+          currentModuleId: null,
+          startedAt: new Date().toISOString(),
+          timeSpent: 0,
+          lastAccessedAt: new Date().toISOString(),
+          certificateGenerated: false
+        });
+      }
+      
+      // Add module to completed list if not already there
+      const completedModules = progress.completedModules || [];
+      if (!completedModules.includes(moduleId)) {
+        completedModules.push(moduleId);
+        
+        // Get all modules to calculate progress
+        const allModules = await storage.getCourseModules(courseId);
+        const progressPercentage = allModules.length > 0 
+          ? (completedModules.length / allModules.length) * 100 
+          : 0;
+        
+        const isCompleted = progressPercentage >= 100;
+        
+        // Update progress
+        progress = await storage.updateUserCourseProgress(userId, courseId, {
+          completedModules,
+          progress: Math.round(progressPercentage),
+          status: isCompleted ? "completed" : "in_progress",
+          completedAt: isCompleted ? new Date().toISOString() : null,
+          lastAccessedAt: new Date().toISOString()
+        });
+      }
+      
+      res.json(progress);
     } catch (error) {
       console.error("Complete module error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro ao completar módulo" });
     }
   });
+
+  // Generate certificate endpoint
+  app.post("/api/courses/:courseId/certificate", requireAuth, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const userId = req.session.userId!;
+      
+      // Check if course is completed
+      const progress = await storage.getUserCourseProgress(userId, courseId);
+      if (!progress || progress.status !== "completed") {
+        return res.status(400).json({ message: "Curso deve estar completo para gerar certificado" });
+      }
+      
+      // Check if course allows certificates
+      const course = await storage.getCourse(courseId, req.session.organizationId!);
+      if (!course || !course.certificateEnabled) {
+        return res.status(400).json({ message: "Certificado não habilitado para este curso" });
+      }
+      
+      // Generate certificate
+      const certificate = await storage.createCertificate({
+        userId,
+        courseId,
+        organizationId: req.session.organizationId!,
+        issuedAt: new Date().toISOString(),
+        validationCode: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+      });
+      
+      // Update progress to mark certificate as generated
+      await storage.updateUserCourseProgress(userId, courseId, {
+        certificateGenerated: true
+      });
+      
+      res.json(certificate);
+    } catch (error) {
+      console.error("Generate certificate error:", error);
+      res.status(500).json({ message: "Erro ao gerar certificado" });
+    }
+  });
+
+
 
   const httpServer = createServer(app);
   return httpServer;
