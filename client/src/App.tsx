@@ -21,6 +21,8 @@ import OrganizationSetup from "@/pages/organization-setup";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import Support from "@/pages/support";
+import Courses from "@/pages/courses";
+import CourseDetail from "@/pages/course-detail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -118,6 +120,16 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/courses">
+        <ProtectedRoute>
+          <Courses />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/courses/:id">
+        <ProtectedRoute>
+          <CourseDetail />
         </ProtectedRoute>
       </Route>
       <Route path="/support">
