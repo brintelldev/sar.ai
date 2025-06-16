@@ -301,11 +301,12 @@ export default function CoursesPage() {
                     {startCourseMutation.isPending ? 'Iniciando...' : 'Iniciar Curso'}
                   </Button>
                 ) : (
-                  <Link href={`/courses/${course.id}`} className="flex-1">
-                    <Button className="w-full">
-                      {progress.status === 'completed' ? 'Revisar' : 'Continuar'}
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={() => navigate(`/courses/${course.id}/progress`)}
+                    className="flex-1"
+                  >
+                    {progress.status === 'completed' ? 'Ver Certificado' : 'Ver Progresso'}
+                  </Button>
                 )}
               </CardFooter>
             </Card>

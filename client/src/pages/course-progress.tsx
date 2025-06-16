@@ -80,13 +80,52 @@ export default function CourseProgress() {
 
   const { data: userProgress, isLoading: progressLoading } = useQuery({
     queryKey: ['/api/courses', courseId, 'user-progress'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/progress`),
+    queryFn: () => {
+      // Use localStorage temporarily for progress tracking
+      const saved = localStorage.getItem(`course_progress_${courseId}`);
+      return saved ? JSON.parse(saved) : {
+        progress: 0,
+        completedModules: [],
+        status: 'not_started',
+        timeSpent: 0,
+        certificateGenerated: false
+      };
+    },
     enabled: !!courseId
   });
 
   const completeModuleMutation = useMutation({
-    mutationFn: (moduleId: string) => 
-      apiRequest(`/api/courses/${courseId}/modules/${moduleId}/complete`, 'POST'),
+    mutationFn: (moduleId: string) => {
+      // Update localStorage temporarily
+      const currentProgress = userProgress || { 
+        progress: 0, 
+        completedModules: [], 
+        status: 'not_started',
+        timeSpent: 0,
+        certificateGenerated: false 
+      };
+      
+      const newCompletedModules = [...currentProgress.completedModules];
+      if (!newCompletedModules.includes(moduleId)) {
+        newCompletedModules.push(moduleId);
+      }
+      
+      const totalModules = sortedModules.length;
+      const newProgress = totalModules > 0 ? (newCompletedModules.length / totalModules) * 100 : 0;
+      const isCompleted = newProgress >= 100;
+      
+      const updatedProgress = {
+        ...currentProgress,
+        completedModules: newCompletedModules,
+        progress: Math.round(newProgress),
+        status: isCompleted ? 'completed' : 'in_progress',
+        completedAt: isCompleted ? new Date().toISOString() : currentProgress.completedAt,
+        lastAccessedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem(`course_progress_${courseId}`, JSON.stringify(updatedProgress));
+      return Promise.resolve(updatedProgress);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'user-progress'] });
       toast({
@@ -97,7 +136,19 @@ export default function CourseProgress() {
   });
 
   const generateCertificateMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/courses/${courseId}/certificate`, 'POST'),
+    mutationFn: () => {
+      // Generate certificate using localStorage temporarily
+      const currentProgress = userProgress || { certificateGenerated: false };
+      const updatedProgress = {
+        ...currentProgress,
+        certificateGenerated: true,
+        certificateId: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        certificateIssuedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem(`course_progress_${courseId}`, JSON.stringify(updatedProgress));
+      return Promise.resolve(updatedProgress);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'user-progress'] });
       toast({

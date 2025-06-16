@@ -324,7 +324,7 @@ export const courseModules = pgTable("course_modules", {
   courseId: uuid("course_id").references(() => courses.id).notNull(),
   title: text("title").notNull(),
   description: text("description"),
-  order: integer("order").notNull(),
+  orderIndex: integer("order_index").notNull(),
   content: jsonb("content"), // conteúdo do módulo
   videoUrl: text("video_url"), // URL do vídeo (YouTube, Vimeo)
   materials: jsonb("materials"), // PDFs, links, arquivos
