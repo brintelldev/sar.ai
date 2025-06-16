@@ -603,9 +603,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ALL specific routes must come before parameterized routes to avoid UUID parsing conflicts
   
   // Admin and progress routes first
-  app.get("/api/courses/admin", requireAuth, async (req, res) => {
+  app.get("/api/courses/admin", requireAuth, requireOrganization, async (req, res) => {
     try {
+      console.log("Getting courses for organization:", req.session.organizationId);
       const courses = await storage.getCourses(req.session.organizationId!);
+      console.log("Found courses:", courses.length);
       res.json(courses);
     } catch (error) {
       console.error("Get courses for admin error:", error);
@@ -634,9 +636,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // General courses routes
-  app.get("/api/courses", requireAuth, async (req, res) => {
+  app.get("/api/courses", requireAuth, requireOrganization, async (req, res) => {
     try {
+      console.log("Getting courses for organization:", req.session.organizationId);
       const courses = await storage.getCourses(req.session.organizationId!);
+      console.log("Found courses:", courses.length);
       res.json(courses);
     } catch (error) {
       console.error("Get courses error:", error);
@@ -646,19 +650,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/courses", requireAuth, async (req, res) => {
     try {
+      // Parse duration from string to number (in minutes)
+      let duration = 60; // default 1 hour
+      if (req.body.duration) {
+        const durationText = req.body.duration.toString();
+        const hours = parseInt(durationText.replace(/\D/g, '')) || 1;
+        duration = hours * 60; // Convert hours to minutes
+      }
+
       const courseData = {
         ...req.body,
         organizationId: req.session.organizationId!,
-        createdBy: req.session.userId!, // Add required created_by field
-        // Convert duration to minutes if it's a string
-        duration: typeof req.body.duration === 'string' 
-          ? parseInt(req.body.duration.replace(/\D/g, '')) * 60 // Convert hours to minutes
-          : req.body.duration
+        createdBy: req.session.userId!,
+        duration: duration
       };
       
-
-      
+      console.log("Creating course with data:", courseData);
       const course = await storage.createCourse(courseData);
+      console.log("Course created:", course);
       res.status(201).json(course);
     } catch (error) {
       console.error("Create course error:", error);

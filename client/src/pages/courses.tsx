@@ -234,7 +234,7 @@ export default function CoursesPage() {
               <Clock className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
                 <p className="text-2xl font-bold">
-                  {Math.round(courses.reduce((acc: number, course: Course) => acc + (course.duration || 0), 0))}h
+                  {Math.round(courses.reduce((acc: number, course: Course) => acc + ((course.duration || 60) / 60), 0))}h
                 </p>
                 <p className="text-gray-600">Total de horas</p>
               </div>
@@ -273,7 +273,7 @@ export default function CoursesPage() {
 
                 <div className="flex items-center text-sm text-gray-600 mb-4">
                   <Clock className="h-4 w-4 mr-1" />
-                  <span>{course.duration}h de duração</span>
+                  <span>{Math.round((course.duration || 60) / 60)}h de duração</span>
                 </div>
 
                 {progress && progress.status === 'in_progress' && (

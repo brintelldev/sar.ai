@@ -91,17 +91,17 @@ export function CourseAdmin() {
 
   const handleCreateCourse = (formData: FormData) => {
     const durationText = formData.get('duration') as string;
-    const durationHours = parseInt(durationText.replace(/\D/g, '')) || 1;
     
     const courseData = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
       category: formData.get('category') as string,
       level: formData.get('level') as string,
-      duration: durationHours * 60, // Convert hours to minutes
+      duration: durationText, // Send as string, server will convert
       status: 'draft'
     };
 
+    console.log("Creating course:", courseData);
     createCourseMutation.mutate(courseData);
   };
 
@@ -338,7 +338,7 @@ export function CourseAdmin() {
                             <Users className="w-4 h-4" />
                             {course.enrolledCount || 0} matriculados
                           </span>
-                          <span>Duração: {course.duration}</span>
+                          <span>Duração: {Math.round((course.duration || 60) / 60)}h</span>
                           <span>Nível: {course.level}</span>
                         </div>
                       </div>
