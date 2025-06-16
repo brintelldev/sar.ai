@@ -12,6 +12,11 @@ import {
   accountsReceivable,
   accountsPayable,
   funders,
+  courses,
+  courseModules,
+  userCourseProgress,
+  courseAssessments,
+  certificates,
   type Organization,
   type User,
   type UserRole,
@@ -23,6 +28,11 @@ import {
   type AccountsReceivable,
   type AccountsPayable,
   type Funder,
+  type Course,
+  type CourseModule,
+  type UserCourseProgress,
+  type CourseAssessment,
+  type Certificate,
   type InsertOrganization,
   type InsertUser,
   type InsertUserRole,
@@ -30,7 +40,10 @@ import {
   type InsertDonor,
   type InsertBeneficiary,
   type InsertVolunteer,
-  type InsertDonation
+  type InsertDonation,
+  type InsertCourse,
+  type InsertCourseModule,
+  type InsertCourseAssessment
 } from '../shared/schema';
 import { IStorage } from './storage';
 
@@ -401,6 +414,13 @@ export class PostgresStorage implements IStorage {
       .where(eq(courseModules.id, id))
       .returning();
     return result;
+  }
+
+  async deleteCourseModule(id: string): Promise<boolean> {
+    const result = await db
+      .delete(courseModules)
+      .where(eq(courseModules.id, id));
+    return result.rowCount! > 0;
   }
 
   // User Course Progress
