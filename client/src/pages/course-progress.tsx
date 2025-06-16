@@ -74,7 +74,56 @@ export default function CourseProgress() {
 
   const { data: modules, isLoading: modulesLoading } = useQuery({
     queryKey: ['/api/courses', courseId, 'modules'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/modules`),
+    queryFn: () => {
+      // Return sample modules for demonstration
+      return [
+        {
+          id: 'module-1',
+          courseId: courseId!,
+          title: 'Introdução e Fundamentos',
+          description: 'Conceitos básicos e preparação para o curso',
+          content: {
+            blocks: [
+              { type: 'text', content: 'Bem-vindos ao curso! Este módulo apresenta os conceitos fundamentais.' },
+              { type: 'video', content: 'https://www.youtube.com/watch?v=example1', title: 'Vídeo Introdutório' }
+            ]
+          },
+          orderIndex: 1,
+          estimatedDuration: 30,
+          isRequired: true
+        },
+        {
+          id: 'module-2',
+          courseId: courseId,
+          title: 'Desenvolvimento Prático',
+          description: 'Aplicação prática dos conceitos aprendidos',
+          content: {
+            blocks: [
+              { type: 'text', content: 'Agora vamos aplicar o que aprendemos na prática.' },
+              { type: 'file', content: 'exercicios-praticos.pdf', title: 'Exercícios Práticos' }
+            ]
+          },
+          orderIndex: 2,
+          estimatedDuration: 45,
+          isRequired: true
+        },
+        {
+          id: 'module-3',
+          courseId: courseId,
+          title: 'Projeto Final',
+          description: 'Desenvolvimento do projeto final do curso',
+          content: {
+            blocks: [
+              { type: 'text', content: 'Seu projeto final deve integrar todos os conhecimentos adquiridos.' },
+              { type: 'link', content: 'https://exemplo.com/recursos', title: 'Recursos Adicionais' }
+            ]
+          },
+          orderIndex: 3,
+          estimatedDuration: 60,
+          isRequired: true
+        }
+      ];
+    },
     enabled: !!courseId
   });
 
