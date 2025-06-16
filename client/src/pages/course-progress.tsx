@@ -1,26 +1,42 @@
 import { useState } from "react";
-import { useRoute, useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, Link } from "wouter";
+import { ArrowLeft, Play, Clock, FileText, Download, CheckCircle2, Circle, Award, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { CertificateGenerator, CertificatePreview } from "@/components/certificate/certificate-generator";
-import { 
-  PlayCircle, 
-  CheckCircle2, 
-  Clock, 
-  BookOpen, 
-  Award,
-  ArrowLeft,
-  FileText,
-  Video,
-  Link as LinkIcon,
-  Download
-} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { apiRequest } from "@/lib/queryClient";
+import { MainLayout } from "@/components/layout/main-layout";
+import { formatDuration } from "@/lib/utils";
+
+interface CourseModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  orderIndex: number;
+  content: {
+    type: string;
+    sections: Array<{
+      type: string;
+      title: string;
+      videoUrl?: string;
+      duration?: number;
+      content?: string;
+      instructions?: string;
+    }>;
+  };
+  resources: Array<{
+    type: string;
+    title: string;
+    url: string;
+  }>;
+  assessmentEnabled: boolean;
+  completed?: boolean;
+}
 
 interface Course {
   id: string;
@@ -29,455 +45,311 @@ interface Course {
   category: string;
   level: string;
   duration: number;
-  status: string;
-  learningObjectives?: string[];
+  coverImage: string | null;
+  learningObjectives: string[];
+  tags: string[];
+  passScore: number;
   certificateEnabled: boolean;
 }
 
-interface CourseModule {
+interface CourseProgress {
   id: string;
   courseId: string;
-  title: string;
-  description: string;
-  content: any;
-  orderIndex: number;
-  estimatedDuration: number;
-  isRequired: boolean;
-}
-
-interface UserProgress {
-  id: string;
-  userId: string;
-  courseId: string;
-  status: string;
   progress: number;
+  status: string;
   completedModules: string[];
-  currentModuleId?: string;
   startedAt: string;
-  completedAt?: string;
-  timeSpent: number;
   lastAccessedAt: string;
-  certificateGenerated: boolean;
+  timeSpent: number;
 }
 
-export default function CourseProgress() {
-  const [, params] = useRoute("/courses/:id/progress");
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const courseId = params?.id;
+export default function CourseProgressPage() {
+  const { courseId } = useParams<{ courseId: string }>();
+  const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<number>(0);
 
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['/api/courses', courseId],
-    queryFn: () => apiRequest(`/api/courses/${courseId}`),
-    enabled: !!courseId
+    queryFn: () => apiRequest(`/api/courses/${courseId}`)
   });
 
   const { data: modules, isLoading: modulesLoading } = useQuery({
     queryKey: ['/api/courses', courseId, 'modules'],
-    queryFn: () => {
-      // Return sample modules for demonstration
-      return [
-        {
-          id: 'module-1',
-          courseId: courseId!,
-          title: 'Introdução e Fundamentos',
-          description: 'Conceitos básicos e preparação para o curso',
-          content: {
-            blocks: [
-              { type: 'text', content: 'Bem-vindos ao curso! Este módulo apresenta os conceitos fundamentais.' },
-              { type: 'video', content: 'https://www.youtube.com/watch?v=example1', title: 'Vídeo Introdutório' }
-            ]
-          },
-          orderIndex: 1,
-          estimatedDuration: 30,
-          isRequired: true
-        },
-        {
-          id: 'module-2',
-          courseId: courseId!,
-          title: 'Desenvolvimento Prático',
-          description: 'Aplicação prática dos conceitos aprendidos',
-          content: {
-            blocks: [
-              { type: 'text', content: 'Agora vamos aplicar o que aprendemos na prática.' },
-              { type: 'file', content: 'exercicios-praticos.pdf', title: 'Exercícios Práticos' }
-            ]
-          },
-          orderIndex: 2,
-          estimatedDuration: 45,
-          isRequired: true
-        },
-        {
-          id: 'module-3',
-          courseId: courseId!,
-          title: 'Projeto Final',
-          description: 'Desenvolvimento do projeto final do curso',
-          content: {
-            blocks: [
-              { type: 'text', content: 'Seu projeto final deve integrar todos os conhecimentos adquiridos.' },
-              { type: 'link', content: 'https://exemplo.com/recursos', title: 'Recursos Adicionais' }
-            ]
-          },
-          orderIndex: 3,
-          estimatedDuration: 60,
-          isRequired: true
-        }
-      ];
-    },
-    enabled: !!courseId
+    queryFn: () => apiRequest(`/api/courses/${courseId}/modules`)
   });
 
-  const { data: userProgress, isLoading: progressLoading } = useQuery({
-    queryKey: ['/api/courses', courseId, 'user-progress'],
-    queryFn: () => {
-      // Use localStorage temporarily for progress tracking
-      const saved = localStorage.getItem(`course_progress_${courseId}`);
-      return saved ? JSON.parse(saved) : {
-        progress: 0,
-        completedModules: [],
-        status: 'not_started',
-        timeSpent: 0,
-        certificateGenerated: false
-      };
-    },
-    enabled: !!courseId
+  const { data: progress } = useQuery({
+    queryKey: ['/api/courses/progress', courseId],
+    queryFn: () => apiRequest(`/api/courses/progress/${courseId}`)
   });
 
-  const completeModuleMutation = useMutation({
-    mutationFn: (moduleId: string) => {
-      // Update localStorage temporarily
-      const currentProgress = userProgress || { 
-        progress: 0, 
-        completedModules: [], 
-        status: 'not_started',
-        timeSpent: 0,
-        certificateGenerated: false 
-      };
-      
-      const newCompletedModules = [...currentProgress.completedModules];
-      if (!newCompletedModules.includes(moduleId)) {
-        newCompletedModules.push(moduleId);
-      }
-      
-      const totalModules = sortedModules.length;
-      const newProgress = totalModules > 0 ? (newCompletedModules.length / totalModules) * 100 : 0;
-      const isCompleted = newProgress >= 100;
-      
-      const updatedProgress = {
-        ...currentProgress,
-        completedModules: newCompletedModules,
-        progress: Math.round(newProgress),
-        status: isCompleted ? 'completed' : 'in_progress',
-        completedAt: isCompleted ? new Date().toISOString() : currentProgress.completedAt,
-        lastAccessedAt: new Date().toISOString()
-      };
-      
-      localStorage.setItem(`course_progress_${courseId}`, JSON.stringify(updatedProgress));
-      return Promise.resolve(updatedProgress);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'user-progress'] });
-      toast({
-        title: "Módulo concluído",
-        description: "Seu progresso foi atualizado com sucesso."
-      });
-    }
-  });
-
-  const generateCertificateMutation = useMutation({
-    mutationFn: () => {
-      // Generate certificate using localStorage temporarily
-      const currentProgress = userProgress || { certificateGenerated: false };
-      const updatedProgress = {
-        ...currentProgress,
-        certificateGenerated: true,
-        certificateId: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        certificateIssuedAt: new Date().toISOString()
-      };
-      
-      localStorage.setItem(`course_progress_${courseId}`, JSON.stringify(updatedProgress));
-      return Promise.resolve(updatedProgress);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'user-progress'] });
-      toast({
-        title: "Certificado gerado",
-        description: "Seu certificado está disponível para download."
-      });
-    }
-  });
-
-  if (courseLoading || modulesLoading || progressLoading) {
+  if (courseLoading || modulesLoading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="space-y-4">
-          <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando curso...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   if (!course) {
     return (
-      <div className="container mx-auto py-8">
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">Curso não encontrado</p>
-          </CardContent>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Curso não encontrado</h1>
+          <Link href="/courses">
+            <Button>Voltar aos Cursos</Button>
+          </Link>
+        </div>
+      </MainLayout>
     );
   }
 
-  const sortedModules = modules?.sort((a: any, b: any) => a.orderIndex - b.orderIndex) || [];
-  const progress = userProgress || { 
-    progress: 0, 
-    completedModules: [], 
-    status: 'not_started',
-    timeSpent: 0,
-    certificateGenerated: false 
+  const modulesList = Array.isArray(modules) ? modules : [];
+  const currentProgress = progress as CourseProgress;
+  const completedModules = currentProgress?.completedModules || [];
+  const progressPercentage = currentProgress?.progress || 0;
+
+  const getModuleStatus = (moduleId: string) => {
+    return completedModules.includes(moduleId) ? 'completed' : 'pending';
   };
 
-  const completedCount = progress.completedModules?.length || 0;
-  const totalModules = sortedModules.length;
-  const progressPercentage = totalModules > 0 ? (completedCount / totalModules) * 100 : 0;
-  const isCompleted = progressPercentage === 100;
-  const canGenerateCertificate = isCompleted && course.certificateEnabled && !progress.certificateGenerated;
-
-  const getContentTypeIcon = (content: any) => {
-    if (!content || !content.blocks) return <FileText className="h-4 w-4" />;
-    
-    const hasVideo = content.blocks.some((block: any) => block.type === 'video');
-    const hasFile = content.blocks.some((block: any) => block.type === 'file');
-    const hasLink = content.blocks.some((block: any) => block.type === 'link');
-    
-    if (hasVideo) return <Video className="h-4 w-4" />;
-    if (hasFile) return <Download className="h-4 w-4" />;
-    if (hasLink) return <LinkIcon className="h-4 w-4" />;
-    
-    return <FileText className="h-4 w-4" />;
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}min`;
+  const getCurrentModule = () => {
+    if (activeModule) {
+      return modulesList.find(m => m.id === activeModule);
     }
-    return `${mins}min`;
+    return modulesList.find(m => getModuleStatus(m.id) === 'pending') || modulesList[0];
   };
+
+  const currentModule = getCurrentModule();
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate('/courses')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar aos Cursos
-        </Button>
-      </div>
+    <MainLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/courses">
+            <Button variant="ghost" className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar aos Cursos
+            </Button>
+          </Link>
 
-      {/* Course Info */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <CardTitle className="text-2xl">{course.title}</CardTitle>
-              <CardDescription>{course.description}</CardDescription>
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{formatDuration(course.duration)}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{totalModules} módulos</span>
-                </div>
-                <Badge variant="outline">{course.level}</Badge>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{course.title}</h1>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Badge variant="secondary" className="capitalize">
+                  {course.category}
+                </Badge>
+                <Badge variant="outline" className="capitalize">
+                  {course.level}
+                </Badge>
+                <Badge variant="outline">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {formatDuration(course.duration / 60)}
+                </Badge>
               </div>
             </div>
-            {canGenerateCertificate && (
-              <Button 
-                onClick={() => generateCertificateMutation.mutate()}
-                disabled={generateCertificateMutation.isPending}
-                className="flex items-center space-x-2"
-              >
-                <Award className="h-4 w-4" />
-                <span>Gerar Certificado</span>
-              </Button>
-            )}
+
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-sm text-gray-600">Progresso</div>
+                <div className="text-2xl font-bold text-blue-600">{progressPercentage}%</div>
+              </div>
+              <div className="w-20">
+                <Progress value={progressPercentage} className="h-3" />
+              </div>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Progresso do Curso</span>
-                <span className="text-sm text-muted-foreground">
-                  {completedCount} de {totalModules} módulos concluídos
-                </span>
-              </div>
-              <Progress value={progressPercentage} className="h-2" />
-              <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                <span>{Math.round(progressPercentage)}% completo</span>
-                {progress.timeSpent > 0 && (
-                  <span>Tempo estudado: {formatDuration(progress.timeSpent)}</span>
-                )}
-              </div>
-            </div>
+        </div>
 
-            {isCompleted && (
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  <span className="font-medium text-green-800 dark:text-green-300">
-                    Parabéns! Você concluiu o curso com sucesso!
-                  </span>
-                </div>
-                {course.certificateEnabled && (
-                  <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                    {progress.certificateGenerated 
-                      ? "Seu certificado está disponível para download."
-                      : "Gere seu certificado de conclusão clicando no botão acima."
-                    }
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar - Módulos */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2" />
+                  Módulos do Curso
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {modulesList.map((module: CourseModule, index: number) => {
+                  const status = getModuleStatus(module.id);
+                  const isActive = currentModule?.id === module.id;
+                  
+                  return (
+                    <div
+                      key={module.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        isActive 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setActiveModule(module.id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-1">
+                            {status === 'completed' ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-gray-400 mr-2" />
+                            )}
+                            <span className="text-sm font-medium">
+                              Módulo {index + 1}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                            {module.title}
+                          </h4>
+                          <p className="text-xs text-gray-600 mb-2">
+                            {module.description}
+                          </p>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatDuration(module.duration / 60)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Certificado */}
+            {course.certificateEnabled && progressPercentage === 100 && (
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-green-600">
+                    <Award className="h-5 w-5 mr-2" />
+                    Certificado
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Parabéns! Você concluiu o curso e pode baixar seu certificado.
                   </p>
-                )}
-              </div>
+                  <Button size="sm" className="w-full">
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar Certificado
+                  </Button>
+                </CardContent>
+              </Card>
             )}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Modules */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Módulos do Curso</CardTitle>
-          <CardDescription>
-            Complete todos os módulos para finalizar o curso
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {sortedModules.map((module: any, index: number) => {
-              const isCompleted = progress.completedModules?.includes(module.id);
-              const isCurrent = progress.currentModuleId === module.id;
-              const isPrevious = index < completedCount;
-              const canAccess = index === 0 || isPrevious || isCompleted;
-
-              return (
-                <div key={module.id} className="space-y-3">
-                  <div className={`
-                    p-4 rounded-lg border transition-colors
-                    ${isCompleted ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}
-                    ${isCurrent ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}
-                    ${!canAccess ? 'bg-gray-50 dark:bg-gray-900/20 opacity-60' : ''}
-                  `}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0">
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-6 w-6 text-green-600" />
-                          ) : isCurrent ? (
-                            <PlayCircle className="h-6 w-6 text-blue-600" />
-                          ) : (
-                            <div className="h-6 w-6 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-500">
-                                {index + 1}
-                              </span>
+          {/* Conteúdo Principal */}
+          <div className="lg:col-span-3">
+            {currentModule && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{currentModule.title}</CardTitle>
+                  <CardDescription>{currentModule.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="content" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="content">Conteúdo</TabsTrigger>
+                      <TabsTrigger value="resources">Recursos</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="content" className="space-y-6">
+                      {currentModule.content.sections.map((section, index) => (
+                        <div key={index} className="space-y-4">
+                          <h3 className="text-lg font-semibold">{section.title}</h3>
+                          
+                          {section.type === 'video' && section.videoUrl && (
+                            <div className="aspect-video">
+                              <iframe
+                                src={section.videoUrl}
+                                title={section.title}
+                                className="w-full h-full rounded-lg"
+                                allowFullScreen
+                              />
+                              {section.duration && (
+                                <div className="mt-2 text-sm text-gray-600">
+                                  <Clock className="h-4 w-4 inline mr-1" />
+                                  Duração: {formatDuration(section.duration / 60)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {section.type === 'text' && section.content && (
+                            <div className="prose max-w-none">
+                              <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-gray-700">{section.content}</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {section.type === 'practical' && section.instructions && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <h4 className="font-semibold text-blue-900 mb-2">Exercício Prático</h4>
+                              <p className="text-blue-800">{section.instructions}</p>
                             </div>
                           )}
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            {getContentTypeIcon(module.content)}
-                            <h4 className="font-medium">{module.title}</h4>
-                            {module.isRequired && (
-                              <Badge variant="secondary" className="text-xs">Obrigatório</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {module.description}
-                          </p>
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
-                            <span>⏱️ {formatDuration(module.estimatedDuration)}</span>
-                          </div>
+                      ))}
+                      
+                      <div className="flex justify-between pt-6">
+                        <Button variant="outline" disabled>
+                          Módulo Anterior
+                        </Button>
+                        <Button>
+                          Próximo Módulo
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="resources" className="space-y-4">
+                      <h3 className="text-lg font-semibold">Recursos Complementares</h3>
+                      
+                      {currentModule.resources.map((resource, index) => (
+                        <Card key={index}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                                  {resource.type === 'pdf' && <FileText className="h-5 w-5 text-blue-600" />}
+                                  {resource.type === 'link' && <FileText className="h-5 w-5 text-blue-600" />}
+                                  {resource.type === 'template' && <Download className="h-5 w-5 text-blue-600" />}
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold">{resource.title}</h4>
+                                  <p className="text-sm text-gray-600 capitalize">{resource.type}</p>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm">
+                                <Download className="h-4 w-4 mr-2" />
+                                Baixar
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {currentModule.resources.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p>Nenhum recurso disponível para este módulo</p>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {canAccess && !isCompleted && (
-                          <Button
-                            size="sm"
-                            onClick={() => completeModuleMutation.mutate(module.id)}
-                            disabled={completeModuleMutation.isPending}
-                          >
-                            Marcar como Concluído
-                          </Button>
-                        )}
-                        {isCompleted && (
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            Concluído
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {index < sortedModules.length - 1 && <Separator />}
-                </div>
-              );
-            })}
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Seção de Certificado - Aparece quando o curso está 100% completo */}
-      {progress.progress === 100 && course && (
-        <Card className="mt-6 border-green-200 bg-green-50">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Award className="w-16 h-16 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl text-green-800">
-              Parabéns! Você concluiu o curso!
-            </CardTitle>
-            <CardDescription className="text-green-700">
-              Seu certificado está disponível para download
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Preview do Certificado */}
-              <CertificatePreview 
-                certificateData={{
-                  studentName: "Usuário Exemplo", // Em produção, viria dos dados do usuário autenticado
-                  courseName: course.title,
-                  organizationName: "Instituto Esperança", // Em produção, viria da organização atual
-                  completionDate: new Date().toISOString(),
-                  duration: Math.round((course.duration || 0) / 60),
-                  certificateId: `CERT-${course.id.slice(0, 8).toUpperCase()}`,
-                  instructorName: "Equipe de Capacitação"
-                }}
-              />
-              
-              {/* Botão para página de geração */}
-              <div className="text-center">
-                <Button 
-                  onClick={() => navigate(`/courses/${courseId}/certificate`)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Gerar Certificado Completo
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        </div>
+      </div>
+    </MainLayout>
   );
 }

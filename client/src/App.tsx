@@ -137,7 +137,7 @@ function Router() {
           <CourseDetail />
         </ProtectedRoute>
       </Route>
-      <Route path="/courses/:id/progress">
+      <Route path="/courses/:courseId/progress">
         <ProtectedRoute>
           <CourseProgress />
         </ProtectedRoute>

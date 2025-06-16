@@ -296,6 +296,205 @@ export async function seedTestData() {
 
     console.log('✅ Doações criadas');
 
+    // 9. Criar cursos de capacitação
+    const techCourse = await storage.createCourse({
+      organizationId: testOrg.id,
+      title: 'Capacitação em Tecnologia para ONGs - Curso Completo',
+      description: 'Um curso abrangente que ensina organizações não governamentais a utilizarem tecnologia para maximizar seu impacto social. Aprenda sobre ferramentas digitais, gestão de dados, comunicação online e sistemas de gestão para ONGs.',
+      category: 'tecnologia',
+      level: 'intermediário',
+      duration: 28800, // 8 horas em segundos
+      requirements: 'Conhecimentos básicos de informática, acesso a computador com internet',
+      learningObjectives: [
+        'Compreender o papel da tecnologia no terceiro setor',
+        'Implementar ferramentas digitais para gestão organizacional',
+        'Desenvolver estratégias de comunicação digital eficazes',
+        'Criar sistemas de monitoramento e avaliação baseados em dados',
+        'Garantir segurança digital e proteção de dados sensíveis'
+      ],
+      tags: ['tecnologia', 'gestão', 'comunicação', 'dados', 'segurança'],
+      passScore: 75,
+      certificateEnabled: true,
+      createdBy: adminUser.id,
+      status: 'published'
+    });
+
+    // 10. Criar módulos do curso com vídeos e materiais
+    const module1 = await storage.createCourseModule({
+      courseId: techCourse.id,
+      title: 'Introdução à Tecnologia para ONGs',
+      description: 'Fundamentos da transformação digital no terceiro setor',
+      duration: 7200, // 2 horas
+      orderIndex: 1,
+      content: {
+        type: 'mixed',
+        sections: [
+          {
+            type: 'video',
+            title: 'O que é Transformação Digital para ONGs?',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 900 // 15 minutos
+          },
+          {
+            type: 'text',
+            title: 'Cenário Atual das ONGs no Brasil',
+            content: 'Dados estatísticos sobre o uso de tecnologia em organizações do terceiro setor...'
+          },
+          {
+            type: 'video',
+            title: 'Casos de Sucesso: ONGs que se Transformaram',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1200 // 20 minutos
+          }
+        ]
+      },
+      resources: [
+        {
+          type: 'pdf',
+          title: 'Guia de Introdução à Tecnologia para ONGs',
+          url: '/materials/guia-introducao-tecnologia.pdf'
+        },
+        {
+          type: 'link',
+          title: 'Ferramentas Gratuitas para ONGs',
+          url: 'https://example.com/ferramentas-gratuitas'
+        }
+      ],
+      assessmentEnabled: true
+    });
+
+    const module2 = await storage.createCourseModule({
+      courseId: techCourse.id,
+      title: 'Ferramentas Digitais Essenciais',
+      description: 'Principais ferramentas para gestão, comunicação e produtividade',
+      duration: 7200,
+      orderIndex: 2,
+      content: {
+        type: 'mixed',
+        sections: [
+          {
+            type: 'video',
+            title: 'Google Workspace para ONGs',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1800 // 30 minutos
+          },
+          {
+            type: 'video',
+            title: 'Trello e Asana: Gestão de Projetos',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1500 // 25 minutos
+          },
+          {
+            type: 'practical',
+            title: 'Exercício Prático: Criando seu Primeiro Projeto',
+            instructions: 'Crie um projeto no Trello seguindo as instruções do vídeo...'
+          }
+        ]
+      },
+      resources: [
+        {
+          type: 'pdf',
+          title: 'Lista de Ferramentas Recomendadas',
+          url: '/materials/ferramentas-recomendadas.pdf'
+        },
+        {
+          type: 'template',
+          title: 'Template de Planejamento de Projeto',
+          url: '/materials/template-projeto.xlsx'
+        }
+      ],
+      assessmentEnabled: true
+    });
+
+    const module3 = await storage.createCourseModule({
+      courseId: techCourse.id,
+      title: 'Comunicação Digital e Redes Sociais',
+      description: 'Estratégias de comunicação digital e presença online',
+      duration: 7200,
+      orderIndex: 3,
+      content: {
+        type: 'mixed',
+        sections: [
+          {
+            type: 'video',
+            title: 'Criando uma Estratégia de Comunicação Digital',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1200 // 20 minutos
+          },
+          {
+            type: 'video',
+            title: 'Instagram e Facebook para ONGs',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1800 // 30 minutos
+          },
+          {
+            type: 'video',
+            title: 'Criação de Conteúdo Visual com Canva',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1500 // 25 minutos
+          }
+        ]
+      },
+      resources: [
+        {
+          type: 'pdf',
+          title: 'Calendário Editorial para ONGs',
+          url: '/materials/calendario-editorial.pdf'
+        },
+        {
+          type: 'template',
+          title: 'Templates para Redes Sociais',
+          url: '/materials/templates-redes-sociais.zip'
+        }
+      ],
+      assessmentEnabled: true
+    });
+
+    const module4 = await storage.createCourseModule({
+      courseId: techCourse.id,
+      title: 'Gestão de Dados e Segurança Digital',
+      description: 'Proteção de dados, LGPD e segurança digital para ONGs',
+      duration: 7200,
+      orderIndex: 4,
+      content: {
+        type: 'mixed',
+        sections: [
+          {
+            type: 'video',
+            title: 'LGPD para ONGs: O que Você Precisa Saber',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 2100 // 35 minutos
+          },
+          {
+            type: 'video',
+            title: 'Backup e Proteção de Dados',
+            videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            duration: 1200 // 20 minutos
+          },
+          {
+            type: 'text',
+            title: 'Políticas de Privacidade e Termos de Uso',
+            content: 'Como criar e implementar políticas de privacidade adequadas...'
+          }
+        ]
+      },
+      resources: [
+        {
+          type: 'pdf',
+          title: 'Checklist de Conformidade LGPD',
+          url: '/materials/checklist-lgpd.pdf'
+        },
+        {
+          type: 'template',
+          title: 'Modelo de Política de Privacidade',
+          url: '/materials/modelo-politica-privacidade.docx'
+        }
+      ],
+      assessmentEnabled: true
+    });
+
+    console.log('✅ Curso e módulos criados');
+
     console.log('🎉 Dados de teste populados com sucesso!');
     console.log('\n📝 Usuários de teste criados:');
     console.log('Admin: admin@institutoesperanca.org.br / admin123');

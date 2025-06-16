@@ -62,12 +62,14 @@ export default function CoursesPage() {
 
   const startCourseMutation = useMutation({
     mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}/start`, 'POST'),
-    onSuccess: () => {
+    onSuccess: (data, courseId) => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses/progress'] });
       toast({
         title: "Sucesso",
         description: "Curso iniciado com sucesso!",
       });
+      // Redirecionar para a página de progressão do curso
+      navigate(`/courses/${courseId}/progress`);
     },
     onError: () => {
       toast({
