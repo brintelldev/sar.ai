@@ -687,6 +687,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual course (public view)
+  app.get("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const courseId = req.params.id;
+      const organizationId = req.session.organizationId!;
+      
+      const course = await storage.getCourse(courseId, organizationId);
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      
+      // Add enrolled count and completion rate (mock data for now)
+      const courseWithStats = {
+        ...course,
+        enrolledCount: 0,
+        completionRate: 0
+      };
+      
+      res.json(courseWithStats);
+    } catch (error) {
+      console.error("Get course error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Parameterized routes MUST come AFTER all specific routes
   app.get("/api/courses/:id", requireAuth, async (req, res) => {
     try {

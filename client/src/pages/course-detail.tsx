@@ -1,27 +1,26 @@
-import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Play, CheckCircle, Clock, BookOpen, Award, FileText, Video } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-
-interface CourseModule {
-  id: string;
-  title: string;
-  description: string;
-  order: number;
-  content: any;
-  videoUrl?: string;
-  materials: any[];
-  duration: number;
-  isRequired: boolean;
-}
+import { Progress } from "@/components/ui/progress";
+import { MainLayout } from "@/components/layout/main-layout";
+import { 
+  Clock, 
+  BookOpen, 
+  Users, 
+  Award, 
+  PlayCircle, 
+  CheckCircle, 
+  Target,
+  Calendar,
+  Star,
+  Download,
+  Share2,
+  User
+} from "lucide-react";
+import { formatDuration } from "@/lib/utils";
 
 interface Course {
   id: string;
@@ -30,378 +29,419 @@ interface Course {
   category: string;
   level: string;
   duration: number;
-  coverImage?: string;
-  requirements: string[];
-  learningObjectives: string[];
+  coverImage: string | null;
+  status: string;
+  requirements: string | null;
+  learningObjectives: string | null;
+  tags: string[] | null;
   passScore: number;
   certificateEnabled: boolean;
-  modules?: CourseModule[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  enrolledCount: number;
+  completionRate: number;
+}
+
+interface CourseModule {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  videoUrl: string | null;
+  orderIndex: number;
+  duration: number | null;
+  isRequired: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UserProgress {
   id: string;
+  userId: string;
+  courseId: string;
   status: string;
   progress: number;
   completedModules: string[];
-  startedAt?: string;
-  completedAt?: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  lastAccessedAt: string | null;
   timeSpent: number;
 }
 
 export default function CourseDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: courseId } = useParams();
   const [, setLocation] = useLocation();
-  const [currentModule, setCurrentModule] = useState<string>("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: course, isLoading: courseLoading } = useQuery({
-    queryKey: ['/api/courses', id],
-    queryFn: () => apiRequest(`/api/courses/${id}`),
-    enabled: !!id,
+  // Fetch course details
+  const { data: course, isLoading: courseLoading } = useQuery<Course>({
+    queryKey: ['/api/courses', courseId],
+    enabled: !!courseId
   });
 
-  const { data: modules = [], isLoading: modulesLoading } = useQuery({
-    queryKey: ['/api/courses', id, 'modules'],
-    queryFn: () => apiRequest(`/api/courses/${id}/modules`),
-    enabled: !!id,
+  // Fetch course modules
+  const { data: modules, isLoading: modulesLoading } = useQuery<CourseModule[]>({
+    queryKey: ['/api/courses', courseId, 'modules'],
+    enabled: !!courseId
   });
 
-  const { data: userProgress } = useQuery({
-    queryKey: ['/api/courses', id, 'progress'],
-    queryFn: () => apiRequest(`/api/courses/${id}/progress`),
-    enabled: !!id,
+  // Fetch user progress
+  const { data: userProgress } = useQuery<UserProgress>({
+    queryKey: ['/api/courses', courseId, 'progress'],
+    enabled: !!courseId
   });
-
-  const startCourseMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/courses/${id}/start`, 'POST'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', id, 'progress'] });
-      toast({
-        title: "Sucesso",
-        description: "Curso iniciado com sucesso!",
-      });
-    },
-  });
-
-  const completeModuleMutation = useMutation({
-    mutationFn: (moduleId: string) => apiRequest(`/api/courses/${id}/modules/${moduleId}/complete`, 'POST'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', id, 'progress'] });
-      toast({
-        title: "Módulo concluído",
-        description: "Parabéns! Você concluiu este módulo.",
-      });
-    },
-  });
-
-  const isModuleCompleted = (moduleId: string) => {
-    return userProgress?.completedModules?.includes(moduleId) || false;
-  };
-
-  const isModuleAccessible = (moduleIndex: number) => {
-    if (moduleIndex === 0) return true;
-    const previousModule = modules[moduleIndex - 1];
-    return isModuleCompleted(previousModule?.id);
-  };
-
-  const getVideoEmbedUrl = (url: string) => {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.includes('youtu.be') 
-        ? url.split('/').pop()
-        : url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.includes('vimeo.com')) {
-      const videoId = url.split('/').pop();
-      return `https://player.vimeo.com/video/${videoId}`;
-    }
-    return url;
-  };
-
-  const renderModuleContent = (module: CourseModule) => {
-    return (
-      <div className="space-y-6">
-        {/* Video */}
-        {module.videoUrl && (
-          <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-            <iframe
-              src={getVideoEmbedUrl(module.videoUrl)}
-              className="w-full h-full"
-              allowFullScreen
-              title={module.title}
-            />
-          </div>
-        )}
-
-        {/* Content */}
-        {module.content && (
-          <div className="prose max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: module.content.html || module.content }} />
-          </div>
-        )}
-
-        {/* Materials */}
-        {module.materials && module.materials.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Materiais de Apoio</h3>
-            <div className="grid gap-3">
-              {module.materials.map((material: any, index: number) => (
-                <Card key={index}>
-                  <CardContent className="flex items-center p-4">
-                    <FileText className="h-5 w-5 text-blue-600 mr-3" />
-                    <div className="flex-1">
-                      <p className="font-medium">{material.name}</p>
-                      <p className="text-sm text-gray-600">{material.type}</p>
-                    </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={material.url} target="_blank" rel="noopener noreferrer">
-                        Baixar
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Complete Module Button */}
-        <div className="flex justify-center pt-6">
-          <Button
-            onClick={() => completeModuleMutation.mutate(module.id)}
-            disabled={isModuleCompleted(module.id) || completeModuleMutation.isPending}
-            size="lg"
-            className={isModuleCompleted(module.id) ? "bg-green-600" : ""}
-          >
-            {isModuleCompleted(module.id) ? (
-              <>
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Módulo Concluído
-              </>
-            ) : (
-              <>
-                <Play className="h-5 w-5 mr-2" />
-                {completeModuleMutation.isPending ? 'Marcando...' : 'Marcar como Concluído'}
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    );
-  };
 
   if (courseLoading || modulesLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando curso...</p>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
           </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   if (!course) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Curso não encontrado</h2>
-          <Button onClick={() => setLocation('/courses')}>
-            Voltar aos Cursos
-          </Button>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Curso não encontrado</h1>
+            <Button onClick={() => setLocation('/courses')}>
+              Voltar aos Cursos
+            </Button>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
+  const handleStartCourse = async () => {
+    try {
+      const response = await fetch(`/api/courses/${courseId}/start`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        setLocation(`/courses/${courseId}/progress`);
+      }
+    } catch (error) {
+      console.error('Error starting course:', error);
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      'tecnologia': 'bg-blue-100 text-blue-800',
+      'gestão': 'bg-green-100 text-green-800',
+      'empreendedorismo': 'bg-purple-100 text-purple-800',
+      'comunicação': 'bg-orange-100 text-orange-800',
+      'desenvolvimento': 'bg-indigo-100 text-indigo-800'
+    };
+    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getLevelColor = (level: string) => {
+    const colors = {
+      'iniciante': 'bg-green-100 text-green-800',
+      'intermediário': 'bg-yellow-100 text-yellow-800',
+      'avançado': 'bg-red-100 text-red-800'
+    };
+    return colors[level as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const isStarted = userProgress?.status !== 'not_started' && userProgress?.status;
+  const isCompleted = userProgress?.status === 'completed';
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex items-center mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation('/courses')}
-          className="mr-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
-          <p className="text-gray-600 mt-2">{course.description}</p>
-        </div>
-      </div>
-
-      {/* Course Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3">
-          <Tabs value={currentModule || modules[0]?.id} onValueChange={setCurrentModule}>
-            {/* Module Navigation */}
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Módulos do Curso</h2>
-              <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 h-auto bg-transparent">
-                {modules.map((module: CourseModule, index: number) => (
-                  <TabsTrigger
-                    key={module.id}
-                    value={module.id}
-                    disabled={!isModuleAccessible(index)}
-                    className="flex items-center justify-start p-4 h-auto data-[state=active]:bg-blue-50 data-[state=active]:border-blue-200"
-                  >
-                    <div className="flex items-center mr-3">
-                      {isModuleCompleted(module.id) ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      ) : isModuleAccessible(index) ? (
-                        <Play className="h-5 w-5 text-blue-600" />
-                      ) : (
-                        <Clock className="h-5 w-5 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">{module.title}</p>
-                      <p className="text-sm text-gray-600">{module.duration}min</p>
-                    </div>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-
-            {/* Module Content */}
-            {modules.map((module: CourseModule) => (
-              <TabsContent key={module.id} value={module.id}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Video className="h-5 w-5 mr-2" />
-                      {module.title}
-                    </CardTitle>
-                    {module.description && (
-                      <CardDescription>{module.description}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {renderModuleContent(module)}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Progress Card */}
-          {userProgress ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Seu Progresso</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>Progresso</span>
-                      <span>{userProgress.progress}%</span>
-                    </div>
-                    <Progress value={userProgress.progress} className="h-2" />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600">Módulos</p>
-                      <p className="font-medium">
-                        {userProgress.completedModules?.length || 0}/{modules.length}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Tempo gasto</p>
-                      <p className="font-medium">{Math.round(userProgress.timeSpent / 60)}h</p>
-                    </div>
-                  </div>
-
-                  {userProgress.status === 'completed' && (
-                    <Badge className="w-full justify-center bg-green-100 text-green-800">
-                      <Award className="h-4 w-4 mr-2" />
-                      Curso Concluído
+    <MainLayout>
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+          <div className="container mx-auto px-4 py-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge className={getCategoryColor(course.category)}>
+                    {course.category}
+                  </Badge>
+                  <Badge className={getLevelColor(course.level)}>
+                    {course.level}
+                  </Badge>
+                  {course.certificateEnabled && (
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      <Award className="w-3 h-3 mr-1" />
+                      Certificado
                     </Badge>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Iniciar Curso</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => startCourseMutation.mutate()}
-                  disabled={startCourseMutation.isPending}
-                  className="w-full"
-                >
-                  {startCourseMutation.isPending ? 'Iniciando...' : 'Começar Agora'}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                
+                <h1 className="text-4xl font-bold leading-tight">
+                  {course.title}
+                </h1>
+                
+                <p className="text-xl text-blue-100 leading-relaxed">
+                  {course.description}
+                </p>
 
-          {/* Course Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informações do Curso</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600">Categoria</p>
-                <Badge variant="outline" className="capitalize">{course.category}</Badge>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600">Nível</p>
-                <Badge variant="outline" className="capitalize">{course.level}</Badge>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600">Duração total</p>
-                <p className="font-medium">{course.duration}h</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600">Módulos</p>
-                <p className="font-medium">{modules.length}</p>
-              </div>
-
-              {course.certificateEnabled && (
-                <div>
-                  <p className="text-sm text-gray-600">Certificado</p>
-                  <p className="font-medium text-green-600">Disponível</p>
+                {/* Course Stats */}
+                <div className="flex flex-wrap gap-6 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatDuration(course.duration)}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <BookOpen className="w-4 h-4" />
+                    <span>{modules?.length || 0} módulos</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4" />
+                    <span>{course.enrolledCount} inscritos</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-4 h-4" />
+                    <span>{course.completionRate}% de conclusão</span>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Learning Objectives */}
-          {course.learningObjectives && course.learningObjectives.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Objetivos de Aprendizagem</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {course.learningObjectives.map((objective: string, index: number) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{objective}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
+                {/* Progress Bar (if started) */}
+                {isStarted && (
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Seu Progresso</span>
+                      <span className="text-sm">{userProgress.progress}%</span>
+                    </div>
+                    <Progress value={userProgress.progress} className="h-2" />
+                  </div>
+                )}
+              </div>
+
+              {/* Action Card */}
+              <div className="lg:col-span-1">
+                <Card className="bg-white shadow-xl">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {/* Course Image Placeholder */}
+                      <div className="aspect-video bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                        <BookOpen className="w-12 h-12 text-blue-600" />
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="space-y-2">
+                        {!isStarted ? (
+                          <Button 
+                            onClick={handleStartCourse}
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            size="lg"
+                          >
+                            <PlayCircle className="w-5 h-5 mr-2" />
+                            Iniciar Curso
+                          </Button>
+                        ) : isCompleted ? (
+                          <Button 
+                            onClick={() => setLocation(`/courses/${courseId}/progress`)}
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            size="lg"
+                          >
+                            <CheckCircle className="w-5 h-5 mr-2" />
+                            Curso Concluído
+                          </Button>
+                        ) : (
+                          <Button 
+                            onClick={() => setLocation(`/courses/${courseId}/progress`)}
+                            className="w-full bg-orange-600 hover:bg-orange-700"
+                            size="lg"
+                          >
+                            <PlayCircle className="w-5 h-5 mr-2" />
+                            Continuar Curso
+                          </Button>
+                        )}
+
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Share2 className="w-4 h-4 mr-1" />
+                            Compartilhar
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Download className="w-4 h-4 mr-1" />
+                            Material
+                          </Button>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Course Info */}
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Duração:</span>
+                          <span className="font-medium">{formatDuration(course.duration)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Módulos:</span>
+                          <span className="font-medium">{modules?.length || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Nota Mínima:</span>
+                          <span className="font-medium">{course.passScore}%</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Certificado:</span>
+                          <span className="font-medium">
+                            {course.certificateEnabled ? 'Sim' : 'Não'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Learning Objectives */}
+              {course.learningObjectives && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Target className="w-5 h-5 text-green-600" />
+                      <span>Objetivos de Aprendizagem</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none">
+                      {course.learningObjectives.split('\n').map((objective, index) => (
+                        <div key={index} className="flex items-start space-x-2 mb-2">
+                          <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span>{objective}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Course Modules */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
+                    <span>Conteúdo do Curso</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {modules?.map((module, index) => (
+                      <div key={module.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">{module.title}</h3>
+                              {module.description && (
+                                <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            {module.duration && (
+                              <span className="flex items-center space-x-1">
+                                <Clock className="w-3 h-3" />
+                                <span>{formatDuration(module.duration)}</span>
+                              </span>
+                            )}
+                            {userProgress?.completedModules?.includes(module.id) && (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Requirements */}
+              {course.requirements && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <User className="w-5 h-5 text-orange-600" />
+                      <span>Pré-requisitos</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none text-gray-700">
+                      {course.requirements}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Tags */}
+              {course.tags && course.tags.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Tags</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {course.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Course Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Informações do Curso</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Criado em:</span>
+                    <span className="font-medium">
+                      {new Date(course.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Inscritos:</span>
+                    <span className="font-medium">{course.enrolledCount}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Award className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Taxa de conclusão:</span>
+                    <span className="font-medium">{course.completionRate}%</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </MainLayout>
   );
 }
