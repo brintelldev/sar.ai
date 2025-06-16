@@ -1,0 +1,97 @@
+Prompt para Desenvolvimento de Módulo de Capacitação Tecnológica
+Contexto
+Você deve desenvolver um módulo de capacitação tecnológica para ser integrado a uma plataforma existente de ONGs. Este módulo será utilizado para treinar beneficiários das organizações não-governamentais. A funcionalidade deve ser robusta, mas com interface intuitiva e acessível.
+
+Funcionalidades Obrigatórias
+1. Catálogo de Cursos Simples
+Objetivo: Criar uma página de listagem de cursos disponíveis
+Requisitos:
+Exibir nome do curso, descrição breve e status (Disponível/Em Progresso/Concluído)
+Implementar sistema de filtros por categoria e nível de dificuldade
+Interface responsiva e acessível
+Busca por palavras-chave nos títulos e descrições
+2. Conteúdo dos Cursos
+Objetivo: Sistema de upload e exibição de materiais educacionais
+Requisitos:
+Suporte para upload de PDFs, apresentações (PPT, PPTX)
+Integração com links de vídeos do YouTube e Vimeo
+Área de exibição de vídeos incorporados
+Seção para textos explicativos com editor rico
+Organização por módulos sequenciais
+Sistema de navegação entre módulos
+3. Controle de Progresso Básico
+Objetivo: Acompanhar o progresso individual dos usuários
+Requisitos:
+Botão "Marcar como Concluído" para cada módulo
+Cálculo e exibição do percentual de conclusão do curso
+Barra de progresso visual
+Histórico de atividades realizadas
+Salvamento automático do progresso
+4. Avaliação Simples e Certificação
+Objetivo: Sistema de avaliação e emissão de certificados
+Requisitos:
+Questionários de múltipla escolha ao final de cada curso
+Sistema de pontuação mínima para aprovação
+Geração automática de certificados em PDF
+Template de certificado editável e personalizável
+Validação digital dos certificados
+Histórico de certificados obtidos
+5. Gestão de Usuários
+Objetivo: Controle de acesso e histórico de usuários
+Requisitos:
+Sistema de registro e login específico para beneficiários
+Perfil de usuário com dados pessoais
+Histórico completo de cursos realizados
+Dashboard individual com estatísticas de progresso
+Integração com sistema de usuários existente da plataforma
+6. Notificações e Comunicação
+Objetivo: Manter usuários engajados e informados
+Requisitos:
+Envio automático de emails para:
+Novos cursos disponíveis
+Lembretes de cursos em progresso
+Parabenização por conclusão
+Certificados obtidos
+Integração opcional com WhatsApp/Telegram para grupos de suporte
+Sistema de anúncios internos na plataforma
+Notificações push (se aplicável)
+Requisitos Técnicos Gerais
+Integração com Plataforma Existente
+Deve se integrar harmoniosamente à arquitetura atual
+Manter consistência visual com o design system existente
+Utilizar as mesmas tecnologias e padrões da plataforma principal
+Implementar sistema de permissões compatível
+Performance e Acessibilidade
+Interface responsiva para dispositivos móveis
+Carregamento otimizado de vídeos e materiais
+Conformidade com padrões de acessibilidade (WCAG 2.1)
+Suporte para baixa largura de banda
+Funcionalidade offline básica para conteúdos já acessados
+Segurança e Privacidade
+Controle de acesso baseado em perfis
+Criptografia de dados sensíveis
+Logs de auditoria para ações importantes
+Conformidade com LGPD
+Entregáveis Esperados
+Documentação Técnica
+Arquitetura do módulo
+APIs e endpoints
+Guia de integração
+Interface de Usuário
+Protótipos de tela
+Componentes reutilizáveis
+Guia de estilo visual
+Funcionalidades Administrativas
+Painel para criação/edição de cursos
+Relatórios de progresso dos usuários
+Gestão de certificados e templates
+Testes e Validação
+Testes unitários e de integração
+Testes de usabilidade
+Validação de acessibilidade
+Considerações Especiais
+Público-alvo: Beneficiários de ONGs com diferentes níveis de letramento digital
+Simplicidade: Priorizaar facilidade de uso sobre funcionalidades avançadas
+Escalabilidade: Preparar para crescimento no número de usuários e cursos
+Manutenibilidade: Código limpo e bem documentado para futuras atualizações
+Desenvolva este módulo considerando que será utilizado por pessoas que podem ter pouca experiência com tecnologia, mas precisam de uma ferramenta eficaz para seu desenvolvimento profissional e pessoal.

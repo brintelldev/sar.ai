@@ -1,11 +1,15 @@
 import { 
   users, organizations, userRoles, projects, donors, beneficiaries, 
   volunteers, donations, accountsReceivable, accountsPayable, funders,
+  courses, courseModules, userCourseProgress, courseAssessments, certificates,
   type User, type InsertUser, type Organization, type InsertOrganization,
   type UserRole, type InsertUserRole, type Project, type InsertProject,
   type Donor, type InsertDonor, type Beneficiary, type InsertBeneficiary,
   type Volunteer, type InsertVolunteer, type Donation, type InsertDonation,
-  type AccountsReceivable, type AccountsPayable, type Funder
+  type AccountsReceivable, type AccountsPayable, type Funder,
+  type Course, type InsertCourse, type CourseModule, type InsertCourseModule,
+  type UserCourseProgress, type InsertUserCourseProgress,
+  type CourseAssessment, type InsertCourseAssessment, type Certificate
 } from "@shared/schema";
 
 export interface IStorage {
@@ -75,6 +79,30 @@ export interface IStorage {
   // Funders
   getFunders(organizationId: string): Promise<Funder[]>;
   createFunder(funder: any): Promise<Funder>;
+  
+  // Training Courses
+  getCourses(organizationId: string): Promise<Course[]>;
+  getCourse(id: string, organizationId: string): Promise<Course | undefined>;
+  createCourse(course: InsertCourse): Promise<Course>;
+  updateCourse(id: string, organizationId: string, updates: Partial<Course>): Promise<Course | undefined>;
+  
+  // Course Modules
+  getCourseModules(courseId: string): Promise<CourseModule[]>;
+  createCourseModule(module: InsertCourseModule): Promise<CourseModule>;
+  updateCourseModule(id: string, updates: Partial<CourseModule>): Promise<CourseModule | undefined>;
+  
+  // User Course Progress
+  getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | undefined>;
+  updateUserCourseProgress(userId: string, courseId: string, updates: Partial<UserCourseProgress>): Promise<UserCourseProgress>;
+  getUserCourseProgressList(userId: string): Promise<UserCourseProgress[]>;
+  
+  // Course Assessments
+  getCourseAssessments(courseId: string): Promise<CourseAssessment[]>;
+  createCourseAssessment(assessment: InsertCourseAssessment): Promise<CourseAssessment>;
+  
+  // User Certificates
+  getUserCertificates(userId: string): Promise<Certificate[]>;
+  createCertificate(certificate: any): Promise<Certificate>;
 }
 
 export class MemStorage implements IStorage {

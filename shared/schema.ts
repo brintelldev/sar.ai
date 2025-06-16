@@ -296,3 +296,157 @@ export type AccountsReceivable = typeof accountsReceivable.$inferSelect;
 export type AccountsPayable = typeof accountsPayable.$inferSelect;
 export type Funder = typeof funders.$inferSelect;
 export type ProjectFunding = typeof projectFunding.$inferSelect;
+
+// Training Courses
+export const courses = pgTable("courses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // 'tecnologia', 'empreendedorismo', 'direitos', 'saude'
+  level: text("level").notNull(), // 'iniciante', 'intermediario', 'avancado'
+  duration: integer("duration"), // em horas
+  coverImage: text("cover_image"),
+  status: text("status").default("draft"), // 'draft', 'published', 'archived'
+  requirements: jsonb("requirements"), // pré-requisitos
+  learningObjectives: jsonb("learning_objectives"), // objetivos de aprendizagem
+  tags: jsonb("tags"), // tags para busca
+  passScore: integer("pass_score").default(70), // pontuação mínima para aprovação
+  certificateEnabled: boolean("certificate_enabled").default(true),
+  createdBy: uuid("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Course Modules
+export const courseModules = pgTable("course_modules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  order: integer("order").notNull(),
+  content: jsonb("content"), // conteúdo do módulo
+  videoUrl: text("video_url"), // URL do vídeo (YouTube, Vimeo)
+  materials: jsonb("materials"), // PDFs, links, arquivos
+  duration: integer("duration"), // duração em minutos
+  isRequired: boolean("is_required").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// User Course Progress
+export const userCourseProgress = pgTable("user_course_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  status: text("status").default("not_started"), // 'not_started', 'in_progress', 'completed', 'failed'
+  progress: integer("progress").default(0), // porcentagem de conclusão
+  completedModules: jsonb("completed_modules").default("[]"), // array de IDs dos módulos concluídos
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+  timeSpent: integer("time_spent").default(0), // tempo total em minutos
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Course Assessments
+export const courseAssessments = pgTable("course_assessments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  questions: jsonb("questions").notNull(), // array de perguntas
+  passingScore: integer("passing_score").default(70),
+  timeLimit: integer("time_limit"), // tempo limite em minutos
+  maxAttempts: integer("max_attempts").default(3),
+  isRequired: boolean("is_required").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// User Assessment Attempts
+export const userAssessmentAttempts = pgTable("user_assessment_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  assessmentId: uuid("assessment_id").references(() => courseAssessments.id).notNull(),
+  answers: jsonb("answers").notNull(), // respostas do usuário
+  score: integer("score").notNull(),
+  passed: boolean("passed").notNull(),
+  attemptNumber: integer("attempt_number").notNull(),
+  timeSpent: integer("time_spent"), // tempo gasto em minutos
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// Certificates
+export const certificates = pgTable("certificates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  certificateNumber: text("certificate_number").unique().notNull(),
+  issuedAt: timestamp("issued_at", { withTimezone: true }).notNull(),
+  validUntil: timestamp("valid_until", { withTimezone: true }),
+  verificationCode: text("verification_code").unique().notNull(),
+  pdfPath: text("pdf_path"), // caminho do arquivo PDF
+  metadata: jsonb("metadata"), // dados adicionais do certificado
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// Training Notifications
+export const trainingNotifications = pgTable("training_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  userId: uuid("user_id").references(() => users.id),
+  type: text("type").notNull(), // 'new_course', 'course_reminder', 'completion', 'certificate'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  emailSent: boolean("email_sent").default(false),
+  relatedCourseId: uuid("related_course_id").references(() => courses.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// Insert schemas for training module
+export const insertCourseSchema = createInsertSchema(courses).omit({
+  id: true,
+  organizationId: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCourseAssessmentSchema = createInsertSchema(courseAssessments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertUserCourseProgressSchema = createInsertSchema(userCourseProgress).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Types for training module
+export type Course = typeof courses.$inferSelect;
+export type InsertCourse = z.infer<typeof insertCourseSchema>;
+
+export type CourseModule = typeof courseModules.$inferSelect;
+export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
+
+export type UserCourseProgress = typeof userCourseProgress.$inferSelect;
+export type InsertUserCourseProgress = z.infer<typeof insertUserCourseProgressSchema>;
+
+export type CourseAssessment = typeof courseAssessments.$inferSelect;
+export type InsertCourseAssessment = z.infer<typeof insertCourseAssessmentSchema>;
+
+export type UserAssessmentAttempt = typeof userAssessmentAttempts.$inferSelect;
+export type Certificate = typeof certificates.$inferSelect;
+export type TrainingNotification = typeof trainingNotifications.$inferSelect;

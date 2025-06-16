@@ -334,4 +334,135 @@ export class PostgresStorage implements IStorage {
       .returning();
     return result;
   }
+
+  // Training Courses
+  async getCourses(organizationId: string): Promise<Course[]> {
+    return await db
+      .select()
+      .from(courses)
+      .where(eq(courses.organizationId, organizationId))
+      .orderBy(desc(courses.createdAt));
+  }
+
+  async getCourse(id: string, organizationId: string): Promise<Course | undefined> {
+    const [result] = await db
+      .select()
+      .from(courses)
+      .where(and(eq(courses.id, id), eq(courses.organizationId, organizationId)))
+      .limit(1);
+    return result;
+  }
+
+  async createCourse(course: InsertCourse): Promise<Course> {
+    const [result] = await db
+      .insert(courses)
+      .values(course)
+      .returning();
+    return result;
+  }
+
+  async updateCourse(id: string, organizationId: string, updates: Partial<Course>): Promise<Course | undefined> {
+    const [result] = await db
+      .update(courses)
+      .set(updates)
+      .where(and(eq(courses.id, id), eq(courses.organizationId, organizationId)))
+      .returning();
+    return result;
+  }
+
+  // Course Modules
+  async getCourseModules(courseId: string): Promise<CourseModule[]> {
+    return await db
+      .select()
+      .from(courseModules)
+      .where(eq(courseModules.courseId, courseId))
+      .orderBy(courseModules.order);
+  }
+
+  async createCourseModule(module: InsertCourseModule): Promise<CourseModule> {
+    const [result] = await db
+      .insert(courseModules)
+      .values(module)
+      .returning();
+    return result;
+  }
+
+  async updateCourseModule(id: string, updates: Partial<CourseModule>): Promise<CourseModule | undefined> {
+    const [result] = await db
+      .update(courseModules)
+      .set(updates)
+      .where(eq(courseModules.id, id))
+      .returning();
+    return result;
+  }
+
+  // User Course Progress
+  async getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | undefined> {
+    const [result] = await db
+      .select()
+      .from(userCourseProgress)
+      .where(and(eq(userCourseProgress.userId, userId), eq(userCourseProgress.courseId, courseId)))
+      .limit(1);
+    return result;
+  }
+
+  async updateUserCourseProgress(userId: string, courseId: string, updates: Partial<UserCourseProgress>): Promise<UserCourseProgress> {
+    const existing = await this.getUserCourseProgress(userId, courseId);
+    
+    if (existing) {
+      const [result] = await db
+        .update(userCourseProgress)
+        .set(updates)
+        .where(and(eq(userCourseProgress.userId, userId), eq(userCourseProgress.courseId, courseId)))
+        .returning();
+      return result;
+    } else {
+      const newProgress = { userId, courseId, ...updates };
+      const [result] = await db
+        .insert(userCourseProgress)
+        .values(newProgress)
+        .returning();
+      return result;
+    }
+  }
+
+  async getUserCourseProgressList(userId: string): Promise<UserCourseProgress[]> {
+    return await db
+      .select()
+      .from(userCourseProgress)
+      .where(eq(userCourseProgress.userId, userId));
+  }
+
+  // Course Assessments
+  async getCourseAssessments(courseId: string): Promise<CourseAssessment[]> {
+    return await db
+      .select()
+      .from(courseAssessments)
+      .where(eq(courseAssessments.courseId, courseId));
+  }
+
+  async createCourseAssessment(assessment: InsertCourseAssessment): Promise<CourseAssessment> {
+    const [result] = await db
+      .insert(courseAssessments)
+      .values(assessment)
+      .returning();
+    return result;
+  }
+
+  // User Certificates
+  async getUserCertificates(userId: string): Promise<Certificate[]> {
+    return await db
+      .select()
+      .from(certificates)
+      .where(eq(certificates.userId, userId))
+      .orderBy(desc(certificates.issuedAt));
+  }
+
+  async createCertificate(certificate: any): Promise<Certificate> {
+    const [result] = await db
+      .insert(certificates)
+      .values(certificate)
+      .returning();
+    return result;
+  }
 }
