@@ -89,10 +89,7 @@ export function CourseEditor() {
   });
 
   const updateCourseMutation = useMutation({
-    mutationFn: (data: Partial<Course>) => apiRequest(`/api/courses/${courseId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data)
-    }),
+    mutationFn: (data: Partial<Course>) => apiRequest(`/api/courses/${courseId}`, 'PATCH', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
       toast({
@@ -103,10 +100,7 @@ export function CourseEditor() {
   });
 
   const createModuleMutation = useMutation({
-    mutationFn: (moduleData: any) => apiRequest(`/api/courses/${courseId}/modules`, {
-      method: 'POST',
-      body: JSON.stringify(moduleData)
-    }),
+    mutationFn: (moduleData: any) => apiRequest(`/api/courses/${courseId}/modules`, 'POST', moduleData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
       setIsModuleDialogOpen(false);
@@ -120,10 +114,7 @@ export function CourseEditor() {
 
   const updateModuleMutation = useMutation({
     mutationFn: ({ moduleId, data }: { moduleId: string; data: any }) => 
-      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-      }),
+      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'PATCH', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
       setIsModuleDialogOpen(false);
@@ -136,9 +127,7 @@ export function CourseEditor() {
   });
 
   const deleteModuleMutation = useMutation({
-    mutationFn: (moduleId: string) => apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: (moduleId: string) => apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'DELETE'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
       toast({
