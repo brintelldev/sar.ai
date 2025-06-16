@@ -293,6 +293,13 @@ export default function CoursesPage() {
               </CardContent>
 
               <CardFooter className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation(`/courses/${course.id}`)}
+                  className="flex-1"
+                >
+                  Ver Detalhes
+                </Button>
                 {!progress || progress.status === 'not_started' ? (
                   <Button 
                     onClick={() => startCourseMutation.mutate(course.id)}
