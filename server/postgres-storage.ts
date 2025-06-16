@@ -396,7 +396,7 @@ export class PostgresStorage implements IStorage {
       .select()
       .from(courseModules)
       .where(eq(courseModules.courseId, courseId))
-      .orderBy(courseModules.order);
+      .orderBy(courseModules.orderIndex);
   }
 
   async createCourseModule(module: InsertCourseModule): Promise<CourseModule> {
