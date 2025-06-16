@@ -41,15 +41,18 @@ export default function CoursesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: courses = [], isLoading } = useQuery({
+  const { data: coursesData, isLoading } = useQuery({
     queryKey: ['/api/courses'],
     queryFn: () => apiRequest('/api/courses'),
   });
 
-  const { data: userProgress = [] } = useQuery({
+  const { data: progressData } = useQuery({
     queryKey: ['/api/courses/progress'],
     queryFn: () => apiRequest('/api/courses/progress'),
   });
+
+  const courses = Array.isArray(coursesData) ? coursesData : [];
+  const userProgress = Array.isArray(progressData) ? progressData : [];
 
   const startCourseMutation = useMutation({
     mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}/start`, 'POST'),
