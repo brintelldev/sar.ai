@@ -1,4 +1,4 @@
-import { eq, and, count, desc, sql } from 'drizzle-orm';
+import { eq, and, count, desc, sql, asc } from 'drizzle-orm';
 import { db } from './db';
 import { 
   organizations, 
@@ -396,7 +396,7 @@ export class PostgresStorage implements IStorage {
       .select()
       .from(courseModules)
       .where(eq(courseModules.courseId, courseId))
-      .orderBy(courseModules.orderIndex);
+      .orderBy(asc(courseModules.orderIndex));
   }
 
   async createCourseModule(module: InsertCourseModule): Promise<CourseModule> {
