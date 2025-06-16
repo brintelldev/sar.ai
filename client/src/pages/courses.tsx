@@ -295,7 +295,7 @@ export default function CoursesPage() {
               <CardFooter className="flex gap-2">
                 <Button 
                   variant="outline"
-                  onClick={() => setLocation(`/courses/${course.id}`)}
+                  onClick={() => navigate(`/courses/${course.id}`)}
                   className="flex-1"
                 >
                   Ver Detalhes
