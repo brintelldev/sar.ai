@@ -656,8 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : req.body.duration
       };
       
-      console.log("Course data being sent:", courseData);
-      console.log("User ID from session:", req.session.userId);
+
       
       const course = await storage.createCourse(courseData);
       res.status(201).json(course);

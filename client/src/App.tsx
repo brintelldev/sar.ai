@@ -25,6 +25,7 @@ import Courses from "@/pages/courses";
 import CourseDetail from "@/pages/course-detail";
 import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
+import { ModuleEditor } from "@/pages/module-editor";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
