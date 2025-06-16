@@ -44,12 +44,12 @@ export default function CoursesPage() {
 
   const { data: coursesData, isLoading } = useQuery({
     queryKey: ['/api/courses'],
-    queryFn: () => apiRequest('/api/courses'),
+    queryFn: () => apiRequest('/api/courses')
   });
 
   const { data: progressData } = useQuery({
     queryKey: ['/api/courses/progress'],
-    queryFn: () => apiRequest('/api/courses/progress'),
+    queryFn: () => apiRequest('/api/courses/progress')
   });
 
   const courses = Array.isArray(coursesData) ? coursesData : [];
@@ -150,48 +150,48 @@ export default function CoursesPage() {
           </div>
         </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="md:col-span-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar cursos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Buscar cursos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
+          
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas as categorias</SelectItem>
+              <SelectItem value="tecnologia">Tecnologia</SelectItem>
+              <SelectItem value="empreendedorismo">Empreendedorismo</SelectItem>
+              <SelectItem value="direitos">Direitos</SelectItem>
+              <SelectItem value="saude">Saúde</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={levelFilter} onValueChange={setLevelFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Nível" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os níveis</SelectItem>
+              <SelectItem value="iniciante">Iniciante</SelectItem>
+              <SelectItem value="intermediario">Intermediário</SelectItem>
+              <SelectItem value="avancado">Avançado</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todas as categorias</SelectItem>
-            <SelectItem value="tecnologia">Tecnologia</SelectItem>
-            <SelectItem value="empreendedorismo">Empreendedorismo</SelectItem>
-            <SelectItem value="direitos">Direitos</SelectItem>
-            <SelectItem value="saude">Saúde</SelectItem>
-          </SelectContent>
-        </Select>
 
-        <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Nível" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os níveis</SelectItem>
-            <SelectItem value="iniciante">Iniciante</SelectItem>
-            <SelectItem value="intermediario">Intermediário</SelectItem>
-            <SelectItem value="avancado">Avançado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
