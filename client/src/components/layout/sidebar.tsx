@@ -1,162 +1,102 @@
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
-  FolderKanban, 
-  Heart, 
   Users, 
-  UserCheck, 
+  Heart, 
+  HandHeart, 
   DollarSign, 
-  ArrowDown, 
-  ArrowUp, 
-  FileText, 
-  Handshake,
-  Shield,
-  BarChart3
-} from 'lucide-react';
-import { Link, useLocation } from 'wouter';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+  FolderOpen,
+  BookOpen,
+  TrendingUp,
+  Receipt,
+  CreditCard,
+  Building2
+} from "lucide-react";
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-];
-
-const managementNav = [
-  { name: 'Projetos', href: '/projects', icon: FolderKanban },
-  { name: 'Doadores', href: '/donors', icon: Heart },
-  { name: 'Beneficiários', href: '/beneficiaries', icon: Users },
-  { name: 'Voluntários', href: '/volunteers', icon: UserCheck },
-];
-
-const financialNav = [
-  { name: 'Doações', href: '/donations', icon: DollarSign },
-  { name: 'Contas a Receber', href: '/accounts-receivable', icon: ArrowDown },
-  { name: 'Contas a Pagar', href: '/accounts-payable', icon: ArrowUp },
-  { name: 'Relatórios', href: '/reports', icon: FileText },
-];
-
-const partnershipsNav = [
-  { name: 'Financiadores', href: '/funders', icon: Handshake },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Projetos", href: "/projects", icon: FolderOpen },
+  { name: "Pessoas Atendidas", href: "/beneficiaries", icon: Users },
+  { name: "Voluntários", href: "/volunteers", icon: HandHeart },
+  { name: "Doadores", href: "/donors", icon: Heart },
+  { name: "Doações", href: "/donations", icon: DollarSign },
+  { name: "Capacitação", href: "/courses", icon: BookOpen },
+  { 
+    name: "Financeiro", 
+    href: "/financial", 
+    icon: TrendingUp,
+    children: [
+      { name: "Contas a Receber", href: "/accounts-receivable", icon: Receipt },
+      { name: "Contas a Pagar", href: "/accounts-payable", icon: CreditCard },
+      { name: "Relatórios", href: "/reports", icon: TrendingUp },
+      { name: "Financiadores", href: "/funders", icon: Building2 },
+    ]
+  },
 ];
 
 export function Sidebar() {
   const [location] = useLocation();
 
-  const isActive = (href: string) => {
-    if (href === '/') {
-      return location === '/';
-    }
-    return location.startsWith(href);
-  };
-
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-6">
-        <nav className="space-y-2">
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+      <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+        <nav className="flex-1 space-y-1 px-2">
           {navigation.map((item) => {
-            const Icon = item.icon;
+            const isActive = location === item.href || 
+                           (item.children && item.children.some(child => location === child.href));
+            
+            if (item.children) {
+              return (
+                <div key={item.name} className="space-y-1">
+                  <div className={cn(
+                    "flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                    isActive 
+                      ? "bg-blue-50 text-blue-700" 
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )}>
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </div>
+                  <div className="ml-8 space-y-1">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        className={cn(
+                          "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                          location === child.href
+                            ? "bg-blue-50 text-blue-700"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                      >
+                        <child.icon className="mr-3 h-4 w-4" />
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
             return (
-              <Link 
-                key={item.name} 
+              <Link
+                key={item.name}
                 href={item.href}
                 className={cn(
-                  'sidebar-nav-item',
-                  isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
+                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                  location === item.href
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span>{item.name}</span>
+                <item.icon className="mr-3 h-5 w-5" />
+                {item.name}
               </Link>
             );
           })}
-          
-          <div className="pt-4">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Gestão
-            </div>
-            <div className="space-y-1">
-              {managementNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link 
-                    key={item.name} 
-                    href={item.href}
-                    className={cn(
-                      'sidebar-nav-item',
-                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Financeiro
-            </div>
-            <div className="space-y-1">
-              {financialNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link 
-                    key={item.name} 
-                    href={item.href}
-                    className={cn(
-                      'sidebar-nav-item',
-                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Parcerias
-            </div>
-            <div className="space-y-1">
-              {partnershipsNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link 
-                    key={item.name} 
-                    href={item.href}
-                    className={cn(
-                      'sidebar-nav-item',
-                      isActive(item.href) && 'sidebar-nav-item-active bg-primary/10 text-primary font-medium'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
         </nav>
       </div>
-
-      {/* LGPD Compliance Indicator */}
-      <div className="mt-auto p-6">
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <span className="text-sm font-medium text-green-800 dark:text-green-200">
-              LGPD Conforme
-            </span>
-          </div>
-          <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-            Dados protegidos e políticas ativas
-          </p>
-        </div>
-      </div>
-    </aside>
+    </div>
   );
 }
