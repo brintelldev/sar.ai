@@ -305,96 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Course management routes - after progress routes to avoid UUID parsing conflicts
-  app.get("/api/courses/:id", requireAuth, async (req, res) => {
-    try {
-      const course = await storage.getCourse(req.params.id, req.session.organizationId!);
-      if (!course) {
-        return res.status(404).json({ message: "Curso não encontrado" });
-      }
-      res.json(course);
-    } catch (error) {
-      console.error("Get course error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
 
-  app.patch("/api/courses/:id", requireAuth, async (req, res) => {
-    try {
-      const course = await storage.updateCourse(req.params.id, req.session.organizationId!, req.body);
-      if (!course) {
-        return res.status(404).json({ message: "Curso não encontrado" });
-      }
-      res.json(course);
-    } catch (error) {
-      console.error("Update course error:", error);
-      res.status(500).json({ message: "Erro ao atualizar curso" });
-    }
-  });
-
-  app.delete("/api/courses/:id", requireAuth, async (req, res) => {
-    try {
-      const success = await storage.deleteCourse(req.params.id, req.session.organizationId!);
-      if (!success) {
-        return res.status(404).json({ message: "Curso não encontrado" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      console.error("Delete course error:", error);
-      res.status(500).json({ message: "Erro ao excluir curso" });
-    }
-  });
-
-  app.get("/api/courses/:id/modules", requireAuth, async (req, res) => {
-    try {
-      const modules = await storage.getCourseModules(req.params.id);
-      res.json(modules);
-    } catch (error) {
-      console.error("Get course modules error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
-
-  app.post("/api/courses/:id/modules", requireAuth, async (req, res) => {
-    try {
-      const moduleData = {
-        ...req.body,
-        courseId: req.params.id
-      };
-      
-      const module = await storage.createCourseModule(moduleData);
-      res.status(201).json(module);
-    } catch (error) {
-      console.error("Create course module error:", error);
-      res.status(500).json({ message: "Erro ao criar módulo" });
-    }
-  });
-
-  app.patch("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
-    try {
-      const module = await storage.updateCourseModule(req.params.moduleId, req.body);
-      if (!module) {
-        return res.status(404).json({ message: "Módulo não encontrado" });
-      }
-      res.json(module);
-    } catch (error) {
-      console.error("Update course module error:", error);
-      res.status(500).json({ message: "Erro ao atualizar módulo" });
-    }
-  });
-
-  app.delete("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
-    try {
-      const success = await storage.deleteCourseModule(req.params.moduleId);
-      if (!success) {
-        return res.status(404).json({ message: "Módulo não encontrado" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      console.error("Delete course module error:", error);
-      res.status(500).json({ message: "Erro ao excluir módulo" });
-    }
-  });
 
   // Dashboard routes
   app.get("/api/dashboard/metrics", requireAuth, requireOrganization, async (req, res) => {
@@ -738,17 +649,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const courseData = {
         ...req.body,
         organizationId: req.session.organizationId!,
+        createdBy: req.session.userId!, // Add required created_by field
         // Convert duration to minutes if it's a string
         duration: typeof req.body.duration === 'string' 
           ? parseInt(req.body.duration.replace(/\D/g, '')) * 60 // Convert hours to minutes
           : req.body.duration
       };
       
+      console.log("Course data being sent:", courseData);
+      console.log("User ID from session:", req.session.userId);
+      
       const course = await storage.createCourse(courseData);
       res.status(201).json(course);
     } catch (error) {
       console.error("Create course error:", error);
       res.status(500).json({ message: "Erro ao criar curso" });
+    }
+  });
+
+  // Parameterized routes MUST come AFTER all specific routes
+  app.get("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const course = await storage.getCourse(req.params.id, req.session.organizationId!);
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      res.json(course);
+    } catch (error) {
+      console.error("Get course error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.patch("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const course = await storage.updateCourse(req.params.id, req.session.organizationId!, req.body);
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      res.json(course);
+    } catch (error) {
+      console.error("Update course error:", error);
+      res.status(500).json({ message: "Erro ao atualizar curso" });
+    }
+  });
+
+  app.delete("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteCourse(req.params.id, req.session.organizationId!);
+      if (!success) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete course error:", error);
+      res.status(500).json({ message: "Erro ao excluir curso" });
+    }
+  });
+
+  app.get("/api/courses/:id/modules", requireAuth, async (req, res) => {
+    try {
+      const modules = await storage.getCourseModules(req.params.id);
+      res.json(modules);
+    } catch (error) {
+      console.error("Get course modules error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses/:id/modules", requireAuth, async (req, res) => {
+    try {
+      const moduleData = {
+        ...req.body,
+        courseId: req.params.id
+      };
+      
+      const module = await storage.createCourseModule(moduleData);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Create course module error:", error);
+      res.status(500).json({ message: "Erro ao criar módulo" });
+    }
+  });
+
+  app.patch("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const module = await storage.updateCourseModule(req.params.moduleId, req.body);
+      if (!module) {
+        return res.status(404).json({ message: "Módulo não encontrado" });
+      }
+      res.json(module);
+    } catch (error) {
+      console.error("Update course module error:", error);
+      res.status(500).json({ message: "Erro ao atualizar módulo" });
+    }
+  });
+
+  app.delete("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteCourseModule(req.params.moduleId);
+      if (!success) {
+        return res.status(404).json({ message: "Módulo não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete course module error:", error);
+      res.status(500).json({ message: "Erro ao excluir módulo" });
     }
   });
 
