@@ -26,8 +26,7 @@ export interface AuthState {
 }
 
 export async function login(email: string, password: string): Promise<AuthState> {
-  const response = await apiRequest('/api/auth/login', 'POST', { email, password });
-  return response.json();
+  return await apiRequest('/api/auth/login', 'POST', { email, password });
 }
 
 export async function register(data: {
@@ -37,8 +36,7 @@ export async function register(data: {
   organizationName: string;
   organizationSlug: string;
 }): Promise<AuthState> {
-  const response = await apiRequest('/api/auth/register', 'POST', data);
-  return response.json();
+  return await apiRequest('/api/auth/register', 'POST', data);
 }
 
 export async function logout(): Promise<void> {
@@ -46,11 +44,9 @@ export async function logout(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<AuthState> {
-  const response = await apiRequest('/api/auth/me', 'GET');
-  return response.json();
+  return await apiRequest('/api/auth/me', 'GET');
 }
 
 export async function switchOrganization(organizationId: string): Promise<{ organization: Organization }> {
-  const response = await apiRequest('/api/organizations/switch', 'POST', { organizationId });
-  return response.json();
+  return await apiRequest('/api/organizations/switch', 'POST', { organizationId });
 }
