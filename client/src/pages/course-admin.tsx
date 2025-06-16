@@ -95,23 +95,7 @@ export function CourseAdmin() {
     }
   });
 
-  const deleteCourseMutation = useMutation({
-    mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}`, 'DELETE'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses/admin'] });
-      toast({
-        title: "Curso excluído",
-        description: "O curso foi excluído com sucesso."
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir curso.",
-        variant: "destructive"
-      });
-    }
-  });
+
 
   const handleCreateCourse = (formData: FormData) => {
     const durationText = formData.get('duration') as string;
