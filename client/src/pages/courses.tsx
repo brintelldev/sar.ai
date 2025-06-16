@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { MainLayout } from "@/components/layout/main-layout";
 
 interface Course {
   id: string;
@@ -123,28 +124,31 @@ export default function CoursesPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando cursos...</p>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Carregando cursos...</p>
+            </div>
           </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Capacitação Tecnológica</h1>
-          <p className="mt-2 text-gray-600">
-            Desenvolva suas habilidades com nossos cursos especializados
-          </p>
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Capacitação Tecnológica</h1>
+            <p className="mt-2 text-gray-600">
+              Desenvolva suas habilidades com nossos cursos especializados
+            </p>
+          </div>
         </div>
-      </div>
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -317,5 +321,6 @@ export default function CoursesPage() {
         </div>
       )}
     </div>
+    </MainLayout>
   );
 }
