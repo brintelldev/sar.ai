@@ -37,11 +37,17 @@ export function CourseActionsModal({ course, action, isOpen, onClose }: CourseAc
 
   const deleteMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      return apiRequest(`/api/courses/${courseId}`, {
+      const response = await fetch(`/api/courses/${courseId}`, {
         method: 'DELETE',
         body: JSON.stringify({ confirmation: "DELETE" }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
       });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao excluir curso');
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -63,11 +69,17 @@ export function CourseActionsModal({ course, action, isOpen, onClose }: CourseAc
 
   const statusMutation = useMutation({
     mutationFn: async ({ courseId, status }: { courseId: string; status: string }) => {
-      return apiRequest(`/api/courses/${courseId}/status`, {
+      const response = await fetch(`/api/courses/${courseId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
       });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao alterar status');
+      }
+      return response.json();
     },
     onSuccess: (_, variables) => {
       const actionText = variables.status === 'inactive' ? 'desativado' : 'ativado';

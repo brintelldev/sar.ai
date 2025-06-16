@@ -24,8 +24,13 @@ import {
   Youtube,
   FileText,
   Settings,
-  BarChart3
+  BarChart3,
+  Power,
+  PowerOff,
+  MoreVertical
 } from "lucide-react";
+import { CourseActionsModal } from "@/components/course/course-actions-modal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Course {
   id: string;
@@ -44,8 +49,23 @@ export function CourseAdmin() {
   const [location, navigate] = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedAction, setSelectedAction] = useState<'delete' | 'deactivate' | 'activate' | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const openActionModal = (course: Course, action: 'delete' | 'deactivate' | 'activate') => {
+    setSelectedCourse(course);
+    setSelectedAction(action);
+    setActionModalOpen(true);
+  };
+
+  const closeActionModal = () => {
+    setSelectedCourse(null);
+    setSelectedAction(null);
+    setActionModalOpen(false);
+  };
 
   const { data: courses, isLoading, error } = useQuery({
     queryKey: ['/api/courses/admin'],
@@ -386,15 +406,39 @@ export function CourseAdmin() {
                           <Eye className="w-4 h-4 mr-1" />
                           Visualizar
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteCourseMutation.mutate(course.id)}
-                          disabled={deleteCourseMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Excluir
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {course.status === 'published' ? (
+                              <DropdownMenuItem
+                                onClick={() => openActionModal(course, 'deactivate')}
+                                className="text-orange-600"
+                              >
+                                <PowerOff className="w-4 h-4 mr-2" />
+                                Desativar Curso
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={() => openActionModal(course, 'activate')}
+                                className="text-green-600"
+                              >
+                                <Power className="w-4 h-4 mr-2" />
+                                Ativar Curso
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => openActionModal(course, 'delete')}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Excluir Permanentemente
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -403,6 +447,14 @@ export function CourseAdmin() {
             )}
           </CardContent>
         </Card>
+
+        {/* Course Actions Modal */}
+        <CourseActionsModal
+          course={selectedCourse}
+          action={selectedAction}
+          isOpen={actionModalOpen}
+          onClose={closeActionModal}
+        />
       </div>
     </MainLayout>
   );
