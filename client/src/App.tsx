@@ -23,6 +23,8 @@ import Settings from "@/pages/settings";
 import Support from "@/pages/support";
 import Courses from "@/pages/courses";
 import CourseDetail from "@/pages/course-detail";
+import { CourseAdmin } from "@/pages/course-admin";
+import { CourseEditor } from "@/pages/course-editor";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -130,6 +132,16 @@ function Router() {
       <Route path="/courses/:id">
         <ProtectedRoute>
           <CourseDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/course-admin">
+        <ProtectedRoute>
+          <CourseAdmin />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/course-admin/:id">
+        <ProtectedRoute>
+          <CourseEditor />
         </ProtectedRoute>
       </Route>
       <Route path="/support">

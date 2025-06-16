@@ -600,52 +600,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Training Courses routes
   app.get("/api/courses", requireAuth, async (req, res) => {
     try {
-      // Mock data for demonstration
-      const courses = [
-        {
-          id: "1",
-          title: "Introdução à Tecnologia Digital",
-          description: "Aprenda os conceitos básicos de tecnologia digital e como ela pode transformar sua vida e trabalho.",
-          category: "tecnologia",
-          level: "iniciante",
-          duration: 4,
-          coverImage: null,
-          status: "published",
-          passScore: 70,
-          certificateEnabled: true,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "2",
-          title: "Empreendedorismo Social",
-          description: "Desenvolva habilidades empreendedoras focadas no impacto social e criação de negócios sustentáveis.",
-          category: "empreendedorismo",
-          level: "intermediario",
-          duration: 6,
-          coverImage: null,
-          status: "published",
-          passScore: 75,
-          certificateEnabled: true,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "3",
-          title: "Direitos das Mulheres",
-          description: "Conheça os direitos fundamentais das mulheres e como buscar apoio em situações de violência.",
-          category: "direitos",
-          level: "iniciante",
-          duration: 3,
-          coverImage: null,
-          status: "published",
-          passScore: 70,
-          certificateEnabled: true,
-          createdAt: new Date().toISOString()
-        }
-      ];
+      const courses = await storage.getCourses(req.session.organizationId!);
       res.json(courses);
     } catch (error) {
       console.error("Get courses error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/courses/admin", requireAuth, async (req, res) => {
+    try {
+      const courses = await storage.getCourses(req.session.organizationId!);
+      res.json(courses);
+    } catch (error) {
+      console.error("Get courses for admin error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses", requireAuth, async (req, res) => {
+    try {
+      const courseData = {
+        ...req.body,
+        organizationId: req.session.organizationId!
+      };
+      
+      const course = await storage.createCourse(courseData);
+      res.status(201).json(course);
+    } catch (error) {
+      console.error("Create course error:", error);
+      res.status(500).json({ message: "Erro ao criar curso" });
     }
   });
 
