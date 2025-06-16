@@ -53,10 +53,7 @@ export function CourseAdmin() {
   });
 
   const createCourseMutation = useMutation({
-    mutationFn: (courseData: any) => apiRequest('/api/courses', {
-      method: 'POST',
-      body: JSON.stringify(courseData)
-    }),
+    mutationFn: (courseData: any) => apiRequest('/api/courses', 'POST', courseData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
       setIsCreateDialogOpen(false);
@@ -75,9 +72,7 @@ export function CourseAdmin() {
   });
 
   const deleteCourseMutation = useMutation({
-    mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}`, 'DELETE'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
       toast({
