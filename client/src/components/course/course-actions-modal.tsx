@@ -47,7 +47,8 @@ export function CourseActionsModal({ course, action, isOpen, onClose }: CourseAc
         const error = await response.json();
         throw new Error(error.message || 'Erro ao excluir curso');
       }
-      return response.json();
+      // Status 204 returns no content, so return empty object
+      return response.status === 204 ? {} : response.json();
     },
     onSuccess: () => {
       toast({
@@ -177,19 +178,21 @@ export function CourseActionsModal({ course, action, isOpen, onClose }: CourseAc
             {config.icon}
             <span>{config.title}</span>
           </DialogTitle>
-          <DialogDescription className="space-y-2">
-            <p>{config.description}</p>
-            <div className="bg-gray-50 p-3 rounded border">
-              <p className="font-medium">Curso: {course.title}</p>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                  {course.status}
-                </Badge>
-                {course.enrolledCount !== undefined && (
-                  <span className="text-sm text-gray-600">
-                    {course.enrolledCount} alunos matriculados
-                  </span>
-                )}
+          <DialogDescription>
+            <div className="space-y-2">
+              <p>{config.description}</p>
+              <div className="bg-gray-50 p-3 rounded border">
+                <p className="font-medium">Curso: {course.title}</p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
+                    {course.status}
+                  </Badge>
+                  {course.enrolledCount !== undefined && (
+                    <span className="text-sm text-gray-600">
+                      {course.enrolledCount} alunos matriculados
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </DialogDescription>
