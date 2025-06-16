@@ -689,16 +689,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Training Courses routes
-  app.get("/api/courses", requireAuth, async (req, res) => {
-    try {
-      const courses = await storage.getCourses(req.session.organizationId!);
-      res.json(courses);
-    } catch (error) {
-      console.error("Get courses error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
-
+  // ALL specific routes must come before parameterized routes to avoid UUID parsing conflicts
+  
+  // Admin and progress routes first
   app.get("/api/courses/admin", requireAuth, async (req, res) => {
     try {
       const courses = await storage.getCourses(req.session.organizationId!);
@@ -709,22 +702,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/courses", requireAuth, async (req, res) => {
-    try {
-      const courseData = {
-        ...req.body,
-        organizationId: req.session.organizationId!
-      };
-      
-      const course = await storage.createCourse(courseData);
-      res.status(201).json(course);
-    } catch (error) {
-      console.error("Create course error:", error);
-      res.status(500).json({ message: "Erro ao criar curso" });
-    }
-  });
-
-  // Progress routes must come before parameterized routes to avoid UUID parsing errors
   app.get("/api/courses/progress", requireAuth, async (req, res) => {
     try {
       const progress = [
@@ -742,6 +719,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get course progress error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // General courses routes
+  app.get("/api/courses", requireAuth, async (req, res) => {
+    try {
+      const courses = await storage.getCourses(req.session.organizationId!);
+      res.json(courses);
+    } catch (error) {
+      console.error("Get courses error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses", requireAuth, async (req, res) => {
+    try {
+      const courseData = {
+        ...req.body,
+        organizationId: req.session.organizationId!,
+        // Convert duration to minutes if it's a string
+        duration: typeof req.body.duration === 'string' 
+          ? parseInt(req.body.duration.replace(/\D/g, '')) * 60 // Convert hours to minutes
+          : req.body.duration
+      };
+      
+      const course = await storage.createCourse(courseData);
+      res.status(201).json(course);
+    } catch (error) {
+      console.error("Create course error:", error);
+      res.status(500).json({ message: "Erro ao criar curso" });
     }
   });
 
