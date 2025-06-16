@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { CertificateGenerator, CertificatePreview } from "@/components/certificate/certificate-generator";
 import { 
   PlayCircle, 
   CheckCircle2, 
@@ -94,7 +95,7 @@ export default function CourseProgress() {
         },
         {
           id: 'module-2',
-          courseId: courseId,
+          courseId: courseId!,
           title: 'Desenvolvimento Prático',
           description: 'Aplicação prática dos conceitos aprendidos',
           content: {
@@ -109,7 +110,7 @@ export default function CourseProgress() {
         },
         {
           id: 'module-3',
-          courseId: courseId,
+          courseId: courseId!,
           title: 'Projeto Final',
           description: 'Desenvolvimento do projeto final do curso',
           content: {
@@ -230,7 +231,7 @@ export default function CourseProgress() {
     );
   }
 
-  const sortedModules = modules?.sort((a: CourseModule, b: CourseModule) => a.orderIndex - b.orderIndex) || [];
+  const sortedModules = modules?.sort((a: any, b: any) => a.orderIndex - b.orderIndex) || [];
   const progress = userProgress || { 
     progress: 0, 
     completedModules: [], 
@@ -363,7 +364,7 @@ export default function CourseProgress() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {sortedModules.map((module: CourseModule, index: number) => {
+            {sortedModules.map((module: any, index: number) => {
               const isCompleted = progress.completedModules?.includes(module.id);
               const isCurrent = progress.currentModuleId === module.id;
               const isPrevious = index < completedCount;
@@ -433,6 +434,50 @@ export default function CourseProgress() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção de Certificado - Aparece quando o curso está 100% completo */}
+      {progress.progress === 100 && course && (
+        <Card className="mt-6 border-green-200 bg-green-50">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <Award className="w-16 h-16 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-green-800">
+              Parabéns! Você concluiu o curso!
+            </CardTitle>
+            <CardDescription className="text-green-700">
+              Seu certificado está disponível para download
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Preview do Certificado */}
+              <CertificatePreview 
+                certificateData={{
+                  studentName: "Usuário Exemplo", // Em produção, viria dos dados do usuário autenticado
+                  courseName: course.title,
+                  organizationName: "Instituto Esperança", // Em produção, viria da organização atual
+                  completionDate: new Date().toISOString(),
+                  duration: Math.round((course.duration || 0) / 60),
+                  certificateId: `CERT-${course.id.slice(0, 8).toUpperCase()}`,
+                  instructorName: "Equipe de Capacitação"
+                }}
+              />
+              
+              {/* Botão para página de geração */}
+              <div className="text-center">
+                <Button 
+                  onClick={() => navigate(`/courses/${courseId}/certificate`)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Gerar Certificado Completo
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
