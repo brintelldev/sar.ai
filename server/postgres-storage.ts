@@ -439,12 +439,28 @@ export class PostgresStorage implements IStorage {
     if (existing) {
       const [result] = await db
         .update(userCourseProgress)
-        .set(updates)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
         .where(and(eq(userCourseProgress.userId, userId), eq(userCourseProgress.courseId, courseId)))
         .returning();
       return result;
     } else {
-      const newProgress = { userId, courseId, ...updates };
+      // Create new progress record with proper types
+      const newProgress = {
+        userId,
+        courseId,
+        status: updates.status || "not_started",
+        progress: updates.progress || 0,
+        completedModules: updates.completedModules || [],
+        startedAt: updates.startedAt || new Date(),
+        timeSpent: updates.timeSpent || 0,
+        lastAccessedAt: updates.lastAccessedAt || new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
       const [result] = await db
         .insert(userCourseProgress)
         .values(newProgress)

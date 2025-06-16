@@ -832,17 +832,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let progress = await storage.getUserCourseProgress(userId, courseId);
       
       if (!progress) {
-        // Create new progress
-        progress = await storage.updateUserCourseProgress(userId, courseId, {
+        // Create new progress using SQL directly
+        const now = new Date();
+        const newProgressData = {
+          userId,
+          courseId,
           status: "in_progress",
           progress: 0,
           completedModules: [],
-          currentModuleId: null,
-          startedAt: new Date().toISOString(),
+          startedAt: now,
           timeSpent: 0,
-          lastAccessedAt: new Date().toISOString(),
-          certificateGenerated: false
-        });
+          lastAccessedAt: now
+        };
+        
+        progress = await storage.updateUserCourseProgress(userId, courseId, newProgressData);
       }
       
       res.json(progress);
