@@ -145,6 +145,11 @@ function Router() {
           <CourseEditor />
         </ProtectedRoute>
       </Route>
+      <Route path="/admin/courses/:courseId/modules">
+        <ProtectedRoute>
+          <ModuleEditor />
+        </ProtectedRoute>
+      </Route>
       <Route path="/support">
         <ProtectedRoute>
           <Support />
