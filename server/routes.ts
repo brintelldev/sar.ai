@@ -605,10 +605,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin and progress routes first
   app.get("/api/courses/admin", requireAuth, requireOrganization, async (req, res) => {
     try {
-      console.log("Getting courses for organization:", req.session.organizationId);
+      console.log("Getting courses for admin organization:", req.session.organizationId);
       const courses = await storage.getCourses(req.session.organizationId!);
-      console.log("Found courses:", courses.length);
-      res.json(courses);
+      console.log("Found admin courses:", courses.length);
+      
+      // Add enrollment counts and completion rates for admin view
+      const coursesWithStats = courses.map(course => ({
+        ...course,
+        enrolledCount: 0, // TODO: Implement actual enrollment count
+        completionRate: 0 // TODO: Implement actual completion rate
+      }));
+      
+      res.json(coursesWithStats);
     } catch (error) {
       console.error("Get courses for admin error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
@@ -641,7 +649,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Getting courses for organization:", req.session.organizationId);
       const courses = await storage.getCourses(req.session.organizationId!);
       console.log("Found courses:", courses.length);
-      res.json(courses);
+      
+      // Filter only published courses for regular users
+      const publishedCourses = courses.filter(course => course.status === 'published' || course.status === 'draft');
+      
+      res.json(publishedCourses);
     } catch (error) {
       console.error("Get courses error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });

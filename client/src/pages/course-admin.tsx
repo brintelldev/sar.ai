@@ -47,10 +47,14 @@ export function CourseAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: courses, isLoading } = useQuery({
+  const { data: courses, isLoading, error } = useQuery({
     queryKey: ['/api/courses/admin'],
-    queryFn: () => apiRequest('/api/courses/admin')
+    queryFn: () => apiRequest('/api/courses/admin'),
+    retry: 1
   });
+
+  // Debug logging
+  console.log("Courses query result:", { courses, isLoading, error });
 
   const createCourseMutation = useMutation({
     mutationFn: (courseData: any) => apiRequest('/api/courses', 'POST', courseData),
@@ -107,6 +111,8 @@ export function CourseAdmin() {
 
   const coursesList = Array.isArray(courses) ? courses : [];
 
+  console.log("Processed courses list:", coursesList);
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -114,6 +120,18 @@ export function CourseAdmin() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-2 text-gray-600">Carregando cursos...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600">Erro ao carregar cursos: {error.message}</p>
           </div>
         </div>
       </MainLayout>

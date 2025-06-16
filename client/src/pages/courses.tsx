@@ -42,9 +42,10 @@ export default function CoursesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: coursesData, isLoading } = useQuery({
+  const { data: coursesData, isLoading, error } = useQuery({
     queryKey: ['/api/courses'],
-    queryFn: () => apiRequest('/api/courses')
+    queryFn: () => apiRequest('/api/courses'),
+    retry: 1
   });
 
   const { data: progressData } = useQuery({
@@ -54,6 +55,9 @@ export default function CoursesPage() {
 
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const userProgress = Array.isArray(progressData) ? progressData : [];
+
+  // Debug logging
+  console.log("Courses data:", { coursesData, courses, isLoading, error });
 
   const startCourseMutation = useMutation({
     mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}/start`, 'POST'),
