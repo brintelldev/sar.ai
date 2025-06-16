@@ -79,7 +79,7 @@ export default function CoursesPage() {
     const matchesCategory = categoryFilter === "todos" || course.category === categoryFilter;
     const matchesLevel = levelFilter === "todos" || course.level === levelFilter;
     
-    return matchesSearch && matchesCategory && matchesLevel && course.status === 'published';
+    return matchesSearch && matchesCategory && matchesLevel;
   });
 
   const getUserProgress = (courseId: string) => {

@@ -55,7 +55,7 @@ export function CourseAdmin() {
   const createCourseMutation = useMutation({
     mutationFn: (courseData: any) => apiRequest('/api/courses', 'POST', courseData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/courses/admin'] });
       setIsCreateDialogOpen(false);
       toast({
         title: "Curso criado",
@@ -74,7 +74,7 @@ export function CourseAdmin() {
   const deleteCourseMutation = useMutation({
     mutationFn: (courseId: string) => apiRequest(`/api/courses/${courseId}`, 'DELETE'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/courses/admin'] });
       toast({
         title: "Curso excluído",
         description: "O curso foi excluído com sucesso."
