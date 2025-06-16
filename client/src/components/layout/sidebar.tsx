@@ -11,7 +11,8 @@ import {
   TrendingUp,
   Receipt,
   CreditCard,
-  Building2
+  Building2,
+  Settings
 } from "lucide-react";
 
 const navigation = [
@@ -22,6 +23,7 @@ const navigation = [
   { name: "Doadores", href: "/donors", icon: Heart },
   { name: "Doações", href: "/donations", icon: DollarSign },
   { name: "Capacitação", href: "/courses", icon: BookOpen },
+  { name: "Admin Cursos", href: "/course-admin", icon: Settings },
   { name: "Contas a Receber", href: "/accounts-receivable", icon: Receipt },
   { name: "Contas a Pagar", href: "/accounts-payable", icon: CreditCard },
   { name: "Relatórios", href: "/reports", icon: TrendingUp },

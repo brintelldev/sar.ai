@@ -85,11 +85,13 @@ export interface IStorage {
   getCourse(id: string, organizationId: string): Promise<Course | undefined>;
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: string, organizationId: string, updates: Partial<Course>): Promise<Course | undefined>;
+  deleteCourse(id: string, organizationId: string): Promise<boolean>;
   
   // Course Modules
   getCourseModules(courseId: string): Promise<CourseModule[]>;
   createCourseModule(module: InsertCourseModule): Promise<CourseModule>;
   updateCourseModule(id: string, updates: Partial<CourseModule>): Promise<CourseModule | undefined>;
+  deleteCourseModule(id: string): Promise<boolean>;
   
   // User Course Progress
   getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | undefined>;

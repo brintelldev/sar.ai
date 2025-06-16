@@ -635,156 +635,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/courses/:id", requireAuth, async (req, res) => {
     try {
-      const { id } = req.params;
-      
-      const courses = {
-        "1": {
-          id: "1",
-          title: "Introdução à Tecnologia Digital",
-          description: "Aprenda os conceitos básicos de tecnologia digital e como ela pode transformar sua vida e trabalho.",
-          category: "tecnologia",
-          level: "iniciante",
-          duration: 4,
-          requirements: ["Acesso à internet", "Dispositivo móvel ou computador"],
-          learningObjectives: [
-            "Compreender conceitos básicos de tecnologia",
-            "Usar ferramentas digitais essenciais",
-            "Navegar com segurança na internet",
-            "Aplicar tecnologia no dia a dia"
-          ],
-          passScore: 70,
-          certificateEnabled: true
-        },
-        "2": {
-          id: "2",
-          title: "Empreendedorismo Social",
-          description: "Desenvolva habilidades empreendedoras focadas no impacto social e criação de negócios sustentáveis.",
-          category: "empreendedorismo",
-          level: "intermediario",
-          duration: 6,
-          requirements: ["Ensino médio completo", "Interesse em empreendedorismo"],
-          learningObjectives: [
-            "Identificar oportunidades de negócio social",
-            "Desenvolver um plano de negócios",
-            "Compreender modelos de financiamento",
-            "Medir impacto social"
-          ],
-          passScore: 75,
-          certificateEnabled: true
-        },
-        "3": {
-          id: "3",
-          title: "Direitos das Mulheres",
-          description: "Conheça os direitos fundamentais das mulheres e como buscar apoio em situações de violência.",
-          category: "direitos",
-          level: "iniciante",
-          duration: 3,
-          requirements: [],
-          learningObjectives: [
-            "Conhecer direitos fundamentais",
-            "Identificar situações de violência",
-            "Saber onde buscar ajuda",
-            "Compreender a Lei Maria da Penha"
-          ],
-          passScore: 70,
-          certificateEnabled: true
-        }
-      };
-
-      const course = courses[id as keyof typeof courses];
+      const course = await storage.getCourse(req.params.id, req.session.organizationId!);
       if (!course) {
         return res.status(404).json({ message: "Curso não encontrado" });
       }
-
       res.json(course);
     } catch (error) {
       console.error("Get course error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.patch("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const course = await storage.updateCourse(req.params.id, req.session.organizationId!, req.body);
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      res.json(course);
+    } catch (error) {
+      console.error("Update course error:", error);
+      res.status(500).json({ message: "Erro ao atualizar curso" });
+    }
+  });
+
+  app.delete("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteCourse(req.params.id, req.session.organizationId!);
+      if (!success) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete course error:", error);
+      res.status(500).json({ message: "Erro ao excluir curso" });
     }
   });
 
   app.get("/api/courses/:id/modules", requireAuth, async (req, res) => {
     try {
-      const { id } = req.params;
-      
-      const modules = {
-        "1": [
-          {
-            id: "1-1",
-            title: "O que é Tecnologia Digital?",
-            description: "Conceitos fundamentais sobre tecnologia digital",
-            order: 1,
-            content: {
-              html: "<h3>Bem-vindas ao mundo digital!</h3><p>A tecnologia digital está presente em nossas vidas de muitas formas. Desde o celular que usamos para nos comunicar até os aplicativos que facilitam nosso dia a dia.</p><p>Neste módulo, vamos explorar:</p><ul><li>O que é tecnologia digital</li><li>Como ela pode nos ajudar</li><li>Exemplos práticos do dia a dia</li></ul>"
-            },
-            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            materials: [
-              {
-                name: "Guia Introdutório",
-                type: "PDF",
-                url: "#"
-              }
-            ],
-            duration: 30,
-            isRequired: true
-          },
-          {
-            id: "1-2",
-            title: "Navegando com Segurança",
-            description: "Como usar a internet de forma segura",
-            order: 2,
-            content: {
-              html: "<h3>Segurança Digital</h3><p>A segurança na internet é fundamental. Vamos aprender como se proteger online.</p><p>Tópicos importantes:</p><ul><li>Senhas seguras</li><li>Identificar sites confiáveis</li><li>Proteger informações pessoais</li></ul>"
-            },
-            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            materials: [],
-            duration: 45,
-            isRequired: true
-          }
-        ],
-        "2": [
-          {
-            id: "2-1",
-            title: "Fundamentos do Empreendedorismo Social",
-            description: "Conceitos básicos sobre empreendedorismo com impacto social",
-            order: 1,
-            content: {
-              html: "<h3>O que é Empreendedorismo Social?</h3><p>O empreendedorismo social busca soluções inovadoras para problemas sociais, criando valor para a sociedade.</p>"
-            },
-            videoUrl: null,
-            materials: [],
-            duration: 60,
-            isRequired: true
-          }
-        ],
-        "3": [
-          {
-            id: "3-1",
-            title: "Seus Direitos Fundamentais",
-            description: "Conhecendo os direitos básicos das mulheres",
-            order: 1,
-            content: {
-              html: "<h3>Direitos das Mulheres</h3><p>Toda mulher tem direito à vida, à segurança, à dignidade e ao respeito.</p><p>Principais direitos:</p><ul><li>Direito à vida livre de violência</li><li>Direito à integridade física e moral</li><li>Direito à igualdade</li></ul>"
-            },
-            videoUrl: null,
-            materials: [
-              {
-                name: "Lei Maria da Penha - Guia Completo",
-                type: "PDF",
-                url: "#"
-              }
-            ],
-            duration: 40,
-            isRequired: true
-          }
-        ]
-      };
-
-      const courseModules = modules[id as keyof typeof modules] || [];
-      res.json(courseModules);
+      const modules = await storage.getCourseModules(req.params.id);
+      res.json(modules);
     } catch (error) {
       console.error("Get course modules error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses/:id/modules", requireAuth, async (req, res) => {
+    try {
+      const moduleData = {
+        ...req.body,
+        courseId: req.params.id
+      };
+      
+      const module = await storage.createCourseModule(moduleData);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Create course module error:", error);
+      res.status(500).json({ message: "Erro ao criar módulo" });
+    }
+  });
+
+  app.patch("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const module = await storage.updateCourseModule(req.params.moduleId, req.body);
+      if (!module) {
+        return res.status(404).json({ message: "Módulo não encontrado" });
+      }
+      res.json(module);
+    } catch (error) {
+      console.error("Update course module error:", error);
+      res.status(500).json({ message: "Erro ao atualizar módulo" });
+    }
+  });
+
+  app.delete("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteCourseModule(req.params.moduleId);
+      if (!success) {
+        return res.status(404).json({ message: "Módulo não encontrado" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete course module error:", error);
+      res.status(500).json({ message: "Erro ao excluir módulo" });
     }
   });
 
