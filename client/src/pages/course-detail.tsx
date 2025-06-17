@@ -322,7 +322,7 @@ export default function CourseDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="prose prose-sm max-w-none">
-                      {course.learningObjectives.split('\n').map((objective, index) => (
+                      {(Array.isArray(course.learningObjectives) ? course.learningObjectives : []).map((objective, index) => (
                         <div key={index} className="flex items-start space-x-2 mb-2">
                           <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                           <span>{objective}</span>
