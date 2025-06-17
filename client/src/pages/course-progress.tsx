@@ -127,6 +127,21 @@ export default function CourseProgressPage() {
 
   const currentModule = getCurrentModule();
 
+  // Additional safety check
+  if (!currentModule) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Módulos não encontrados</h1>
+          <p className="text-gray-600 mb-4">Não foi possível carregar os módulos do curso.</p>
+          <Link href="/courses">
+            <Button>Voltar aos Cursos</Button>
+          </Link>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -349,7 +364,7 @@ export default function CourseProgressPage() {
                         </Card>
                       ))}
                       
-                      {currentModule.resources.length === 0 && (
+                      {(!currentModule.resources || currentModule.resources.length === 0) && (
                         <div className="text-center py-8 text-gray-500">
                           <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                           <p>Nenhum recurso disponível para este módulo</p>
