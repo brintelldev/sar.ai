@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MainLayout } from "@/components/layout/main-layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Globe, Palette, Layout, FileText, Menu, Link as LinkIcon, Mail, Settings, Eye, ExternalLink } from "lucide-react";
+import { Globe, Palette, Layout, FileText, Menu, Link as LinkIcon, Mail, Settings, Eye, ExternalLink, Plus, Edit, Trash2, ChevronUp, ChevronDown, EyeOff } from "lucide-react";
 
 interface WhitelabelSite {
   id: string;
@@ -491,46 +491,355 @@ function DesignCustomization({ site, onUpdate, isLoading }: {
 }
 
 function PagesManager({ siteId }: { siteId: string }) {
+  const [pages, setPages] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showNewPageForm, setShowNewPageForm] = useState(false);
+  const [newPage, setNewPage] = useState({
+    title: '',
+    slug: '',
+    content: '',
+    isPublished: true
+  });
+
+  const { data: pagesData } = useQuery({
+    queryKey: ['/api/whitelabel/pages'],
+    queryFn: () => fetch('/api/whitelabel/pages').then(res => res.json())
+  });
+
+  useEffect(() => {
+    if (pagesData) {
+      setPages(pagesData);
+    }
+  }, [pagesData]);
+
+  const handleCreatePage = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/whitelabel/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newPage,
+          siteId
+        })
+      });
+      
+      if (response.ok) {
+        const createdPage = await response.json();
+        setPages(prev => [...prev, createdPage]);
+        setNewPage({ title: '', slug: '', content: '', isPublished: true });
+        setShowNewPageForm(false);
+      }
+    } catch (error) {
+      console.error('Error creating page:', error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleDeletePage = async (pageId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta página?')) return;
+    
+    try {
+      const response = await fetch(`/api/whitelabel/pages/${pageId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setPages(prev => prev.filter(page => page.id !== pageId));
+      }
+    } catch (error) {
+      console.error('Error deleting page:', error);
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Páginas</CardTitle>
-        <CardDescription>
-          Crie e edite as páginas do seu site
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center py-8">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">Funcionalidade em desenvolvimento</p>
-          <p className="text-sm text-gray-500">
-            Em breve você poderá criar páginas personalizadas com editor visual
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Páginas do Site</CardTitle>
+            <CardDescription>
+              Gerencie as páginas personalizadas do seu site
+            </CardDescription>
+          </div>
+          <Button onClick={() => setShowNewPageForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Página
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {pages.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">Nenhuma página personalizada criada</p>
+              <Button onClick={() => setShowNewPageForm(true)} variant="outline">
+                Criar primeira página
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pages.map((page) => (
+                <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{page.title}</h4>
+                    <p className="text-sm text-gray-600">/{page.slug}</p>
+                    <Badge variant={page.isPublished ? "default" : "secondary"}>
+                      {page.isPublished ? "Publicada" : "Rascunho"}
+                    </Badge>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleDeletePage(page.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {showNewPageForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Nova Página</CardTitle>
+            <CardDescription>
+              Crie uma nova página para o seu site
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Título da Página</Label>
+              <Input
+                value={newPage.title}
+                onChange={(e) => setNewPage(prev => ({ 
+                  ...prev, 
+                  title: e.target.value,
+                  slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+                }))}
+                placeholder="Ex: Sobre Nós"
+              />
+            </div>
+            <div>
+              <Label>URL da Página</Label>
+              <Input
+                value={newPage.slug}
+                onChange={(e) => setNewPage(prev => ({ ...prev, slug: e.target.value }))}
+                placeholder="sobre-nos"
+              />
+            </div>
+            <div>
+              <Label>Conteúdo</Label>
+              <textarea
+                value={newPage.content}
+                onChange={(e) => setNewPage(prev => ({ ...prev, content: e.target.value }))}
+                rows={6}
+                className="w-full mt-1 p-2 border rounded"
+                placeholder="Digite o conteúdo da página..."
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isPublished"
+                checked={newPage.isPublished}
+                onChange={(e) => setNewPage(prev => ({ ...prev, isPublished: e.target.checked }))}
+              />
+              <Label htmlFor="isPublished">Publicar imediatamente</Label>
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleCreatePage} disabled={isLoading}>
+                {isLoading ? 'Criando...' : 'Criar Página'}
+              </Button>
+              <Button variant="outline" onClick={() => setShowNewPageForm(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
 function MenuManager({ siteId }: { siteId: string }) {
+  const [menuItems, setMenuItems] = useState([
+    { id: '1', label: 'Início', url: '#inicio', order: 1, isVisible: true },
+    { id: '2', label: 'Sobre', url: '#sobre', order: 2, isVisible: true },
+    { id: '3', label: 'Projetos', url: '#projetos', order: 3, isVisible: true },
+    { id: '4', label: 'Contato', url: '#contato', order: 4, isVisible: true }
+  ]);
+  const [showNewItemForm, setShowNewItemForm] = useState(false);
+  const [newItem, setNewItem] = useState({
+    label: '',
+    url: '',
+    isVisible: true
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddMenuItem = () => {
+    if (!newItem.label || !newItem.url) return;
+    
+    const menuItem = {
+      id: Date.now().toString(),
+      ...newItem,
+      order: menuItems.length + 1
+    };
+    
+    setMenuItems(prev => [...prev, menuItem]);
+    setNewItem({ label: '', url: '', isVisible: true });
+    setShowNewItemForm(false);
+  };
+
+  const handleDeleteMenuItem = (id: string) => {
+    setMenuItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleToggleVisibility = (id: string) => {
+    setMenuItems(prev => prev.map(item => 
+      item.id === id ? { ...item, isVisible: !item.isVisible } : item
+    ));
+  };
+
+  const moveItemUp = (index: number) => {
+    if (index > 0) {
+      const newItems = [...menuItems];
+      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+      setMenuItems(newItems);
+    }
+  };
+
+  const moveItemDown = (index: number) => {
+    if (index < menuItems.length - 1) {
+      const newItems = [...menuItems];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+      setMenuItems(newItems);
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Menu</CardTitle>
-        <CardDescription>
-          Configure o menu de navegação do seu site
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center py-8">
-          <Menu className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">Funcionalidade em desenvolvimento</p>
-          <p className="text-sm text-gray-500">
-            Em breve você poderá personalizar completamente o menu de navegação
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Menu de Navegação</CardTitle>
+            <CardDescription>
+              Configure os itens do menu principal do site
+            </CardDescription>
+          </div>
+          <Button onClick={() => setShowNewItemForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Item
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {menuItems.map((item, index) => (
+              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="flex flex-col space-y-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => moveItemUp(index)}
+                      disabled={index === 0}
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => moveItemDown(index)}
+                      disabled={index === menuItems.length - 1}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium">{item.label}</h4>
+                    <p className="text-sm text-gray-600">{item.url}</p>
+                    <Badge variant={item.isVisible ? "default" : "secondary"}>
+                      {item.isVisible ? "Visível" : "Oculto"}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleVisibility(item.id)}
+                  >
+                    {item.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteMenuItem(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {showNewItemForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Novo Item do Menu</CardTitle>
+            <CardDescription>
+              Adicione um novo item ao menu de navegação
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Texto do Menu</Label>
+              <Input
+                value={newItem.label}
+                onChange={(e) => setNewItem(prev => ({ ...prev, label: e.target.value }))}
+                placeholder="Ex: Serviços"
+              />
+            </div>
+            <div>
+              <Label>URL ou Âncora</Label>
+              <Input
+                value={newItem.url}
+                onChange={(e) => setNewItem(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="Ex: #servicos ou https://exemplo.com"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isVisible"
+                checked={newItem.isVisible}
+                onChange={(e) => setNewItem(prev => ({ ...prev, isVisible: e.target.checked }))}
+              />
+              <Label htmlFor="isVisible">Visível no menu</Label>
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleAddMenuItem}>
+                Adicionar Item
+              </Button>
+              <Button variant="outline" onClick={() => setShowNewItemForm(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 

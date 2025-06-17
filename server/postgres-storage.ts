@@ -544,9 +544,12 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateWhitelabelSite(organizationId: string, updates: Partial<WhitelabelSite>): Promise<WhitelabelSite | undefined> {
+    // Remove any timestamp fields from updates to avoid conflicts
+    const { createdAt, updatedAt, ...cleanUpdates } = updates;
+    
     const [result] = await db
       .update(whitelabelSites)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...cleanUpdates, updatedAt: new Date() })
       .where(eq(whitelabelSites.organizationId, organizationId))
       .returning();
     return result;
