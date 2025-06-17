@@ -982,7 +982,255 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Whitelabel Site Routes
+  app.get('/api/whitelabel/site', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      res.json(site);
+    } catch (error) {
+      console.error("Get whitelabel site error:", error);
+      res.status(500).json({ message: "Erro ao buscar site" });
+    }
+  });
 
+  app.post('/api/whitelabel/site', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const siteData = { ...req.body, organizationId };
+      const site = await storage.createWhitelabelSite(siteData);
+      res.json(site);
+    } catch (error) {
+      console.error("Create whitelabel site error:", error);
+      res.status(500).json({ message: "Erro ao criar site" });
+    }
+  });
+
+  app.put('/api/whitelabel/site', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.updateWhitelabelSite(organizationId!, req.body);
+      res.json(site);
+    } catch (error) {
+      console.error("Update whitelabel site error:", error);
+      res.status(500).json({ message: "Erro ao atualizar site" });
+    }
+  });
+
+  // Whitelabel Templates Routes
+  app.get('/api/whitelabel/templates', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const templates = await storage.getWhitelabelTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Get templates error:", error);
+      res.status(500).json({ message: "Erro ao buscar templates" });
+    }
+  });
+
+  app.get('/api/whitelabel/templates/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const template = await storage.getWhitelabelTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Get template error:", error);
+      res.status(500).json({ message: "Erro ao buscar template" });
+    }
+  });
+
+  // Whitelabel Pages Routes
+  app.get('/api/whitelabel/pages', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const pages = await storage.getSitePages(site.id);
+      res.json(pages);
+    } catch (error) {
+      console.error("Get pages error:", error);
+      res.status(500).json({ message: "Erro ao buscar páginas" });
+    }
+  });
+
+  app.get('/api/whitelabel/pages/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const page = await storage.getPage(req.params.id, site.id);
+      if (!page) {
+        return res.status(404).json({ message: "Página não encontrada" });
+      }
+      res.json(page);
+    } catch (error) {
+      console.error("Get page error:", error);
+      res.status(500).json({ message: "Erro ao buscar página" });
+    }
+  });
+
+  app.post('/api/whitelabel/pages', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const pageData = { ...req.body, siteId: site.id };
+      const page = await storage.createPage(pageData);
+      res.json(page);
+    } catch (error) {
+      console.error("Create page error:", error);
+      res.status(500).json({ message: "Erro ao criar página" });
+    }
+  });
+
+  app.put('/api/whitelabel/pages/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const page = await storage.updatePage(req.params.id, site.id, req.body);
+      res.json(page);
+    } catch (error) {
+      console.error("Update page error:", error);
+      res.status(500).json({ message: "Erro ao atualizar página" });
+    }
+  });
+
+  app.delete('/api/whitelabel/pages/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const success = await storage.deletePage(req.params.id, site.id);
+      res.json({ success });
+    } catch (error) {
+      console.error("Delete page error:", error);
+      res.status(500).json({ message: "Erro ao deletar página" });
+    }
+  });
+
+  // Whitelabel Menu Routes
+  app.get('/api/whitelabel/menus', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const menus = await storage.getSiteMenus(site.id);
+      res.json(menus);
+    } catch (error) {
+      console.error("Get menus error:", error);
+      res.status(500).json({ message: "Erro ao buscar menus" });
+    }
+  });
+
+  app.post('/api/whitelabel/menus', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const menuData = { ...req.body, siteId: site.id };
+      const menu = await storage.createMenu(menuData);
+      res.json(menu);
+    } catch (error) {
+      console.error("Create menu error:", error);
+      res.status(500).json({ message: "Erro ao criar menu" });
+    }
+  });
+
+  app.put('/api/whitelabel/menus/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const menu = await storage.updateMenu(req.params.id, req.body);
+      res.json(menu);
+    } catch (error) {
+      console.error("Update menu error:", error);
+      res.status(500).json({ message: "Erro ao atualizar menu" });
+    }
+  });
+
+  app.delete('/api/whitelabel/menus/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const success = await storage.deleteMenu(req.params.id);
+      res.json({ success });
+    } catch (error) {
+      console.error("Delete menu error:", error);
+      res.status(500).json({ message: "Erro ao deletar menu" });
+    }
+  });
+
+  // Whitelabel Forms Routes
+  app.get('/api/whitelabel/forms', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const forms = await storage.getSiteForms(site.id);
+      res.json(forms);
+    } catch (error) {
+      console.error("Get forms error:", error);
+      res.status(500).json({ message: "Erro ao buscar formulários" });
+    }
+  });
+
+  app.post('/api/whitelabel/forms', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = req.session as SessionData;
+      const site = await storage.getWhitelabelSite(organizationId!);
+      if (!site) {
+        return res.status(404).json({ message: "Site não encontrado" });
+      }
+      const formData = { ...req.body, siteId: site.id };
+      const form = await storage.createForm(formData);
+      res.json(form);
+    } catch (error) {
+      console.error("Create form error:", error);
+      res.status(500).json({ message: "Erro ao criar formulário" });
+    }
+  });
+
+  // Form Submissions
+  app.get('/api/whitelabel/forms/:formId/submissions', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const submissions = await storage.getFormSubmissions(req.params.formId);
+      res.json(submissions);
+    } catch (error) {
+      console.error("Get form submissions error:", error);
+      res.status(500).json({ message: "Erro ao buscar submissões" });
+    }
+  });
+
+  app.post('/api/whitelabel/forms/:formId/submit', async (req: Request, res: Response) => {
+    try {
+      const submission = {
+        formId: req.params.formId,
+        data: req.body.data,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      };
+      const result = await storage.createFormSubmission(submission);
+      res.json(result);
+    } catch (error) {
+      console.error("Submit form error:", error);
+      res.status(500).json({ message: "Erro ao enviar formulário" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

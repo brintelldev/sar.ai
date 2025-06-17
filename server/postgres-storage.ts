@@ -17,6 +17,12 @@ import {
   userCourseProgress,
   courseAssessments,
   certificates,
+  whitelabelSites,
+  whitelabelTemplates,
+  whitelabelPages,
+  whitelabelMenus,
+  whitelabelForms,
+  whitelabelFormSubmissions,
   type Organization,
   type User,
   type UserRole,
@@ -33,6 +39,17 @@ import {
   type UserCourseProgress,
   type CourseAssessment,
   type Certificate,
+  type WhitelabelSite,
+  type WhitelabelTemplate,
+  type WhitelabelPage,
+  type WhitelabelMenu,
+  type WhitelabelForm,
+  type WhitelabelFormSubmission,
+  type InsertWhitelabelSite,
+  type InsertWhitelabelTemplate,
+  type InsertWhitelabelPage,
+  type InsertWhitelabelMenu,
+  type InsertWhitelabelForm,
   type InsertOrganization,
   type InsertUser,
   type InsertUserRole,
@@ -505,6 +522,224 @@ export class PostgresStorage implements IStorage {
     const [result] = await db
       .insert(certificates)
       .values(certificate)
+      .returning();
+    return result;
+  }
+
+  // Whitelabel Sites
+  async getWhitelabelSite(organizationId: string): Promise<WhitelabelSite | undefined> {
+    const [result] = await db
+      .select()
+      .from(whitelabelSites)
+      .where(eq(whitelabelSites.organizationId, organizationId));
+    return result;
+  }
+
+  async createWhitelabelSite(site: InsertWhitelabelSite): Promise<WhitelabelSite> {
+    const [result] = await db
+      .insert(whitelabelSites)
+      .values(site)
+      .returning();
+    return result;
+  }
+
+  async updateWhitelabelSite(organizationId: string, updates: Partial<WhitelabelSite>): Promise<WhitelabelSite | undefined> {
+    const [result] = await db
+      .update(whitelabelSites)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(whitelabelSites.organizationId, organizationId))
+      .returning();
+    return result;
+  }
+
+  // Whitelabel Templates
+  async getWhitelabelTemplates(): Promise<WhitelabelTemplate[]> {
+    return await db
+      .select()
+      .from(whitelabelTemplates)
+      .where(eq(whitelabelTemplates.isActive, true))
+      .orderBy(whitelabelTemplates.category, whitelabelTemplates.name);
+  }
+
+  async getWhitelabelTemplate(id: string): Promise<WhitelabelTemplate | undefined> {
+    const [result] = await db
+      .select()
+      .from(whitelabelTemplates)
+      .where(eq(whitelabelTemplates.id, id));
+    return result;
+  }
+
+  async createWhitelabelTemplate(template: InsertWhitelabelTemplate): Promise<WhitelabelTemplate> {
+    const [result] = await db
+      .insert(whitelabelTemplates)
+      .values(template)
+      .returning();
+    return result;
+  }
+
+  // Whitelabel Pages
+  async getSitePages(siteId: string): Promise<WhitelabelPage[]> {
+    return await db
+      .select()
+      .from(whitelabelPages)
+      .where(eq(whitelabelPages.siteId, siteId))
+      .orderBy(whitelabelPages.order, whitelabelPages.title);
+  }
+
+  async getPage(id: string, siteId: string): Promise<WhitelabelPage | undefined> {
+    const [result] = await db
+      .select()
+      .from(whitelabelPages)
+      .where(and(
+        eq(whitelabelPages.id, id),
+        eq(whitelabelPages.siteId, siteId)
+      ));
+    return result;
+  }
+
+  async getPageBySlug(slug: string, siteId: string): Promise<WhitelabelPage | undefined> {
+    const [result] = await db
+      .select()
+      .from(whitelabelPages)
+      .where(and(
+        eq(whitelabelPages.slug, slug),
+        eq(whitelabelPages.siteId, siteId)
+      ));
+    return result;
+  }
+
+  async createPage(page: InsertWhitelabelPage): Promise<WhitelabelPage> {
+    const [result] = await db
+      .insert(whitelabelPages)
+      .values(page)
+      .returning();
+    return result;
+  }
+
+  async updatePage(id: string, siteId: string, updates: Partial<WhitelabelPage>): Promise<WhitelabelPage | undefined> {
+    const [result] = await db
+      .update(whitelabelPages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(
+        eq(whitelabelPages.id, id),
+        eq(whitelabelPages.siteId, siteId)
+      ))
+      .returning();
+    return result;
+  }
+
+  async deletePage(id: string, siteId: string): Promise<boolean> {
+    const result = await db
+      .delete(whitelabelPages)
+      .where(and(
+        eq(whitelabelPages.id, id),
+        eq(whitelabelPages.siteId, siteId)
+      ));
+    return result.rowCount! > 0;
+  }
+
+  // Whitelabel Menus
+  async getSiteMenus(siteId: string): Promise<WhitelabelMenu[]> {
+    return await db
+      .select()
+      .from(whitelabelMenus)
+      .where(and(
+        eq(whitelabelMenus.siteId, siteId),
+        eq(whitelabelMenus.isActive, true)
+      ))
+      .orderBy(whitelabelMenus.order);
+  }
+
+  async createMenu(menu: InsertWhitelabelMenu): Promise<WhitelabelMenu> {
+    const [result] = await db
+      .insert(whitelabelMenus)
+      .values(menu)
+      .returning();
+    return result;
+  }
+
+  async updateMenu(id: string, updates: Partial<WhitelabelMenu>): Promise<WhitelabelMenu | undefined> {
+    const [result] = await db
+      .update(whitelabelMenus)
+      .set(updates)
+      .where(eq(whitelabelMenus.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteMenu(id: string): Promise<boolean> {
+    const result = await db
+      .delete(whitelabelMenus)
+      .where(eq(whitelabelMenus.id, id));
+    return result.rowCount! > 0;
+  }
+
+  // Whitelabel Forms
+  async getSiteForms(siteId: string): Promise<WhitelabelForm[]> {
+    return await db
+      .select()
+      .from(whitelabelForms)
+      .where(and(
+        eq(whitelabelForms.siteId, siteId),
+        eq(whitelabelForms.isActive, true)
+      ))
+      .orderBy(whitelabelForms.name);
+  }
+
+  async getForm(id: string, siteId: string): Promise<WhitelabelForm | undefined> {
+    const [result] = await db
+      .select()
+      .from(whitelabelForms)
+      .where(and(
+        eq(whitelabelForms.id, id),
+        eq(whitelabelForms.siteId, siteId)
+      ));
+    return result;
+  }
+
+  async createForm(form: InsertWhitelabelForm): Promise<WhitelabelForm> {
+    const [result] = await db
+      .insert(whitelabelForms)
+      .values(form)
+      .returning();
+    return result;
+  }
+
+  async updateForm(id: string, siteId: string, updates: Partial<WhitelabelForm>): Promise<WhitelabelForm | undefined> {
+    const [result] = await db
+      .update(whitelabelForms)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(
+        eq(whitelabelForms.id, id),
+        eq(whitelabelForms.siteId, siteId)
+      ))
+      .returning();
+    return result;
+  }
+
+  async deleteForm(id: string, siteId: string): Promise<boolean> {
+    const result = await db
+      .delete(whitelabelForms)
+      .where(and(
+        eq(whitelabelForms.id, id),
+        eq(whitelabelForms.siteId, siteId)
+      ));
+    return result.rowCount! > 0;
+  }
+
+  // Form Submissions
+  async getFormSubmissions(formId: string): Promise<WhitelabelFormSubmission[]> {
+    return await db
+      .select()
+      .from(whitelabelFormSubmissions)
+      .where(eq(whitelabelFormSubmissions.formId, formId))
+      .orderBy(desc(whitelabelFormSubmissions.createdAt));
+  }
+
+  async createFormSubmission(submission: Omit<WhitelabelFormSubmission, 'id' | 'createdAt'>): Promise<WhitelabelFormSubmission> {
+    const [result] = await db
+      .insert(whitelabelFormSubmissions)
+      .values(submission)
       .returning();
     return result;
   }

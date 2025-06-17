@@ -450,3 +450,126 @@ export type InsertCourseAssessment = z.infer<typeof insertCourseAssessmentSchema
 export type UserAssessmentAttempt = typeof userAssessmentAttempts.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
 export type TrainingNotification = typeof trainingNotifications.$inferSelect;
+
+// Site Whitelabel tables
+export const whitelabelSites = pgTable("whitelabel_sites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  subdomain: text("subdomain").unique().notNull(), // ex: nomeong.plataforma.org
+  customDomain: text("custom_domain").unique(), // ex: nomeong.org
+  isActive: boolean("is_active").default(true),
+  theme: jsonb("theme"), // cores, fontes, layout
+  content: jsonb("content"), // conteúdo das seções
+  seoSettings: jsonb("seo_settings"), // meta tags, descrições
+  analyticsCode: text("analytics_code"), // Google Analytics, etc
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+export const whitelabelTemplates = pgTable("whitelabel_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category").notNull(), // 'institutional', 'projects', 'donations', 'team', 'contact'
+  templateData: jsonb("template_data").notNull(), // HTML, CSS, componentes
+  preview: text("preview"), // URL da imagem de preview
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+export const whitelabelPages = pgTable("whitelabel_pages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id").references(() => whitelabelSites.id).notNull(),
+  slug: text("slug").notNull(), // ex: 'sobre', 'projetos', 'contato'
+  title: text("title").notNull(),
+  content: jsonb("content").notNull(), // conteúdo estruturado da página
+  templateId: uuid("template_id").references(() => whitelabelTemplates.id),
+  isPublished: boolean("is_published").default(false),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  seoKeywords: text("seo_keywords"),
+  order: integer("order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+export const whitelabelMenus = pgTable("whitelabel_menus", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id").references(() => whitelabelSites.id).notNull(),
+  label: text("label").notNull(),
+  url: text("url").notNull(),
+  type: text("type").notNull(), // 'internal', 'external', 'page'
+  parentId: uuid("parent_id"),
+  order: integer("order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+export const whitelabelForms = pgTable("whitelabel_forms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id").references(() => whitelabelSites.id).notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'contact', 'donation', 'volunteer', 'newsletter'
+  fields: jsonb("fields").notNull(), // configuração dos campos
+  settings: jsonb("settings"), // configurações de envio, validação
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+export const whitelabelFormSubmissions = pgTable("whitelabel_form_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  formId: uuid("form_id").references(() => whitelabelForms.id).notNull(),
+  data: jsonb("data").notNull(), // dados submetidos
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// Insert schemas for whitelabel module
+export const insertWhitelabelSiteSchema = createInsertSchema(whitelabelSites).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertWhitelabelTemplateSchema = createInsertSchema(whitelabelTemplates).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertWhitelabelPageSchema = createInsertSchema(whitelabelPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertWhitelabelMenuSchema = createInsertSchema(whitelabelMenus).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertWhitelabelFormSchema = createInsertSchema(whitelabelForms).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Types for whitelabel module
+export type WhitelabelSite = typeof whitelabelSites.$inferSelect;
+export type InsertWhitelabelSite = z.infer<typeof insertWhitelabelSiteSchema>;
+
+export type WhitelabelTemplate = typeof whitelabelTemplates.$inferSelect;
+export type InsertWhitelabelTemplate = z.infer<typeof insertWhitelabelTemplateSchema>;
+
+export type WhitelabelPage = typeof whitelabelPages.$inferSelect;
+export type InsertWhitelabelPage = z.infer<typeof insertWhitelabelPageSchema>;
+
+export type WhitelabelMenu = typeof whitelabelMenus.$inferSelect;
+export type InsertWhitelabelMenu = z.infer<typeof insertWhitelabelMenuSchema>;
+
+export type WhitelabelForm = typeof whitelabelForms.$inferSelect;
+export type InsertWhitelabelForm = z.infer<typeof insertWhitelabelFormSchema>;
+
+export type WhitelabelFormSubmission = typeof whitelabelFormSubmissions.$inferSelect;
