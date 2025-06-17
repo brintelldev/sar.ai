@@ -261,14 +261,14 @@ export default function CourseProgressPage() {
                     </TabsList>
                     
                     <TabsContent value="content" className="space-y-6">
-                      {currentModule.content?.sections?.map((section: any, index: number) => (
+                      {currentModule.content?.blocks?.map((section: any, index: number) => (
                         <div key={index} className="space-y-4">
-                          <h3 className="text-lg font-semibold">{section.title}</h3>
+                          {section.title && <h3 className="text-lg font-semibold">{section.title}</h3>}
                           
-                          {section.type === 'video' && section.videoUrl && (
+                          {section.type === 'video' && section.content && (
                             <div className="aspect-video">
                               <iframe
-                                src={section.videoUrl}
+                                src={section.content}
                                 title={section.title}
                                 className="w-full h-full rounded-lg"
                                 allowFullScreen
@@ -284,8 +284,21 @@ export default function CourseProgressPage() {
                           
                           {section.type === 'text' && section.content && (
                             <div className="prose max-w-none">
-                              <div className="bg-gray-50 p-4 rounded-lg">
-                                <p className="text-gray-700">{section.content}</p>
+                              <div className="bg-gray-50 p-6 rounded-lg">
+                                <div 
+                                  className="text-gray-800 whitespace-pre-line"
+                                  dangerouslySetInnerHTML={{
+                                    __html: section.content
+                                      .replace(/# /g, '<h1 class="text-2xl font-bold mb-4">')
+                                      .replace(/## /g, '<h2 class="text-xl font-semibold mb-3">')
+                                      .replace(/### /g, '<h3 class="text-lg font-medium mb-2">')
+                                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                      .replace(/- /g, '<li>')
+                                      .replace(/\n\n/g, '</p><p class="mb-4">')
+                                      .replace(/^\s*/, '<p class="mb-4">')
+                                      + '</p>'
+                                  }}
+                                />
                               </div>
                             </div>
                           )}
