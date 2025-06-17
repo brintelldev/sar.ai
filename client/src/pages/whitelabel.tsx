@@ -844,24 +844,203 @@ function MenuManager({ siteId }: { siteId: string }) {
 }
 
 function FormsManager({ siteId }: { siteId: string }) {
+  const [forms, setForms] = useState([
+    {
+      id: '1',
+      name: 'Formulário de Contato',
+      type: 'contact',
+      isActive: true,
+      fields: ['name', 'email', 'message']
+    },
+    {
+      id: '2', 
+      name: 'Formulário de Doação',
+      type: 'donation',
+      isActive: true,
+      fields: ['name', 'email', 'amount', 'message']
+    }
+  ]);
+  const [showNewFormModal, setShowNewFormModal] = useState(false);
+  const [newForm, setNewForm] = useState({
+    name: '',
+    type: 'contact',
+    fields: ['name', 'email']
+  });
+
+  const formTypes = [
+    { value: 'contact', label: 'Formulário de Contato' },
+    { value: 'donation', label: 'Formulário de Doação' },
+    { value: 'newsletter', label: 'Newsletter' },
+    { value: 'volunteer', label: 'Voluntariado' }
+  ];
+
+  const availableFields = [
+    { value: 'name', label: 'Nome' },
+    { value: 'email', label: 'Email' },
+    { value: 'phone', label: 'Telefone' },
+    { value: 'message', label: 'Mensagem' },
+    { value: 'amount', label: 'Valor da Doação' },
+    { value: 'address', label: 'Endereço' },
+    { value: 'cpf', label: 'CPF' }
+  ];
+
+  const handleCreateForm = () => {
+    const form = {
+      id: Date.now().toString(),
+      ...newForm,
+      isActive: true
+    };
+    setForms(prev => [...prev, form]);
+    setNewForm({ name: '', type: 'contact', fields: ['name', 'email'] });
+    setShowNewFormModal(false);
+  };
+
+  const toggleFormStatus = (formId: string) => {
+    setForms(prev => prev.map(form => 
+      form.id === formId ? { ...form, isActive: !form.isActive } : form
+    ));
+  };
+
+  const deleteForm = (formId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este formulário?')) return;
+    setForms(prev => prev.filter(form => form.id !== formId));
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Formulários</CardTitle>
-        <CardDescription>
-          Crie formulários de contato, doação e captação de leads
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center py-8">
-          <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">Funcionalidade em desenvolvimento</p>
-          <p className="text-sm text-gray-500">
-            Em breve você poderá criar formulários personalizados integrados ao WhatsApp
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Formulários do Site</CardTitle>
+            <CardDescription>
+              Gerencie os formulários de captação de leads e contato
+            </CardDescription>
+          </div>
+          <Button onClick={() => setShowNewFormModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Formulário
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {forms.map((form) => (
+              <div key={form.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">{form.name}</h4>
+                  <p className="text-sm text-gray-600">
+                    Tipo: {formTypes.find(t => t.value === form.type)?.label}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Campos: {form.fields.map(field => 
+                      availableFields.find(f => f.value === field)?.label
+                    ).join(', ')}
+                  </p>
+                  <Badge variant={form.isActive ? "default" : "secondary"}>
+                    {form.isActive ? "Ativo" : "Inativo"}
+                  </Badge>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleFormStatus(form.id)}
+                  >
+                    {form.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => deleteForm(form.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {showNewFormModal && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Novo Formulário</CardTitle>
+            <CardDescription>
+              Crie um novo formulário para o seu site
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Nome do Formulário</Label>
+              <Input
+                value={newForm.name}
+                onChange={(e) => setNewForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Ex: Contato Geral"
+              />
+            </div>
+            <div>
+              <Label>Tipo do Formulário</Label>
+              <Select
+                value={newForm.type}
+                onValueChange={(value) => setNewForm(prev => ({ ...prev, type: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {formTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Campos do Formulário</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {availableFields.map((field) => (
+                  <div key={field.value} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={field.value}
+                      checked={newForm.fields.includes(field.value)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewForm(prev => ({
+                            ...prev,
+                            fields: [...prev.fields, field.value]
+                          }));
+                        } else {
+                          setNewForm(prev => ({
+                            ...prev,
+                            fields: prev.fields.filter(f => f !== field.value)
+                          }));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={field.value} className="text-sm">
+                      {field.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleCreateForm}>
+                Criar Formulário
+              </Button>
+              <Button variant="outline" onClick={() => setShowNewFormModal(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
