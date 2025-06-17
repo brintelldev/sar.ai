@@ -28,6 +28,7 @@ import Certificate from "@/pages/certificate";
 import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
 import { ModuleEditor } from "@/pages/module-editor";
+import Whitelabel from "@/pages/whitelabel";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -165,6 +166,11 @@ function Router() {
       <Route path="/support">
         <ProtectedRoute>
           <Support />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/whitelabel">
+        <ProtectedRoute>
+          <Whitelabel />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

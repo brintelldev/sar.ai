@@ -2,6 +2,8 @@ import {
   users, organizations, userRoles, projects, donors, beneficiaries, 
   volunteers, donations, accountsReceivable, accountsPayable, funders,
   courses, courseModules, userCourseProgress, courseAssessments, certificates,
+  whitelabelSites, whitelabelTemplates, whitelabelPages, whitelabelMenus, 
+  whitelabelForms, whitelabelFormSubmissions,
   type User, type InsertUser, type Organization, type InsertOrganization,
   type UserRole, type InsertUserRole, type Project, type InsertProject,
   type Donor, type InsertDonor, type Beneficiary, type InsertBeneficiary,
@@ -9,7 +11,11 @@ import {
   type AccountsReceivable, type AccountsPayable, type Funder,
   type Course, type InsertCourse, type CourseModule, type InsertCourseModule,
   type UserCourseProgress, type InsertUserCourseProgress,
-  type CourseAssessment, type InsertCourseAssessment, type Certificate
+  type CourseAssessment, type InsertCourseAssessment, type Certificate,
+  type WhitelabelSite, type InsertWhitelabelSite, type WhitelabelTemplate,
+  type InsertWhitelabelTemplate, type WhitelabelPage, type InsertWhitelabelPage,
+  type WhitelabelMenu, type InsertWhitelabelMenu, type WhitelabelForm,
+  type InsertWhitelabelForm, type WhitelabelFormSubmission
 } from "@shared/schema";
 
 export interface IStorage {
@@ -105,6 +111,41 @@ export interface IStorage {
   // User Certificates
   getUserCertificates(userId: string): Promise<Certificate[]>;
   createCertificate(certificate: any): Promise<Certificate>;
+
+  // Whitelabel Sites
+  getWhitelabelSite(organizationId: string): Promise<WhitelabelSite | undefined>;
+  createWhitelabelSite(site: InsertWhitelabelSite): Promise<WhitelabelSite>;
+  updateWhitelabelSite(organizationId: string, updates: Partial<WhitelabelSite>): Promise<WhitelabelSite | undefined>;
+
+  // Whitelabel Templates
+  getWhitelabelTemplates(): Promise<WhitelabelTemplate[]>;
+  getWhitelabelTemplate(id: string): Promise<WhitelabelTemplate | undefined>;
+  createWhitelabelTemplate(template: InsertWhitelabelTemplate): Promise<WhitelabelTemplate>;
+
+  // Whitelabel Pages
+  getSitePages(siteId: string): Promise<WhitelabelPage[]>;
+  getPage(id: string, siteId: string): Promise<WhitelabelPage | undefined>;
+  getPageBySlug(slug: string, siteId: string): Promise<WhitelabelPage | undefined>;
+  createPage(page: InsertWhitelabelPage): Promise<WhitelabelPage>;
+  updatePage(id: string, siteId: string, updates: Partial<WhitelabelPage>): Promise<WhitelabelPage | undefined>;
+  deletePage(id: string, siteId: string): Promise<boolean>;
+
+  // Whitelabel Menus
+  getSiteMenus(siteId: string): Promise<WhitelabelMenu[]>;
+  createMenu(menu: InsertWhitelabelMenu): Promise<WhitelabelMenu>;
+  updateMenu(id: string, updates: Partial<WhitelabelMenu>): Promise<WhitelabelMenu | undefined>;
+  deleteMenu(id: string): Promise<boolean>;
+
+  // Whitelabel Forms
+  getSiteForms(siteId: string): Promise<WhitelabelForm[]>;
+  getForm(id: string, siteId: string): Promise<WhitelabelForm | undefined>;
+  createForm(form: InsertWhitelabelForm): Promise<WhitelabelForm>;
+  updateForm(id: string, siteId: string, updates: Partial<WhitelabelForm>): Promise<WhitelabelForm | undefined>;
+  deleteForm(id: string, siteId: string): Promise<boolean>;
+
+  // Form Submissions
+  getFormSubmissions(formId: string): Promise<WhitelabelFormSubmission[]>;
+  createFormSubmission(submission: Omit<WhitelabelFormSubmission, 'id' | 'createdAt'>): Promise<WhitelabelFormSubmission>;
 }
 
 export class MemStorage implements IStorage {
