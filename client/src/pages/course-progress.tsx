@@ -111,7 +111,7 @@ export default function CourseProgressPage() {
 
   const modulesList = Array.isArray(modules) ? modules : [];
   const currentProgress = progress as CourseProgress;
-  const completedModules = currentProgress?.completedModules || [];
+  const completedModules = Array.isArray(currentProgress?.completedModules) ? currentProgress.completedModules : [];
   const progressPercentage = currentProgress?.progress || 0;
 
   const getModuleStatus = (moduleId: string) => {
@@ -179,7 +179,7 @@ export default function CourseProgressPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {modulesList.map((module: CourseModule, index: number) => {
+                {modulesList?.map((module: CourseModule, index: number) => {
                   const status = getModuleStatus(module.id);
                   const isActive = currentModule?.id === module.id;
                   
@@ -261,7 +261,7 @@ export default function CourseProgressPage() {
                     </TabsList>
                     
                     <TabsContent value="content" className="space-y-6">
-                      {currentModule.content.sections.map((section, index) => (
+                      {currentModule.content?.sections?.map((section: any, index: number) => (
                         <div key={index} className="space-y-4">
                           <h3 className="text-lg font-semibold">{section.title}</h3>
                           
@@ -312,7 +312,7 @@ export default function CourseProgressPage() {
                     <TabsContent value="resources" className="space-y-4">
                       <h3 className="text-lg font-semibold">Recursos Complementares</h3>
                       
-                      {currentModule.resources.map((resource, index) => (
+                      {currentModule.resources?.map((resource: any, index: number) => (
                         <Card key={index}>
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
