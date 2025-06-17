@@ -1,27 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Users, Target, Phone, Mail, MapPin, ExternalLink } from "lucide-react";
-
-// Hook para extrair subdomínio da URL
-function useSubdomain() {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const parts = hostname.split('.');
-  
-  // Se estamos em localhost:5000 ou similar, usar um subdomínio padrão para testes
-  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-    return 'institutoesperanca';
-  }
-  
-  // Em produção, extrair o subdomínio
-  if (parts.length > 2) {
-    return parts[0];
-  }
-  
-  return null;
-}
 
 interface PublicSiteData {
   id: string;
@@ -52,7 +34,8 @@ interface PublicSiteData {
 }
 
 export default function PublicSite() {
-  const subdomain = useSubdomain();
+  const [match, params] = useRoute("/site/:subdomain");
+  const subdomain = params?.subdomain;
   
   const { data: siteData, isLoading, error } = useQuery({
     queryKey: ['/api/public/site', subdomain],

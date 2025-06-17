@@ -495,6 +495,42 @@ export async function seedTestData() {
 
     console.log('✅ Curso e módulos criados');
 
+    // 11. Criar site whitelabel para a organização
+    const whitelabelSite = await storage.createWhitelabelSite({
+      organizationId: testOrg.id,
+      subdomain: 'institutoesperanca',
+      isActive: true,
+      theme: {
+        primaryColor: '#3b82f6',
+        secondaryColor: '#64748b',
+        fontFamily: 'Inter',
+        logoUrl: null
+      },
+      content: {
+        hero: {
+          title: 'Bem-vindos ao Instituto Esperança',
+          subtitle: 'Transformando vidas através do trabalho social e educação. Oferecemos suporte integral a mulheres vítimas de violência, proporcionando capacitação profissional, apoio psicológico e reinserção social.',
+          ctaText: 'Saiba Mais'
+        },
+        about: {
+          title: 'Nossa Missão',
+          description: 'Oferecemos suporte integral a mulheres vítimas de violência, proporcionando capacitação profissional, apoio psicológico e reinserção social. Acreditamos que através da educação e do empoderamento feminino podemos construir uma sociedade mais justa e igualitária.'
+        },
+        contact: {
+          email: 'contato@institutoesperanca.org.br',
+          phone: '(11) 99999-9999',
+          address: 'São Paulo, SP - Brasil'
+        }
+      },
+      seoSettings: {
+        metaTitle: 'Instituto Esperança - Transformando Vidas',
+        metaDescription: 'ONG dedicada ao apoio integral de mulheres vítimas de violência através de capacitação profissional e reinserção social.',
+        keywords: 'ONG, mulheres, violência, capacitação, apoio social, São Paulo'
+      }
+    });
+
+    console.log('✅ Site whitelabel criado para:', testOrg.name);
+
     console.log('🎉 Dados de teste populados com sucesso!');
     console.log('\n📝 Usuários de teste criados:');
     console.log('Admin: admin@institutoesperanca.org.br / admin123');

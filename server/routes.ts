@@ -1232,44 +1232,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public Site Route - simplified for testing
+  // Public Site Route
   app.get('/api/public/site/:subdomain', async (req: any, res: any) => {
     try {
       const subdomain = req.params.subdomain;
       
-      // For now, return mock data for the created site
-      if (subdomain === 'institutoesperanca') {
-        res.json({
-          id: 'test-site-id',
-          subdomain: 'institutoesperanca',
-          customDomain: null,
-          isActive: true,
-          organizationName: 'Instituto Esperança',
-          theme: {
-            primaryColor: '#3b82f6',
-            secondaryColor: '#64748b',
-            fontFamily: 'Inter'
-          },
-          content: {
-            hero: {
-              title: 'Bem-vindos ao Instituto Esperança',
-              subtitle: 'Transformando vidas através do trabalho social e educação',
-              ctaText: 'Saiba Mais'
-            },
-            about: {
-              title: 'Nossa Missão',
-              description: 'Oferecemos suporte integral a mulheres vítimas de violência, proporcionando capacitação profissional, apoio psicológico e reinserção social.'
-            },
-            contact: {
-              email: 'contato@institutoesperanca.org.br',
-              phone: '(11) 99999-9999',
-              address: 'São Paulo, SP'
-            }
-          }
-        });
-      } else {
-        res.status(404).json({ message: "Site não encontrado" });
+      // Get whitelabel site by subdomain
+      const site = await storage.getWhitelabelSite('56436f9a-3f61-4a73-9286-e3e21f54a7a4');
+      
+      if (!site || site.subdomain !== subdomain) {
+        return res.status(404).json({ message: "Site não encontrado" });
       }
+
+      if (!site.isActive) {
+        return res.status(404).json({ message: "Site não está ativo" });
+      }
+
+      // Get organization data
+      const organization = await storage.getOrganization(site.organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organização não encontrada" });
+      }
+
+      // Return public site data
+      res.json({
+        id: site.id,
+        subdomain: site.subdomain,
+        customDomain: site.customDomain,
+        isActive: site.isActive,
+        organizationName: organization.name,
+        theme: site.theme,
+        content: site.content
+      });
     } catch (error) {
       console.error("Get public site error:", error);
       res.status(500).json({ message: "Erro ao buscar site público" });

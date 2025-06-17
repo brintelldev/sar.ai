@@ -356,7 +356,7 @@ function SiteOverview({ site }: { site: WhitelabelSite }) {
             </div>
           </div>
           <Button variant="outline" className="w-full" asChild>
-            <a href={`https://${site.subdomain}.plataforma.org`} target="_blank" rel="noopener noreferrer">
+            <a href={`/site/${site.subdomain}`} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
               Abrir Site
             </a>
