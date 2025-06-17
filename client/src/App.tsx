@@ -29,6 +29,7 @@ import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
 import { ModuleEditor } from "@/pages/module-editor";
 import Whitelabel from "@/pages/whitelabel";
+import PublicSite from "@/pages/public-site";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -172,6 +173,9 @@ function Router() {
         <ProtectedRoute>
           <Whitelabel />
         </ProtectedRoute>
+      </Route>
+      <Route path="/site/:subdomain">
+        <PublicSite />
       </Route>
       <Route component={NotFound} />
     </Switch>

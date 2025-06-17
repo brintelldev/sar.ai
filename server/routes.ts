@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { 
   insertUserSchema, insertOrganizationSchema, insertUserRoleSchema,
   insertProjectSchema, insertDonorSchema, insertBeneficiarySchema,
-  insertVolunteerSchema, insertDonationSchema
+  insertVolunteerSchema, insertDonationSchema, whitelabelSites
 } from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
@@ -1229,6 +1229,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Submit form error:", error);
       res.status(500).json({ message: "Erro ao enviar formulário" });
+    }
+  });
+
+  // Public Site Route - simplified for testing
+  app.get('/api/public/site/:subdomain', async (req: any, res: any) => {
+    try {
+      const subdomain = req.params.subdomain;
+      
+      // For now, return mock data for the created site
+      if (subdomain === 'institutoesperanca') {
+        res.json({
+          id: 'test-site-id',
+          subdomain: 'institutoesperanca',
+          customDomain: null,
+          isActive: true,
+          organizationName: 'Instituto Esperança',
+          theme: {
+            primaryColor: '#3b82f6',
+            secondaryColor: '#64748b',
+            fontFamily: 'Inter'
+          },
+          content: {
+            hero: {
+              title: 'Bem-vindos ao Instituto Esperança',
+              subtitle: 'Transformando vidas através do trabalho social e educação',
+              ctaText: 'Saiba Mais'
+            },
+            about: {
+              title: 'Nossa Missão',
+              description: 'Oferecemos suporte integral a mulheres vítimas de violência, proporcionando capacitação profissional, apoio psicológico e reinserção social.'
+            },
+            contact: {
+              email: 'contato@institutoesperanca.org.br',
+              phone: '(11) 99999-9999',
+              address: 'São Paulo, SP'
+            }
+          }
+        });
+      } else {
+        res.status(404).json({ message: "Site não encontrado" });
+      }
+    } catch (error) {
+      console.error("Get public site error:", error);
+      res.status(500).json({ message: "Erro ao buscar site público" });
     }
   });
 

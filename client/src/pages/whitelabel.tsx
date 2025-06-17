@@ -317,22 +317,25 @@ function SiteOverview({ site }: { site: WhitelabelSite }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-sm font-medium">Subdomínio Principal</Label>
-            <div className="flex items-center space-x-2 mt-1">
-              <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+            <Label className="text-sm font-medium text-gray-600">Subdomínio Principal</Label>
+            <div className="flex items-center space-x-2 mt-2">
+              <span className="bg-gray-100 px-3 py-1 rounded text-sm font-mono">
                 {site.subdomain}
-              </code>
-              <Badge variant={site.isActive ? "default" : "secondary"}>
+              </span>
+              <Badge 
+                variant={site.isActive ? "default" : "secondary"}
+                className={site.isActive ? "bg-purple-600 hover:bg-purple-700" : ""}
+              >
                 {site.isActive ? "Ativo" : "Inativo"}
               </Badge>
             </div>
           </div>
           {site.customDomain && (
             <div>
-              <Label className="text-sm font-medium">Domínio Personalizado</Label>
-              <code className="bg-gray-100 px-2 py-1 rounded text-sm block mt-1">
+              <Label className="text-sm font-medium text-gray-600">Domínio Personalizado</Label>
+              <div className="bg-gray-100 px-3 py-1 rounded text-sm font-mono mt-2">
                 {site.customDomain}
-              </code>
+              </div>
             </div>
           )}
         </CardContent>
@@ -346,14 +349,14 @@ function SiteOverview({ site }: { site: WhitelabelSite }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center">
+          <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center mb-4">
             <div className="text-center">
-              <Globe className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Preview do Site</p>
+              <Globe className="h-12 w-12 text-blue-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">Preview do Site</p>
             </div>
           </div>
-          <Button variant="outline" className="w-full mt-4" asChild>
-            <a href={`https://${site.subdomain}`} target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" className="w-full" asChild>
+            <a href={`https://${site.subdomain}.plataforma.org`} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
               Abrir Site
             </a>
@@ -370,20 +373,29 @@ function SiteOverview({ site }: { site: WhitelabelSite }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Site Publicado</span>
-            <Badge variant={site.isActive ? "default" : "secondary"}>
+            <span className="text-sm text-gray-600">Site Publicado</span>
+            <Badge 
+              variant={site.isActive ? "default" : "secondary"}
+              className={site.isActive ? "bg-purple-600 hover:bg-purple-700 text-white" : "bg-gray-200 text-gray-600"}
+            >
               {site.isActive ? "Sim" : "Não"}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Domínio Custom</span>
-            <Badge variant={site.customDomain ? "default" : "secondary"}>
-              {site.customDomain ? "Configurado" : "Não"}
+            <span className="text-sm text-gray-600">Domínio Custom</span>
+            <Badge 
+              variant={site.customDomain ? "default" : "secondary"}
+              className={site.customDomain ? "bg-purple-600 hover:bg-purple-700 text-white" : "bg-gray-200 text-gray-600"}
+            >
+              {site.customDomain ? "Sim" : "Não"}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Analytics</span>
-            <Badge variant={site.analyticsCode ? "default" : "secondary"}>
+            <span className="text-sm text-gray-600">Analytics</span>
+            <Badge 
+              variant={site.analyticsCode ? "default" : "secondary"}
+              className={site.analyticsCode ? "bg-purple-600 hover:bg-purple-700 text-white" : "bg-gray-200 text-gray-600"}
+            >
               {site.analyticsCode ? "Ativo" : "Inativo"}
             </Badge>
           </div>
