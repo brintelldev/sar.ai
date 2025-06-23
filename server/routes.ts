@@ -1368,6 +1368,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Super Admin Routes
+  const requireSuperAdmin = (req: any, res: any, next: any) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    next();
+  };
+
+  // Platform overview
+  app.get('/api/admin/overview', requireSuperAdmin, async (req: Request, res: Response) => {
+    try {
+      const overview = await storage.getPlatformOverview();
+      res.json(overview);
+    } catch (error) {
+      console.error('Error fetching platform overview:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Organizations management
+  app.get('/api/admin/organizations', requireSuperAdmin, async (req: Request, res: Response) => {
+    try {
+      const organizations = await storage.getAllOrganizations();
+      res.json(organizations);
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Subscription plans management
+  app.get('/api/admin/plans', requireSuperAdmin, async (req: Request, res: Response) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post('/api/admin/plans', requireSuperAdmin, async (req: Request, res: Response) => {
+    try {
+      const plan = await storage.createSubscriptionPlan(req.body);
+      res.json(plan);
+    } catch (error) {
+      console.error('Error creating subscription plan:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // System announcements
+  app.get('/api/admin/announcements', requireSuperAdmin, async (req: Request, res: Response) => {
+    try {
+      const announcements = await storage.getSystemAnnouncements();
+      res.json(announcements);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  app.post('/api/admin/announcements', requireSuperAdmin, async (req: Request, res: Response) => {
+    try {
+      const { userId } = (req as any).session as SessionData;
+      const announcementData = { ...req.body, createdBy: userId };
+      const announcement = await storage.createSystemAnnouncement(announcementData);
+      res.json(announcement);
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
