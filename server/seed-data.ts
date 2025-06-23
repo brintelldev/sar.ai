@@ -25,6 +25,15 @@ export async function seedTestData() {
     console.log('✅ Organização criada:', testOrg.name);
 
     // 2. Criar usuários com diferentes níveis de acesso
+    
+    // Criar super administrador da plataforma
+    const superAdminUser = await storage.createUser({
+      email: 'superadmin@sarai.com.br',
+      passwordHash: await bcrypt.hash('superadmin123', 10),
+      name: 'Super Administrador SARAI',
+      isGlobalAdmin: true
+    });
+
     const adminUser = await storage.createUser({
       email: 'admin@institutoesperanca.org.br',
       passwordHash: await bcrypt.hash('admin123', 10),
@@ -533,6 +542,7 @@ export async function seedTestData() {
 
     console.log('🎉 Dados de teste populados com sucesso!');
     console.log('\n📝 Usuários de teste criados:');
+    console.log('🔑 SUPER ADMIN: superadmin@sarai.com.br / superadmin123');
     console.log('Admin: admin@institutoesperanca.org.br / admin123');
     console.log('Gerente: gerente@institutoesperanca.org.br / gerente123');
     console.log('Voluntário: voluntario@institutoesperanca.org.br / voluntario123');

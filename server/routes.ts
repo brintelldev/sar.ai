@@ -1369,11 +1369,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Super Admin Routes
-  const requireSuperAdmin = (req: any, res: any, next: any) => {
+  const requireSuperAdmin = async (req: any, res: any, next: any) => {
     if (!req.session?.userId) {
       return res.status(401).json({ message: 'Authentication required' });
     }
-    next();
+    
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || !user.isGlobalAdmin) {
+        return res.status(403).json({ message: 'Super admin access required' });
+      }
+      next();
+    } catch (error) {
+      console.error('Super admin check error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   };
 
   // Platform overview
