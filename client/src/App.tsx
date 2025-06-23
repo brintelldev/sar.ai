@@ -30,6 +30,7 @@ import { CourseEditor } from "@/pages/course-editor";
 import { ModuleEditor } from "@/pages/module-editor";
 import Whitelabel from "@/pages/whitelabel";
 import PublicSite from "@/pages/public-site";
+import SuperAdminPage from "@/pages/super-admin";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -176,6 +177,11 @@ function Router() {
       </Route>
       <Route path="/site/:subdomain">
         <PublicSite />
+      </Route>
+      <Route path="/super-admin">
+        <ProtectedRoute>
+          <SuperAdminPage />
+        </ProtectedRoute>
       </Route>
       <Route component={NotFound} />
     </Switch>
