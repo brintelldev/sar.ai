@@ -286,7 +286,17 @@ export class PostgresStorage implements IStorage {
     totalDonated: number;
     beneficiariesServed: number;
     activeVolunteers: number;
+    projectsChange: string;
+    donationsChange: string;
+    beneficiariesChange: string;
+    volunteersChange: string;
   }> {
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Current metrics
     const [activeProjectsResult] = await db
       .select({ count: count() })
       .from(projects)
@@ -309,11 +319,85 @@ export class PostgresStorage implements IStorage {
       .from(volunteers)
       .where(and(eq(volunteers.organizationId, organizationId), eq(volunteers.status, 'active')));
 
+    // Previous month metrics for comparison
+    const [lastMonthProjectsResult] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(and(
+        eq(projects.organizationId, organizationId), 
+        eq(projects.status, 'active'),
+        sql`${projects.createdAt} < ${currentMonthStart}`
+      ));
+
+    const [lastMonthDonationsResult] = await db
+      .select({ 
+        total: sql<string>`COALESCE(SUM(CAST(${donations.amount} AS DECIMAL)), 0)`
+      })
+      .from(donations)
+      .where(and(
+        eq(donations.organizationId, organizationId),
+        sql`${donations.createdAt} >= ${lastMonthStart}`,
+        sql`${donations.createdAt} <= ${lastMonthEnd}`
+      ));
+
+    const [thisMonthDonationsResult] = await db
+      .select({ 
+        total: sql<string>`COALESCE(SUM(CAST(${donations.amount} AS DECIMAL)), 0)`
+      })
+      .from(donations)
+      .where(and(
+        eq(donations.organizationId, organizationId),
+        sql`${donations.createdAt} >= ${currentMonthStart}`
+      ));
+
+    const [lastMonthBeneficiariesResult] = await db
+      .select({ count: count() })
+      .from(beneficiaries)
+      .where(and(
+        eq(beneficiaries.organizationId, organizationId),
+        sql`${beneficiaries.createdAt} < ${currentMonthStart}`
+      ));
+
+    const [lastMonthVolunteersResult] = await db
+      .select({ count: count() })
+      .from(volunteers)
+      .where(and(
+        eq(volunteers.organizationId, organizationId),
+        eq(volunteers.status, 'active'),
+        sql`${volunteers.createdAt} < ${currentMonthStart}`
+      ));
+
+    // Calculate changes
+    const currentProjects = activeProjectsResult?.count || 0;
+    const lastProjects = lastMonthProjectsResult?.count || 0;
+    const projectsDiff = currentProjects - lastProjects;
+
+    const thisMonthDonations = parseFloat(thisMonthDonationsResult?.total || '0');
+    const lastMonthDonations = parseFloat(lastMonthDonationsResult?.total || '0');
+    const donationsPercent = lastMonthDonations > 0 ? 
+      ((thisMonthDonations - lastMonthDonations) / lastMonthDonations * 100) : 0;
+
+    const currentBeneficiaries = beneficiariesResult?.count || 0;
+    const lastBeneficiaries = lastMonthBeneficiariesResult?.count || 0;
+    const beneficiariesDiff = currentBeneficiaries - lastBeneficiaries;
+
+    const currentVolunteers = volunteersResult?.count || 0;
+    const lastVolunteers = lastMonthVolunteersResult?.count || 0;
+    const volunteersDiff = currentVolunteers - lastVolunteers;
+
     return {
-      activeProjects: activeProjectsResult?.count || 0,
+      activeProjects: currentProjects,
       totalDonated: parseFloat(totalDonatedResult?.total || '0'),
-      beneficiariesServed: beneficiariesResult?.count || 0,
-      activeVolunteers: volunteersResult?.count || 0,
+      beneficiariesServed: currentBeneficiaries,
+      activeVolunteers: currentVolunteers,
+      projectsChange: projectsDiff > 0 ? `+${projectsDiff} este mês` : 
+                    projectsDiff < 0 ? `${projectsDiff} este mês` : 'Sem alteração',
+      donationsChange: donationsPercent > 0 ? `+${donationsPercent.toFixed(1)}% este mês` :
+                      donationsPercent < 0 ? `${donationsPercent.toFixed(1)}% este mês` : 'Sem alteração',
+      beneficiariesChange: beneficiariesDiff > 0 ? `+${beneficiariesDiff} este mês` :
+                          beneficiariesDiff < 0 ? `${beneficiariesDiff} este mês` : 'Sem alteração',
+      volunteersChange: volunteersDiff > 0 ? `${volunteersDiff} novos este mês` :
+                       volunteersDiff < 0 ? `${Math.abs(volunteersDiff)} menos este mês` : 'Sem alteração'
     };
   }
 

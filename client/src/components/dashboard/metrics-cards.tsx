@@ -38,7 +38,7 @@ export function MetricsCards() {
     {
       title: 'Projetos Ativos',
       value: metrics.activeProjects,
-      change: '+2 este mês',
+      change: metrics.projectsChange,
       icon: FolderKanban,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
@@ -46,7 +46,7 @@ export function MetricsCards() {
     {
       title: 'Total Arrecadado',
       value: formatCurrency(metrics.totalDonated),
-      change: '+15% este mês',
+      change: metrics.donationsChange,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/20',
@@ -54,7 +54,7 @@ export function MetricsCards() {
     {
       title: 'Beneficiários Atendidos',
       value: metrics.beneficiariesServed,
-      change: '+8 este mês',
+      change: metrics.beneficiariesChange,
       icon: Users,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100 dark:bg-orange-900/20',
@@ -62,7 +62,7 @@ export function MetricsCards() {
     {
       title: 'Voluntários Ativos',
       value: metrics.activeVolunteers,
-      change: '5 novos este mês',
+      change: metrics.volunteersChange,
       icon: UserCheck,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
@@ -85,7 +85,13 @@ export function MetricsCards() {
                     {card.value}
                   </p>
                   <div className="flex items-center mt-1 sm:mt-2">
-                    <span className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
+                    <span className={`text-xs sm:text-sm font-medium ${
+                      card.change.includes('+') 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : card.change.includes('-')
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-muted-foreground'
+                    }`}>
                       {card.change}
                     </span>
                   </div>
