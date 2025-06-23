@@ -154,7 +154,7 @@ export default function PublicSite() {
             <Card>
               <CardHeader className="text-center">
                 <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Pessoas Atendidas</CardTitle>
+                <CardTitle>Beneficiários</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <CardDescription>

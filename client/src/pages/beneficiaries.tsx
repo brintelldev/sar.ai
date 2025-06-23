@@ -84,9 +84,9 @@ export default function Beneficiaries() {
       <div className="container mx-auto px-4 py-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Pessoas Atendidas</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Beneficiários</h1>
             <p className="text-base text-muted-foreground">
-              Gestão compassiva e segura das pessoas acolhidas pela organização
+              Gestão compassiva e segura dos beneficiários acolhidos pela organização
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -100,7 +100,7 @@ export default function Beneficiaries() {
               <DialogHeader>
                 <DialogTitle>Novo Acolhimento</DialogTitle>
                 <DialogDescription>
-                  Registro confidencial de uma nova pessoa em nosso programa de apoio. 
+                  Registro confidencial de um novo beneficiário em nosso programa de apoio. 
                   Todas as informações são protegidas pela LGPD.
                 </DialogDescription>
               </DialogHeader>
@@ -389,9 +389,9 @@ export default function Beneficiaries() {
           <CardHeader className="border-b bg-gray-50/50">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Pessoas em Acompanhamento</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900">Beneficiários em Acompanhamento</CardTitle>
                 <CardDescription className="text-sm text-gray-600 mt-1">
-                  Lista confidencial de pessoas acolhidas em nossos programas
+                  Lista confidencial de beneficiários acolhidos em nossos programas
                 </CardDescription>
               </div>
               <Badge variant="outline" className="text-xs">
@@ -409,7 +409,7 @@ export default function Beneficiaries() {
               <div className="text-center py-12 px-4">
                 <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchTerm ? 'Nenhuma pessoa encontrada' : 'Nenhum acolhimento registrado'}
+                  {searchTerm ? 'Nenhum beneficiário encontrado' : 'Nenhum acolhimento registrado'}
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                   {searchTerm ? 'Tente ajustar os termos da busca.' : 'Quando houver novos acolhimentos, eles aparecerão aqui.'}

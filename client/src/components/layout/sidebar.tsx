@@ -19,7 +19,7 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Projetos", href: "/projects", icon: FolderOpen },
-  { name: "Pessoas Atendidas", href: "/beneficiaries", icon: Users },
+  { name: "Beneficiários", href: "/beneficiaries", icon: Users },
   { name: "Voluntários", href: "/volunteers", icon: HandHeart },
   { name: "Doadores", href: "/donors", icon: Heart },
   { name: "Doações", href: "/donations", icon: DollarSign },
