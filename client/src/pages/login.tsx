@@ -96,22 +96,14 @@ export default function Login() {
 
   const forgotPasswordMutation = useMutation({
     mutationFn: async (email: string) => {
-      const response = await apiRequest('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      const response = await apiRequest('/api/auth/forgot-password', 'POST', { email });
       return response;
     },
   });
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (data: { email: string; token: string; newPassword: string }) => {
-      const response = await apiRequest('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('/api/auth/reset-password', 'POST', data);
       return response;
     },
   });

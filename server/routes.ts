@@ -161,8 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user exists
       const user = await storage.getUserByEmail(email);
       if (!user) {
-        // Don't reveal if email exists or not for security
-        return res.json({ message: "Se o email existir em nossa base, você receberá instruções para redefinir sua senha." });
+        return res.status(404).json({ message: "Email não encontrado em nossa base de dados. Verifique se o email está correto ou crie uma nova conta." });
       }
 
       // Generate reset token (in a real app, you'd store this in database with expiration)
@@ -175,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Password reset token for ${email}: ${resetToken}`);
       
       res.json({ 
-        message: "Se o email existir em nossa base, você receberá instruções para redefinir sua senha.",
+        message: "Instruções para redefinir sua senha foram enviadas para seu email.",
         // In development, include the token for testing
         ...(process.env.NODE_ENV === 'development' && { resetToken })
       });
