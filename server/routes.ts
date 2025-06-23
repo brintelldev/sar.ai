@@ -1270,6 +1270,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Activity logs route
+  app.get('/api/activity', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = (req as any).session as SessionData;
+      const activities = await storage.getActivityLogs(organizationId!);
+      res.json(activities);
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
