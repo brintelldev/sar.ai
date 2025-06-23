@@ -110,7 +110,7 @@ This is a comprehensive NGO (Non-Governmental Organization) management platform 
 ## Super Admin Access
 
 **Credenciais de Super Admin:**
-- Email: superadmin@platform.com.br
+- Email: superadmin@brintell.com
 - Senha: admin123
 
 O super admin tem acesso completo ao painel administrativo da plataforma SaaS, incluindo:
