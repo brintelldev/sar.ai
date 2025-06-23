@@ -67,28 +67,28 @@ export function RecentActivity() {
 
   return (
     <Card>
-      <CardHeader>
-        <h2 className="text-lg font-semibold text-foreground">Atividades Recentes</h2>
+      <CardHeader className="p-4 sm:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-foreground">Atividades Recentes</h2>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4 sm:p-6 pt-0">
+        <div className="space-y-3 sm:space-y-4">
           {activities.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">
               Nenhuma atividade recente
             </p>
           ) : (
             activities.map((activity: ActivityLog) => {
               const { icon: Icon, color, bg } = getActivityIcon(activity.type);
               return (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <div className={`w-8 h-8 ${bg} rounded-full flex items-center justify-center`}>
-                    <Icon className={`h-4 w-4 ${color}`} />
+                <div key={activity.id} className="flex items-start space-x-2 sm:space-x-3">
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 ${bg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground font-medium">
+                    <p className="text-xs sm:text-sm text-foreground font-medium line-clamp-2">
                       {activity.title}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                       {activity.description}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">

@@ -36,18 +36,18 @@ export function QuickActions() {
       <CardHeader>
         <h2 className="text-lg font-semibold text-foreground">Ações Rápidas</h2>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="p-4 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2 sm:gap-3">
           {actions.map((action) => {
             const Icon = action.icon;
             return (
               <Link key={action.title} href={action.href}>
                 <Button
                   variant="outline"
-                  className="w-full justify-start h-auto py-3 px-4 bg-muted/50 hover:bg-muted border-border"
+                  className="w-full justify-start h-auto py-2 sm:py-3 px-3 sm:px-4 bg-muted/50 hover:bg-muted border-border text-left"
                 >
-                  <Icon className={`h-4 w-4 mr-3 ${action.color}`} />
-                  <span className="text-sm font-medium text-foreground">
+                  <Icon className={`h-4 w-4 mr-2 sm:mr-3 ${action.color} flex-shrink-0`} />
+                  <span className="text-xs sm:text-sm font-medium text-foreground truncate">
                     {action.title}
                   </span>
                 </Button>

@@ -96,7 +96,7 @@
 
 @layer components {
   .metric-card {
-    @apply bg-white dark:bg-card rounded-xl shadow-sm border border-border p-6 transition-all hover:shadow-md;
+    @apply bg-white dark:bg-card rounded-xl shadow-sm border border-border transition-all hover:shadow-md;
   }
 
   .sidebar-nav-item {
@@ -108,7 +108,7 @@
   }
 
   .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap;
   }
 
   .status-active {
@@ -122,6 +122,19 @@
   .status-pending {
     @apply bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400;
   }
+
+  .status-completed {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400;
+  }
+
+  /* Utility classes for text truncation */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
 
   .status-completed {
     @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400;

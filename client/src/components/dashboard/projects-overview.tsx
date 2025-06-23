@@ -93,18 +93,23 @@ export function ProjectsOverview() {
             {projects.slice(0, 3).map((project: any) => (
               <div
                 key={project.id}
-                className="border border-border rounded-lg p-4 hover:border-muted-foreground/50 transition-colors"
+                className="border border-border rounded-lg p-3 sm:p-4 hover:border-muted-foreground/50 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{project.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base">{project.name}</h3>
+                      <Badge className={`status-badge ${getStatusVariant(project.status)} self-start`}>
+                        {getStatusLabel(project.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
                       {project.description}
                     </p>
-                    <div className="flex items-center space-x-4 mt-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-3">
                       <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">
                           {project.startDate && project.endDate
                             ? `${formatDate(project.startDate)} - ${formatDate(project.endDate)}`
                             : 'Datas não definidas'}
@@ -112,8 +117,8 @@ export function ProjectsOverview() {
                       </div>
                       {project.budget && (
                         <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
+                          <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-xs sm:text-sm text-muted-foreground">
                             {formatCurrency(project.budget)}
                           </span>
                         </div>
@@ -122,19 +127,14 @@ export function ProjectsOverview() {
                     {project.budget && (
                       <div className="mt-3">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm text-muted-foreground">Progresso</span>
-                          <span className="text-sm font-medium text-foreground">
+                          <span className="text-xs sm:text-sm text-muted-foreground">Progresso</span>
+                          <span className="text-xs sm:text-sm font-medium text-foreground">
                             {calculateProgress(project)}%
                           </span>
                         </div>
                         <Progress value={calculateProgress(project)} className="h-2" />
                       </div>
                     )}
-                  </div>
-                  <div className="ml-4">
-                    <Badge className={`status-badge ${getStatusVariant(project.status)}`}>
-                      {getStatusLabel(project.status)}
-                    </Badge>
                   </div>
                 </div>
               </div>

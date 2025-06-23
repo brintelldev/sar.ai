@@ -70,28 +70,28 @@ export function MetricsCards() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <Card key={card.title} className="metric-card">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
                     {card.title}
                   </p>
-                  <p className="text-3xl font-bold text-foreground mt-2">
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mt-1 sm:mt-2">
                     {card.value}
                   </p>
-                  <div className="flex items-center mt-2">
-                    <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  <div className="flex items-center mt-1 sm:mt-2">
+                    <span className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
                       {card.change}
                     </span>
                   </div>
                 </div>
-                <div className={`w-12 h-12 ${card.bgColor} rounded-lg flex items-center justify-center`}>
-                  <Icon className={`h-6 w-6 ${card.color}`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 ${card.bgColor} rounded-lg flex items-center justify-center flex-shrink-0 ml-3`}>
+                  <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.color}`} />
                 </div>
               </div>
             </CardContent>

@@ -8,11 +8,11 @@ import { LGPDStatus } from '@/components/dashboard/lgpd-status';
 export default function Dashboard() {
   return (
     <MainLayout>
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Visão geral das atividades e métricas da sua organização
           </p>
         </div>
@@ -21,14 +21,14 @@ export default function Dashboard() {
         <MetricsCards />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Projects Overview */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2">
             <ProjectsOverview />
           </div>
 
           {/* Sidebar Content */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <RecentActivity />
             <QuickActions />
             <LGPDStatus />
