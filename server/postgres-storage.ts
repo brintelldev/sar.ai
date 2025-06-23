@@ -746,4 +746,32 @@ export class PostgresStorage implements IStorage {
       .returning();
     return result;
   }
+
+  // Activity logs methods
+  async getActivityLogs(organizationId: string, limit: number = 10): Promise<ActivityLog[]> {
+    return await db
+      .select({
+        id: activityLogs.id,
+        organizationId: activityLogs.organizationId,
+        userId: activityLogs.userId,
+        type: activityLogs.type,
+        title: activityLogs.title,
+        description: activityLogs.description,
+        entityType: activityLogs.entityType,
+        entityId: activityLogs.entityId,
+        metadata: activityLogs.metadata,
+        createdAt: activityLogs.createdAt,
+        userName: users.name
+      })
+      .from(activityLogs)
+      .leftJoin(users, eq(activityLogs.userId, users.id))
+      .where(eq(activityLogs.organizationId, organizationId))
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit);
+  }
+
+  async createActivityLog(activity: InsertActivityLog): Promise<ActivityLog> {
+    const [result] = await db.insert(activityLogs).values(activity).returning();
+    return result;
+  }
 }

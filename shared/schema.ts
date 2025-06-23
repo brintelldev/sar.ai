@@ -408,6 +408,20 @@ export const trainingNotifications = pgTable("training_notifications", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
 });
 
+// Activity logs table for real-time dashboard activities
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  userId: uuid("user_id").references(() => users.id),
+  type: text("type").notNull(), // 'user_created', 'project_created', 'donation_received', 'beneficiary_added', 'volunteer_registered', 'course_completed', 'site_updated'
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  entityType: text("entity_type"), // 'user', 'project', 'donation', 'beneficiary', 'volunteer', 'course', 'site'
+  entityId: uuid("entity_id"), // ID of the related entity
+  metadata: jsonb("metadata"), // Additional data like amounts, names, etc.
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
 // Insert schemas for training module
 export const insertCourseSchema = createInsertSchema(courses).omit({
   id: true,
@@ -573,3 +587,12 @@ export type WhitelabelForm = typeof whitelabelForms.$inferSelect;
 export type InsertWhitelabelForm = z.infer<typeof insertWhitelabelFormSchema>;
 
 export type WhitelabelFormSubmission = typeof whitelabelFormSubmissions.$inferSelect;
+
+// Activity logs schemas and types
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true
+});
+
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
