@@ -147,7 +147,7 @@ export default function Login() {
 
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
       toast({
         title: 'Erro',
@@ -250,7 +250,7 @@ export default function Login() {
                   <Button type="submit" className="w-full" disabled={isLoginPending}>
                     {isLoginPending ? 'Entrando...' : 'Entrar'}
                   </Button>
-                  
+
                   <div className="text-center mt-4">
                     <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
                       <DialogTrigger asChild>
