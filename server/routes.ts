@@ -154,6 +154,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: "Se o email existir em nossa base, você receberá instruções para redefinir sua senha." });
+      }
+
+      // Generate reset token (in a real app, you'd store this in database with expiration)
+      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // In a real implementation, you would:
+      // 1. Store the reset token in the database with expiration
+      // 2. Send email with reset link
+      // For demo purposes, we'll just log the token
+      console.log(`Password reset token for ${email}: ${resetToken}`);
+      
+      res.json({ 
+        message: "Se o email existir em nossa base, você receberá instruções para redefinir sua senha.",
+        // In development, include the token for testing
+        ...(process.env.NODE_ENV === 'development' && { resetToken })
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { email, token, newPassword } = req.body;
+      
+      // In a real implementation, you would verify the token from database
+      // For demo purposes, we'll just check if token is provided
+      if (!token || token.length < 10) {
+        return res.status(400).json({ message: "Token de redefinição inválido ou expirado" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: "Token de redefinição inválido ou expirado" });
+      }
+
+      // Hash new password
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      
+      // Update user password
+      await storage.updateUser(user.id, { passwordHash });
+      
+      res.json({ message: "Senha redefinida com sucesso. Você pode fazer login agora." });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);

@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Heart } from 'lucide-react';
 import { useSimpleAuth as useAuth } from '@/hooks/use-simple-auth';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { slugify } from '@/lib/utils';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import logoSarai from '@/assets/logo_sarai.png';
 
 export default function Login() {
@@ -28,6 +31,20 @@ export default function Login() {
     organizationName: '',
     organizationSlug: '',
   });
+
+  const [forgotPasswordForm, setForgotPasswordForm] = useState({
+    email: '',
+  });
+
+  const [resetPasswordForm, setResetPasswordForm] = useState({
+    email: '',
+    token: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +92,106 @@ export default function Login() {
       organizationName: value,
       organizationSlug: slugify(value),
     }));
+  };
+
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await apiRequest('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      return response;
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (data: { email: string; token: string; newPassword: string }) => {
+      const response = await apiRequest('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
+  });
+
+  const handleForgotPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    forgotPasswordMutation.mutate(forgotPasswordForm.email, {
+      onSuccess: (data) => {
+        toast({
+          title: 'Email enviado',
+          description: data.message,
+        });
+        if (data.resetToken) {
+          // In development, show the token for testing
+          setResetPasswordForm(prev => ({ 
+            ...prev, 
+            email: forgotPasswordForm.email,
+            token: data.resetToken 
+          }));
+          setShowResetForm(true);
+        }
+        setForgotPasswordOpen(false);
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Erro',
+          description: error.message || 'Erro ao enviar email de recuperação',
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
+      toast({
+        title: 'Erro',
+        description: 'As senhas não coincidem',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (resetPasswordForm.newPassword.length < 6) {
+      toast({
+        title: 'Erro',
+        description: 'A senha deve ter pelo menos 6 caracteres',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    resetPasswordMutation.mutate({
+      email: resetPasswordForm.email,
+      token: resetPasswordForm.token,
+      newPassword: resetPasswordForm.newPassword,
+    }, {
+      onSuccess: (data) => {
+        toast({
+          title: 'Sucesso',
+          description: data.message,
+        });
+        setShowResetForm(false);
+        setResetPasswordForm({
+          email: '',
+          token: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Erro',
+          description: error.message || 'Erro ao redefinir senha',
+          variant: 'destructive',
+        });
+      },
+    });
   };
 
   return (
@@ -133,6 +250,44 @@ export default function Login() {
                   <Button type="submit" className="w-full" disabled={isLoginPending}>
                     {isLoginPending ? 'Entrando...' : 'Entrar'}
                   </Button>
+                  
+                  <div className="text-center mt-4">
+                    <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="link" className="text-sm text-muted-foreground">
+                          Esqueci minha senha
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Recuperar senha</DialogTitle>
+                          <DialogDescription>
+                            Digite seu email para receber instruções de recuperação
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="forgot-email">Email</Label>
+                            <Input
+                              id="forgot-email"
+                              type="email"
+                              placeholder="seu@email.com"
+                              value={forgotPasswordForm.email}
+                              onChange={(e) => setForgotPasswordForm({ email: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <Button 
+                            type="submit" 
+                            className="w-full" 
+                            disabled={forgotPasswordMutation.isPending}
+                          >
+                            {forgotPasswordMutation.isPending ? 'Enviando...' : 'Enviar'}
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </form>
               </CardContent>
             </Card>
@@ -215,6 +370,73 @@ export default function Login() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Reset Password Modal */}
+        <Dialog open={showResetForm} onOpenChange={setShowResetForm}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Redefinir senha</DialogTitle>
+              <DialogDescription>
+                Digite o token recebido e sua nova senha
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={resetPasswordForm.email}
+                  onChange={(e) => setResetPasswordForm(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reset-token">Token de recuperação</Label>
+                <Input
+                  id="reset-token"
+                  type="text"
+                  placeholder="Token recebido por email"
+                  value={resetPasswordForm.token}
+                  onChange={(e) => setResetPasswordForm(prev => ({ ...prev, token: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova senha</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={resetPasswordForm.newPassword}
+                  onChange={(e) => setResetPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Digite a senha novamente"
+                  value={resetPasswordForm.confirmPassword}
+                  onChange={(e) => setResetPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  required
+                  minLength={6}
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? 'Redefinindo...' : 'Redefinir senha'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
