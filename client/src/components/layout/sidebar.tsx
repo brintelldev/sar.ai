@@ -57,16 +57,21 @@ export function Sidebar() {
   const navigation = isSuperAdmin ? superAdminNavigation : standardNavigation;
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+    <div className={cn(
+      "flex h-full w-64 flex-col border-r",
+      isSuperAdmin 
+        ? "bg-gradient-to-b from-purple-50 to-white border-purple-200" 
+        : "bg-white border-gray-200"
+    )}>
       <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
         {/* Logo/Header específico para super admin */}
         {isSuperAdmin && (
-          <div className="px-4 mb-6">
-            <div className="flex items-center gap-2">
+          <div className="px-4 mb-6 border-b border-purple-100 pb-4">
+            <div className="flex items-center gap-2 mb-1">
               <Shield className="h-6 w-6 text-purple-600" />
-              <span className="font-bold text-lg text-purple-600">Super Admin</span>
+              <span className="font-bold text-lg text-purple-700">Super Admin</span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Gerenciamento da Plataforma</p>
+            <p className="text-xs text-purple-500 font-medium">Gerenciamento da Plataforma</p>
           </div>
         )}
         
@@ -78,8 +83,12 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
                 location === item.href
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? isSuperAdmin 
+                    ? "bg-purple-50 text-purple-700 border-l-4 border-purple-600"
+                    : "bg-blue-50 text-blue-700"
+                  : isSuperAdmin
+                    ? "text-purple-600 hover:bg-purple-50 hover:text-purple-700 hover:border-l-2 hover:border-purple-300"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               )}
             >
               <item.icon className="mr-3 h-5 w-5" />
