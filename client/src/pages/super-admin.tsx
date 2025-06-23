@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,9 +73,17 @@ export default function SuperAdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Get tab from URL params
-  const searchParams = new URLSearchParams(window.location.search);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview");
+  // Handle tab navigation
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Update tab based on URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   // Fetch platform overview
   const { data: overview, isLoading: overviewLoading } = useQuery<PlatformOverview>({

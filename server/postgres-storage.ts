@@ -893,13 +893,16 @@ export class PostgresStorage implements IStorage {
 
     const [userCount] = await db.select({ count: count() }).from(users);
     
-    const [revenueStats] = await db.select({
-      totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN sp.billing_cycle = 'yearly' THEN sp.price ELSE sp.price * 12 END), 0)`,
-      mrr: sql<number>`COALESCE(SUM(CASE WHEN sp.billing_cycle = 'monthly' THEN sp.price ELSE sp.price / 12 END), 0)`
+    // Calculate revenue - using subquery to avoid alias issues
+    const revenueQuery = db.select({
+      totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN subscription_plans.billing_cycle = 'yearly' THEN subscription_plans.price ELSE subscription_plans.price * 12 END), 0)`,
+      mrr: sql<number>`COALESCE(SUM(CASE WHEN subscription_plans.billing_cycle = 'monthly' THEN subscription_plans.price ELSE subscription_plans.price / 12 END), 0)`
     })
     .from(subscriptions)
     .innerJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
     .where(eq(subscriptions.status, 'active'));
+
+    const [revenueStats] = await revenueQuery;
 
     return {
       totalOrganizations: orgStats.total,

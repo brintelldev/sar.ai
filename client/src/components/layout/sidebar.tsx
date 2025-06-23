@@ -21,13 +21,13 @@ import {
   CreditCard as PlansIcon
 } from "lucide-react";
 
-// Navegação para super admin
+// Navegação para super admin - apenas gestão da plataforma
 const superAdminNavigation = [
   { name: "Visão Geral", href: "/super-admin", icon: LayoutDashboard },
-  { name: "Organizações", href: "/super-admin?tab=organizations", icon: Building2 },
-  { name: "Planos", href: "/super-admin?tab=plans", icon: PlansIcon },
-  { name: "Anúncios", href: "/super-admin?tab=announcements", icon: Megaphone },
-  { name: "Analytics", href: "/super-admin?tab=analytics", icon: BarChart3 },
+  { name: "Organizações", href: "/super-admin", icon: Building2 },
+  { name: "Planos", href: "/super-admin", icon: PlansIcon },
+  { name: "Anúncios", href: "/super-admin", icon: Megaphone },
+  { name: "Analytics", href: "/super-admin", icon: BarChart3 },
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
