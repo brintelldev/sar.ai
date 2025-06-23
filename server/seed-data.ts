@@ -537,6 +537,52 @@ export async function seedTestData() {
     console.log('Gerente: gerente@institutoesperanca.org.br / gerente123');
     console.log('Voluntário: voluntario@institutoesperanca.org.br / voluntario123');
 
+    // Create some activity logs for notifications
+    await storage.createActivityLog({
+      organizationId: testOrg.id,
+      userId: adminUser.id,
+      type: 'project_created',
+      title: 'Novo projeto criado',
+      description: 'O projeto "Alfabetização Digital" foi criado com sucesso',
+      entityType: 'project',
+      entityId: educationProject.id,
+      metadata: { projectName: educationProject.name }
+    });
+
+    await storage.createActivityLog({
+      organizationId: testOrg.id,
+      userId: volunteerUser.id,
+      type: 'volunteer_registered',
+      title: 'Novo voluntário registrado',
+      description: 'Ana Paula Costa se registrou como voluntária',
+      entityType: 'volunteer',
+      entityId: volunteerUser.id,
+      metadata: { volunteerName: volunteerUser.name }
+    });
+
+    await storage.createActivityLog({
+      organizationId: testOrg.id,
+      userId: corporateDonor.id,
+      type: 'donation_received',
+      title: 'Nova doação recebida',
+      description: 'Doação de R$ 15000.00 recebida via Transferência Bancária',
+      entityType: 'donation',
+      entityId: corporateDonor.id,
+      metadata: { amount: '15000.00', method: 'bank_transfer' }
+    });
+
+    await storage.createActivityLog({
+      organizationId: testOrg.id,
+      userId: individualDonor.id,
+      type: 'beneficiary_added',
+      title: 'Novo beneficiário adicionado',
+      description: 'Fernanda Santos foi adicionado como beneficiário',
+      entityType: 'beneficiary',
+      entityId: individualDonor.id,
+      metadata: { beneficiaryName: individualDonor.name }
+    });
+
+    console.log('✅ Dados de teste populados com sucesso!');
   } catch (error) {
     console.error('❌ Erro ao popular dados de teste:', error);
     throw error;

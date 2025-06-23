@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, ChevronDown, Heart, User, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { ChevronDown, Heart, User, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,10 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { getInitials } from '@/lib/utils';
 import { useLocation } from 'wouter';
+import { NotificationsDropdown } from './notifications-dropdown';
 import logoSarai from '@/assets/logo_sarai.png';
 
 export function Navbar() {
@@ -84,15 +84,7 @@ export function Navbar() {
 
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-            >
-              3
-            </Badge>
-          </Button>
+          <NotificationsDropdown />
 
           {/* User Menu */}
           <DropdownMenu>

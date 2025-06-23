@@ -1282,6 +1282,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notifications endpoint
+  app.get('/api/notifications', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = (req as any).session as SessionData;
+      const limit = parseInt(req.query.limit as string) || 5;
+      
+      // Get recent activities as notifications
+      const notifications = await storage.getActivityLogs(organizationId!, limit);
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Mark notification as read
+  app.patch('/api/notifications/:id/read', requireAuth, async (req: Request, res: Response) => {
+    try {
+      // For now, just return success since we don't have a read status in the schema
+      // In a real implementation, you'd update the activity log or have a separate notifications table
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
