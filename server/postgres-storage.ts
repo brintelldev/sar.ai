@@ -24,6 +24,10 @@ import {
   whitelabelForms,
   whitelabelFormSubmissions,
   activityLogs,
+  subscriptionPlans,
+  subscriptions,
+  platformMetrics,
+  systemAnnouncements,
   type Organization,
   type User,
   type UserRole,
@@ -48,6 +52,14 @@ import {
   type WhitelabelFormSubmission,
   type ActivityLog,
   type InsertActivityLog,
+  type SubscriptionPlan,
+  type InsertSubscriptionPlan,
+  type Subscription,
+  type InsertSubscription,
+  type PlatformMetrics,
+  type InsertPlatformMetrics,
+  type SystemAnnouncement,
+  type InsertSystemAnnouncement,
   type InsertWhitelabelSite,
   type InsertWhitelabelTemplate,
   type InsertWhitelabelPage,
@@ -859,6 +871,131 @@ export class PostgresStorage implements IStorage {
 
   async createActivityLog(activity: InsertActivityLog): Promise<ActivityLog> {
     const [result] = await db.insert(activityLogs).values(activity).returning();
+    return result;
+  }
+
+  // Super Admin methods
+  async getAllOrganizations(): Promise<Organization[]> {
+    return await db.select().from(organizations).orderBy(desc(organizations.createdAt));
+  }
+
+  async getPlatformOverview(): Promise<{
+    totalOrganizations: number;
+    activeOrganizations: number;
+    totalUsers: number;
+    totalRevenue: number;
+    monthlyRecurringRevenue: number;
+  }> {
+    const [orgStats] = await db.select({
+      total: count(),
+      active: sql<number>`count(case when subscription_status = 'active' then 1 end)`
+    }).from(organizations);
+
+    const [userCount] = await db.select({ count: count() }).from(users);
+    
+    const [revenueStats] = await db.select({
+      totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN p.billing_cycle = 'yearly' THEN p.price ELSE p.price * 12 END), 0)`,
+      mrr: sql<number>`COALESCE(SUM(CASE WHEN p.billing_cycle = 'monthly' THEN p.price ELSE p.price / 12 END), 0)`
+    })
+    .from(subscriptions)
+    .innerJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+    .where(eq(subscriptions.status, 'active'));
+
+    return {
+      totalOrganizations: orgStats.total,
+      activeOrganizations: orgStats.active,
+      totalUsers: userCount.count,
+      totalRevenue: revenueStats.totalRevenue || 0,
+      monthlyRecurringRevenue: revenueStats.mrr || 0
+    };
+  }
+
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(subscriptionPlans).orderBy(asc(subscriptionPlans.sortOrder));
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [result] = await db.insert(subscriptionPlans).values(plan).returning();
+    return result;
+  }
+
+  async updateSubscriptionPlan(id: string, updates: Partial<SubscriptionPlan>): Promise<SubscriptionPlan | undefined> {
+    const [result] = await db
+      .update(subscriptionPlans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteSubscriptionPlan(id: string): Promise<boolean> {
+    const result = await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getOrganizationSubscriptions(): Promise<(Subscription & { organizationName: string; planName: string })[]> {
+    return await db
+      .select({
+        id: subscriptions.id,
+        organizationId: subscriptions.organizationId,
+        planId: subscriptions.planId,
+        status: subscriptions.status,
+        currentPeriodStart: subscriptions.currentPeriodStart,
+        currentPeriodEnd: subscriptions.currentPeriodEnd,
+        canceledAt: subscriptions.canceledAt,
+        cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+        trialStart: subscriptions.trialStart,
+        trialEnd: subscriptions.trialEnd,
+        metadata: subscriptions.metadata,
+        createdAt: subscriptions.createdAt,
+        updatedAt: subscriptions.updatedAt,
+        organizationName: organizations.name,
+        planName: subscriptionPlans.name
+      })
+      .from(subscriptions)
+      .innerJoin(organizations, eq(subscriptions.organizationId, organizations.id))
+      .innerJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
+      .orderBy(desc(subscriptions.createdAt));
+  }
+
+  async getSystemAnnouncements(): Promise<SystemAnnouncement[]> {
+    return await db.select().from(systemAnnouncements).orderBy(desc(systemAnnouncements.createdAt));
+  }
+
+  async createSystemAnnouncement(announcement: InsertSystemAnnouncement): Promise<SystemAnnouncement> {
+    const [result] = await db.insert(systemAnnouncements).values(announcement).returning();
+    return result;
+  }
+
+  async updateSystemAnnouncement(id: string, updates: Partial<SystemAnnouncement>): Promise<SystemAnnouncement | undefined> {
+    const [result] = await db
+      .update(systemAnnouncements)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(systemAnnouncements.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteSystemAnnouncement(id: string): Promise<boolean> {
+    const result = await db.delete(systemAnnouncements).where(eq(systemAnnouncements.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getPlatformMetrics(startDate?: Date, endDate?: Date): Promise<PlatformMetrics[]> {
+    let query = db.select().from(platformMetrics);
+    
+    if (startDate && endDate) {
+      query = query.where(and(
+        gte(platformMetrics.date, startDate.toISOString().split('T')[0]),
+        lte(platformMetrics.date, endDate.toISOString().split('T')[0])
+      ));
+    }
+    
+    return await query.orderBy(desc(platformMetrics.date));
+  }
+
+  async createPlatformMetrics(metrics: InsertPlatformMetrics): Promise<PlatformMetrics> {
+    const [result] = await db.insert(platformMetrics).values(metrics).returning();
     return result;
   }
 }

@@ -596,3 +596,107 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+// Subscription plans table for SaaS management
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("BRL"),
+  billingCycle: text("billing_cycle").notNull(), // 'monthly', 'yearly'
+  features: jsonb("features").notNull(), // Array of features
+  limits: jsonb("limits").notNull(), // Usage limits (users, projects, storage, etc.)
+  isActive: boolean("is_active").default(true),
+  isPopular: boolean("is_popular").default(false),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Subscriptions table to track organization subscriptions
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  planId: uuid("plan_id").references(() => subscriptionPlans.id).notNull(),
+  status: text("status").notNull(), // 'active', 'canceled', 'past_due', 'paused'
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }).notNull(),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }).notNull(),
+  canceledAt: timestamp("canceled_at", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  trialStart: timestamp("trial_start", { withTimezone: true }),
+  trialEnd: timestamp("trial_end", { withTimezone: true }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Platform analytics and metrics
+export const platformMetrics = pgTable("platform_metrics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  date: date("date").notNull(),
+  totalOrganizations: integer("total_organizations").notNull(),
+  activeOrganizations: integer("active_organizations").notNull(),
+  newOrganizations: integer("new_organizations").notNull(),
+  totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).notNull(),
+  monthlyRecurringRevenue: decimal("monthly_recurring_revenue", { precision: 12, scale: 2 }).notNull(),
+  churnRate: decimal("churn_rate", { precision: 5, scale: 2 }),
+  totalUsers: integer("total_users").notNull(),
+  activeUsers: integer("active_users").notNull(),
+  storageUsed: integer("storage_used"), // in bytes
+  apiCalls: integer("api_calls").notNull(),
+  supportTickets: integer("support_tickets").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// System announcements for organizations
+export const systemAnnouncements = pgTable("system_announcements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  type: text("type").notNull(), // 'info', 'warning', 'maintenance', 'feature'
+  priority: text("priority").default("normal"), // 'low', 'normal', 'high', 'urgent'
+  targetAudience: text("target_audience").default("all"), // 'all', 'premium', 'trial', 'free'
+  isActive: boolean("is_active").default(true),
+  startsAt: timestamp("starts_at", { withTimezone: true }),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Schema and types for super admin features
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertPlatformMetricsSchema = createInsertSchema(platformMetrics).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertSystemAnnouncementSchema = createInsertSchema(systemAnnouncements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type PlatformMetrics = typeof platformMetrics.$inferSelect;
+export type InsertPlatformMetrics = z.infer<typeof insertPlatformMetricsSchema>;
+
+export type SystemAnnouncement = typeof systemAnnouncements.$inferSelect;
+export type InsertSystemAnnouncement = z.infer<typeof insertSystemAnnouncementSchema>;
