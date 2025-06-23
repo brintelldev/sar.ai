@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,10 +15,24 @@ import {
   Building2,
   Settings,
   Globe,
-  Shield
+  Shield,
+  BarChart3,
+  Megaphone,
+  CreditCard as PlansIcon
 } from "lucide-react";
 
-const navigation = [
+// Navegação para super admin
+const superAdminNavigation = [
+  { name: "Visão Geral", href: "/super-admin", icon: LayoutDashboard },
+  { name: "Organizações", href: "/super-admin?tab=organizations", icon: Building2 },
+  { name: "Planos", href: "/super-admin?tab=plans", icon: PlansIcon },
+  { name: "Anúncios", href: "/super-admin?tab=announcements", icon: Megaphone },
+  { name: "Analytics", href: "/super-admin?tab=analytics", icon: BarChart3 },
+  { name: "Configurações", href: "/settings", icon: Settings },
+];
+
+// Navegação padrão para ONGs
+const standardNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Projetos", href: "/projects", icon: FolderOpen },
   { name: "Beneficiários", href: "/beneficiaries", icon: Users },
@@ -27,7 +42,6 @@ const navigation = [
   { name: "Capacitação", href: "/courses", icon: BookOpen },
   { name: "Admin Cursos", href: "/course-admin", icon: Settings },
   { name: "Site Whitelabel", href: "/whitelabel", icon: Globe },
-  { name: "Super Admin", href: "/super-admin", icon: Shield },
   { name: "Contas a Receber", href: "/accounts-receivable", icon: Receipt },
   { name: "Contas a Pagar", href: "/accounts-payable", icon: CreditCard },
   { name: "Relatórios", href: "/reports", icon: TrendingUp },
@@ -36,10 +50,26 @@ const navigation = [
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { currentOrganization } = useAuth();
+  
+  // Verificar se é organização de super admin
+  const isSuperAdmin = currentOrganization?.slug === 'super-admin';
+  const navigation = isSuperAdmin ? superAdminNavigation : standardNavigation;
 
   return (
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
       <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+        {/* Logo/Header específico para super admin */}
+        {isSuperAdmin && (
+          <div className="px-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Shield className="h-6 w-6 text-purple-600" />
+              <span className="font-bold text-lg text-purple-600">Super Admin</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Gerenciamento da Plataforma</p>
+          </div>
+        )}
+        
         <nav className="flex-1 space-y-1 px-2">
           {navigation.map((item) => (
             <Link

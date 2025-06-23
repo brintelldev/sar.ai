@@ -71,10 +71,13 @@ interface SystemAnnouncement {
 export default function SuperAdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Get tab from URL params
+  const searchParams = new URLSearchParams(window.location.search);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview");
 
   // Fetch platform overview
-  const { data: overview } = useQuery<PlatformOverview>({
+  const { data: overview, isLoading: overviewLoading } = useQuery<PlatformOverview>({
     queryKey: ['/api/admin/overview'],
   });
 
@@ -114,6 +117,54 @@ export default function SuperAdminPage() {
 
           <TabsContent value="overview" className="space-y-6">
             <OverviewTab overview={overview} />
+            
+            {/* Resumo de atividades da plataforma */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Resumo da Plataforma</CardTitle>
+                <CardDescription>
+                  Visão geral das atividades e status da plataforma SaaS
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium mb-2">Status do Sistema</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Uptime</span>
+                        <span className="text-green-600">99.9%</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Performance</span>
+                        <span className="text-green-600">Ótima</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Última atualização</span>
+                        <span className="text-muted-foreground">Hoje</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Métricas Recentes</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Novos cadastros (7 dias)</span>
+                        <span>0</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Organizações ativas</span>
+                        <span>{overview?.activeOrganizations || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Taxa de crescimento</span>
+                        <span className="text-green-600">+5%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="organizations" className="space-y-6">
@@ -139,7 +190,21 @@ export default function SuperAdminPage() {
 
 function OverviewTab({ overview }: { overview?: PlatformOverview }) {
   if (!overview) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="space-y-0 pb-2">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   return (

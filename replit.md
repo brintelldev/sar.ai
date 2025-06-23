@@ -133,4 +133,6 @@ Changelog:
 
 ```
 Preferred communication style: Simple, everyday language.
+Super Admin Focus: Super admin should only see platform management features, not NGO-specific operations.
+Navigation: Different sidebar for super admin with platform-focused options only.
 ```
