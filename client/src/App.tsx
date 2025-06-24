@@ -31,6 +31,9 @@ import { ModuleEditor } from "@/pages/module-editor";
 import Whitelabel from "@/pages/whitelabel";
 import PublicSite from "@/pages/public-site";
 import SuperAdminPage from "@/pages/super-admin";
+import CourseEnrollment from "@/pages/course-enrollment";
+import CourseManagement from "@/pages/course-management";
+import { Suspense } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
@@ -152,12 +155,16 @@ function Router() {
       </Route>
       <Route path="/course-enrollment">
         <ProtectedRoute>
-          <LazyComponent loader={() => import('./pages/course-enrollment')} />
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <CourseEnrollment />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:courseId/manage">
         <ProtectedRoute>
-          <LazyComponent loader={() => import('./pages/course-management')} />
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <CourseManagement />
+          </Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/course-admin">

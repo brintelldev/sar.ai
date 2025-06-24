@@ -245,7 +245,7 @@ export default function CourseDetailPage() {
                           </Button>
                         ) : isCompleted ? (
                           <Button 
-                            onClick={() => setLocation(`/courses/${courseId}/progress`)}
+                            onClick={() => navigate(`/courses/${courseId}/progress`)}
                             className="w-full bg-blue-600 hover:bg-blue-700"
                             size="lg"
                           >
@@ -254,7 +254,7 @@ export default function CourseDetailPage() {
                           </Button>
                         ) : (
                           <Button 
-                            onClick={() => setLocation(`/courses/${courseId}/progress`)}
+                            onClick={() => navigate(`/courses/${courseId}/progress`)}
                             className="w-full bg-orange-600 hover:bg-orange-700"
                             size="lg"
                           >
@@ -264,9 +264,14 @@ export default function CourseDetailPage() {
                         )}
 
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <Share2 className="w-4 h-4 mr-1" />
-                            Compartilhar
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => navigate(`/courses/${courseId}/manage`)}
+                          >
+                            <User className="w-4 h-4 mr-1" />
+                            Gerenciar
                           </Button>
                           <Button variant="outline" size="sm" className="flex-1">
                             <Download className="w-4 h-4 mr-1" />
