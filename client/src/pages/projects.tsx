@@ -278,6 +278,12 @@ export default function Projects() {
     return matchesSearch && matchesStatus;
   }) : [];
 
+  // Debug logging
+  console.log('Projects data:', projects);
+  console.log('Filtered projects:', filteredProjects);
+  console.log('Search term:', searchTerm);
+  console.log('Status filter:', statusFilter);
+
   if (isLoading) {
     return (
       <MainLayout>
