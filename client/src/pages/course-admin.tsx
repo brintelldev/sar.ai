@@ -70,7 +70,8 @@ export function CourseAdmin() {
   const { data: courses, isLoading, error } = useQuery({
     queryKey: ['/api/courses/admin'],
     queryFn: () => apiRequest('/api/courses/admin'),
-    retry: 1
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Debug logging

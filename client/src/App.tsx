@@ -29,11 +29,11 @@ import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
 import { ModuleEditor } from "@/pages/module-editor";
 import Whitelabel from "@/pages/whitelabel";
+import { Suspense } from 'react';
 import PublicSite from "@/pages/public-site";
 import SuperAdminPage from "@/pages/super-admin";
 import CourseEnrollment from "@/pages/course-enrollment";
 import CourseManagement from "@/pages/course-management";
-import { Suspense } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();

@@ -8,8 +8,8 @@ export async function seedTestData() {
     // Verificar se já existem dados
     const existingOrg = await storage.getOrganizationBySlug('instituto-esperanca');
     if (existingOrg) {
-      console.log('⚠️ Dados já existem, mas continuando para garantir completude...');
-      // Continue com a criação dos dados para garantir que tudo existe
+      console.log('✅ Dados já existem, pulando população para evitar duplicatas');
+      return;
     }
 
     // 1. Criar primeira organização (ONG)

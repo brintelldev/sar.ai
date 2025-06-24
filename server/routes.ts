@@ -947,7 +947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get individual course (public view)
+  // Get individual course (must come after all specific routes)
   app.get("/api/courses/:id", requireAuth, async (req, res) => {
     try {
       const courseId = req.params.id;
@@ -972,19 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Parameterized routes MUST come AFTER all specific routes
-  app.get("/api/courses/:id", requireAuth, async (req, res) => {
-    try {
-      const course = await storage.getCourse(req.params.id, req.session.organizationId!);
-      if (!course) {
-        return res.status(404).json({ message: "Curso não encontrado" });
-      }
-      res.json(course);
-    } catch (error) {
-      console.error("Get course error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
+  
 
   app.get("/api/courses/:id/modules", requireAuth, async (req, res) => {
     try {
