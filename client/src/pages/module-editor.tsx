@@ -56,10 +56,7 @@ export function ModuleEditor() {
 
   // Create module mutation
   const createModuleMutation = useMutation({
-    mutationFn: (moduleData: any) => apiRequest(`/api/courses/${courseId}/modules`, {
-      method: 'POST',
-      body: JSON.stringify(moduleData)
-    }),
+    mutationFn: (moduleData: any) => apiRequest(`/api/courses/${courseId}/modules`, 'POST', moduleData),
     onSuccess: () => {
       toast({
         title: "Sucesso",
@@ -81,10 +78,7 @@ export function ModuleEditor() {
   // Update module mutation
   const updateModuleMutation = useMutation({
     mutationFn: ({ moduleId, updates }: { moduleId: string; updates: any }) => 
-      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updates)
-      }),
+      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'PATCH', updates),
     onSuccess: () => {
       toast({
         title: "Sucesso",
