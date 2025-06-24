@@ -176,6 +176,13 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async deleteProject(id: string, organizationId: string): Promise<boolean> {
+    const result = await db
+      .delete(projects)
+      .where(and(eq(projects.id, id), eq(projects.organizationId, organizationId)));
+    return result.rowCount > 0;
+  }
+
   // Donors
   async getDonors(organizationId: string): Promise<Donor[]> {
     const result = await db.select().from(donors).where(eq(donors.organizationId, organizationId));
