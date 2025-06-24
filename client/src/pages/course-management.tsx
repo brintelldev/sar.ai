@@ -623,13 +623,16 @@ export default function CourseManagement() {
                     courseId={courseId} 
                     enrollments={enrollments} 
                     courseType={course.courseType}
-                  />llmentId: enrollment.id,
-                                    status: 'completed'
-                                  })}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  Concluir
-                                </Button>
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+        </Tabs>
+      </div>
+    </MainLayout>
+  );
+}
                               )}
                             </div>
                           </TableCell>
@@ -675,7 +678,7 @@ export default function CourseManagement() {
                           <SelectContent>
                             {volunteers?.map((volunteer: any) => (
                               <SelectItem key={volunteer.id} value={volunteer.id}>
-                                {volunteer.personalInfo?.name || volunteer.email}
+                                {volunteer.name || volunteer.email}
                               </SelectItem>
                             ))}
                           </SelectContent>
