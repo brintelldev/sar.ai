@@ -292,7 +292,8 @@ export function CourseEditor() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
-              <div className="flex items-center gap-3 mt-1">
+              <p className="text-gray-600 mt-1 mb-2">Edite as informações do curso e gerencie seus módulos de conteúdo</p>
+              <div className="flex items-center gap-3">
                 <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
                   {course.status === 'published' ? 'Publicado' : 'Rascunho'}
                 </Badge>
@@ -334,8 +335,8 @@ export function CourseEditor() {
         {/* Course Editor Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">Informações do Curso</TabsTrigger>
-            <TabsTrigger value="modules">Módulos e Conteúdo</TabsTrigger>
+            <TabsTrigger value="info">Informações Básicas</TabsTrigger>
+            <TabsTrigger value="modules">Gerenciar Módulos</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 

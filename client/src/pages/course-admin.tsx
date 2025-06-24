@@ -388,23 +388,17 @@ export function CourseAdmin() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/admin/courses/${course.id}/modules`)}
-                        >
-                          <BookOpen className="w-4 h-4 mr-1" />
-                          Módulos
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
                           onClick={() => navigate(`/course-admin/${course.id}`)}
+                          title="Editar informações do curso e gerenciar módulos"
                         >
                           <Edit className="w-4 h-4 mr-1" />
-                          Editar
+                          Editar Curso
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/courses/${course.id}`)}
+                          title="Ver como o curso aparece para os beneficiários"
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           Visualizar

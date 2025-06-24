@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 24, 2025. Interface de capacitação simplificada e clarificada:
+  * Removido botão "Módulos" duplicado da listagem de cursos
+  * Mantido apenas "Editar Curso" como ponto único de edição
+  * Adicionadas descrições explicativas nos botões e páginas
+  * Interface mais intuitiva sem redundância de funcionalidades
+  * Tooltips informativos para guiar usuários na criação de cursos
 - June 24, 2025. Unificação e sistema de permissões de capacitação:
   * Removida página separada de inscrições (/course-enrollments)
   * Tudo consolidado em /course-admin com permissões por role
@@ -163,4 +169,5 @@ Preferred communication style: Simple, everyday language.
 Super Admin Focus: Super admin should only see platform management features, not NGO-specific operations.
 Navigation: Different sidebar for super admin with platform-focused options only.
 Course Management: Unified interface with role-based permissions - beneficiaries can only view/enroll, admins have full control.
+Interface Clarity: Remove redundant buttons and provide clear descriptions of what each action does. Users should not be confused about functionality.
 ```
