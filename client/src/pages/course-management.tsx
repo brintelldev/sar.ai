@@ -593,58 +593,6 @@ export default function CourseManagement() {
             </Card>
           </TabsContent>
 
-          {/* Attendance Tab (In-Person Courses) */}
-          {course.courseType === 'in_person' && (
-            <TabsContent value="attendance">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Controle de Frequência</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AttendanceManager 
-                    courseId={courseId} 
-                    enrollments={enrollments} 
-                    courseType={course.courseType}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-
-          {/* Progress Tab (Online Courses) */}
-          {course.courseType === 'online' && (
-            <TabsContent value="progress">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Progresso dos Módulos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ProgressManager 
-                    courseId={courseId} 
-                    enrollments={enrollments} 
-                    courseType={course.courseType}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-        </Tabs>
-      </div>
-    </MainLayout>
-  );
-}
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           {/* Instructors Tab */}
           <TabsContent value="instructors">
             <Card>
@@ -691,8 +639,8 @@ export default function CourseManagement() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="instructor">Instrutor Principal</SelectItem>
-                            <SelectItem value="assistant">Instrutor Assistente</SelectItem>
+                            <SelectItem value="instructor">Instrutor</SelectItem>
+                            <SelectItem value="assistant">Assistente</SelectItem>
                             <SelectItem value="coordinator">Coordenador</SelectItem>
                           </SelectContent>
                         </Select>
@@ -731,8 +679,8 @@ export default function CourseManagement() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
-                              {instructor.role === 'instructor' ? 'Instrutor Principal' :
-                               instructor.role === 'assistant' ? 'Instrutor Assistente' : 'Coordenador'}
+                              {instructor.role === 'instructor' ? 'Instrutor' : 
+                               instructor.role === 'assistant' ? 'Assistente' : 'Coordenador'}
                             </Badge>
                           </TableCell>
                           <TableCell>{formatDate(instructor.assignedAt)}</TableCell>
@@ -745,7 +693,7 @@ export default function CourseManagement() {
             </Card>
           </TabsContent>
 
-          {/* Attendance Tab (for in-person courses) */}
+          {/* Attendance Tab (In-Person Courses) */}
           {course.courseType === 'in_person' && (
             <TabsContent value="attendance">
               <Card>
@@ -753,22 +701,17 @@ export default function CourseManagement() {
                   <CardTitle>Controle de Frequência</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Controle de Frequência</h3>
-                    <p className="text-gray-600 mb-4">
-                      Para cursos presenciais, os instrutores podem marcar a presença dos alunos em cada sessão.
-                    </p>
-                    <Button onClick={() => setIsAttendanceDialogOpen(true)}>
-                      Marcar Presença
-                    </Button>
-                  </div>
+                  <AttendanceManager 
+                    courseId={courseId} 
+                    enrollments={enrollments} 
+                    courseType={course.courseType}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
           )}
 
-          {/* Progress Tab (for online courses) */}
+          {/* Progress Tab (Online Courses) */}
           {course.courseType === 'online' && (
             <TabsContent value="progress">
               <Card>
@@ -776,13 +719,11 @@ export default function CourseManagement() {
                   <CardTitle>Progresso dos Módulos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Acompanhamento Online</h3>
-                    <p className="text-gray-600">
-                      Para cursos online, o progresso é rastreado automaticamente conforme os alunos acessam os módulos.
-                    </p>
-                  </div>
+                  <ProgressManager 
+                    courseId={courseId} 
+                    enrollments={enrollments} 
+                    courseType={course.courseType}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
