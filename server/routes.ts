@@ -429,6 +429,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/projects/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const success = await storage.deleteProject(req.params.id, req.session.organizationId!);
+      if (!success) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      res.json({ message: "Project deleted successfully" });
+    } catch (error) {
+      console.error("Delete project error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Donors routes
   app.get("/api/donors", requireAuth, requireOrganization, async (req, res) => {
     try {

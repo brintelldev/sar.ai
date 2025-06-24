@@ -171,6 +171,23 @@ export default function Projects() {
     }
   };
 
+  const onDeleteProject = async (projectId: string) => {
+    try {
+      await deleteProjectMutation.mutateAsync(projectId);
+      toast({
+        title: "Projeto excluído com sucesso!",
+        description: "O projeto foi removido da sua organização.",
+      });
+    } catch (error) {
+      console.error('Delete project error:', error);
+      toast({
+        title: "Erro ao excluir projeto",
+        description: "Ocorreu um erro ao excluir o projeto. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'active':
