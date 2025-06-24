@@ -1031,10 +1031,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Curso não encontrado" });
       }
-      res.status(204).send();
+      res.json({ success: true, message: "Curso e todos os dados relacionados foram excluídos com sucesso" });
     } catch (error) {
       console.error("Delete course error:", error);
-      res.status(500).json({ message: "Erro ao excluir curso" });
+      const errorMessage = error instanceof Error ? error.message : "Erro ao excluir curso";
+      res.status(500).json({ message: errorMessage });
     }
   });
 

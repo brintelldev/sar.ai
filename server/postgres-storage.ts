@@ -518,10 +518,63 @@ export class PostgresStorage implements IStorage {
   }
 
   async deleteCourse(id: string, organizationId: string): Promise<boolean> {
-    const result = await db
-      .delete(courses)
-      .where(and(eq(courses.id, id), eq(courses.organizationId, organizationId)));
-    return result.rowCount! > 0;
+    try {
+      // Verificar se o curso existe na organização
+      const courseCheck = await this.db.raw(`
+        SELECT id FROM courses WHERE id = $1 AND organization_id = $2
+      `, [id, organizationId]);
+      
+      if (courseCheck.rows.length === 0) {
+        return false;
+      }
+
+      // Deletar todos os dados relacionados em ordem correta usando raw SQL
+      await this.db.raw('BEGIN');
+      
+      try {
+        // 1. Deletar progress de módulos
+        await this.db.raw(`
+          DELETE FROM user_module_progress 
+          WHERE module_id IN (
+            SELECT id FROM course_modules WHERE course_id = $1
+          )
+        `, [id]);
+
+        // 2. Deletar registros de frequência
+        await this.db.raw(`
+          DELETE FROM course_attendance 
+          WHERE enrollment_id IN (
+            SELECT id FROM course_enrollments WHERE course_id = $1
+          )
+        `, [id]);
+
+        // 3. Deletar inscrições
+        await this.db.raw(`DELETE FROM course_enrollments WHERE course_id = $1`, [id]);
+
+        // 4. Deletar instrutores
+        await this.db.raw(`DELETE FROM course_instructors WHERE course_id = $1`, [id]);
+
+        // 5. Deletar avaliações
+        await this.db.raw(`DELETE FROM course_assessments WHERE course_id = $1`, [id]);
+
+        // 6. Deletar módulos
+        await this.db.raw(`DELETE FROM course_modules WHERE course_id = $1`, [id]);
+
+        // 7. Finalmente deletar o curso
+        const deleteResult = await this.db.raw(`
+          DELETE FROM courses WHERE id = $1 AND organization_id = $2
+        `, [id, organizationId]);
+
+        await this.db.raw('COMMIT');
+        return true;
+      } catch (error) {
+        await this.db.raw('ROLLBACK');
+        throw error;
+      }
+    } catch (error) {
+      console.error('Delete course error:', error);
+      throw error;
+    }
   }
 
   // Course Modules
