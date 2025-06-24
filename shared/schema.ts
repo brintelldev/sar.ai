@@ -436,6 +436,25 @@ export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
   updatedAt: true
 });
 
+export const insertCourseEnrollmentSchema = createInsertSchema(courseEnrollments).omit({
+  id: true,
+  enrolledAt: true
+});
+
+export const insertCourseInstructorSchema = createInsertSchema(courseInstructors).omit({
+  id: true,
+  assignedAt: true
+});
+
+export const insertCourseAttendanceSchema = createInsertSchema(courseAttendance).omit({
+  id: true,
+  markedAt: true
+});
+
+export const insertUserModuleProgressSchema = createInsertSchema(userModuleProgress).omit({
+  id: true
+});
+
 export const insertCourseAssessmentSchema = createInsertSchema(courseAssessments).omit({
   id: true,
   createdAt: true,
@@ -454,6 +473,18 @@ export type InsertCourse = z.infer<typeof insertCourseSchema>;
 
 export type CourseModule = typeof courseModules.$inferSelect;
 export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
+
+export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
+export type InsertCourseEnrollment = z.infer<typeof insertCourseEnrollmentSchema>;
+
+export type CourseInstructor = typeof courseInstructors.$inferSelect;
+export type InsertCourseInstructor = z.infer<typeof insertCourseInstructorSchema>;
+
+export type CourseAttendance = typeof courseAttendance.$inferSelect;
+export type InsertCourseAttendance = z.infer<typeof insertCourseAttendanceSchema>;
+
+export type UserModuleProgress = typeof userModuleProgress.$inferSelect;
+export type InsertUserModuleProgress = z.infer<typeof insertUserModuleProgressSchema>;
 
 export type UserCourseProgress = typeof userCourseProgress.$inferSelect;
 export type InsertUserCourseProgress = z.infer<typeof insertUserCourseProgressSchema>;
