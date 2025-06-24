@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Calendar, DollarSign, Users, Target, Edit, Eye, X } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, DollarSign, Users, Target, Edit, Eye, X, CheckSquare, Square } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +27,7 @@ export default function Projects() {
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [milestonesList, setMilestonesList] = useState<Array<{id: string, text: string, completed: boolean}>>([]);
   const { toast } = useToast();
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
@@ -41,7 +43,7 @@ export default function Projects() {
       budget: '',
       spentAmount: '0',
       goals: '',
-      milestones: '',
+      milestones: '[]',
     }
   });
 
@@ -56,7 +58,7 @@ export default function Projects() {
       budget: '',
       spentAmount: '0',
       goals: '',
-      milestones: '',
+      milestones: '[]',
     }
   });
 
@@ -337,22 +339,68 @@ export default function Projects() {
                       )}
                     />
 
-                    <FormField
-                      control={createForm.control}
-                      name="milestones"
-                      render={({ field }) => (
-                        <FormItem className="col-span-2">
-                          <FormLabel>Marcos e Etapas</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} rows={3} placeholder="Liste os principais marcos do projeto" />
-                          </FormControl>
-                          <FormDescription>
-                            Principais entregas e pontos de controle
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="col-span-2">
+                      <FormLabel>Marcos e Etapas</FormLabel>
+                      <div className="space-y-3 mt-2">
+                        {milestonesList.map((milestone, index) => (
+                          <div key={milestone.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                            <Checkbox
+                              checked={milestone.completed}
+                              onCheckedChange={(checked) => {
+                                const updated = [...milestonesList];
+                                updated[index].completed = !!checked;
+                                setMilestonesList(updated);
+                                createForm.setValue('milestones', JSON.stringify(updated));
+                              }}
+                            />
+                            <Input
+                              value={milestone.text}
+                              onChange={(e) => {
+                                const updated = [...milestonesList];
+                                updated[index].text = e.target.value;
+                                setMilestonesList(updated);
+                                createForm.setValue('milestones', JSON.stringify(updated));
+                              }}
+                              placeholder="Digite o marco/etapa"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const updated = milestonesList.filter((_, i) => i !== index);
+                                setMilestonesList(updated);
+                                createForm.setValue('milestones', JSON.stringify(updated));
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newMilestone = {
+                              id: Date.now().toString(),
+                              text: '',
+                              completed: false
+                            };
+                            const updated = [...milestonesList, newMilestone];
+                            setMilestonesList(updated);
+                            createForm.setValue('milestones', JSON.stringify(updated));
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar Marco
+                        </Button>
+                      </div>
+                      <FormDescription>
+                        Principais entregas e pontos de controle do projeto
+                      </FormDescription>
+                    </div>
                   </div>
 
                   <DialogFooter>
