@@ -275,7 +275,48 @@ export default function Projects() {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    // Budget filter
+    let matchesBudget = true;
+    if (budgetFilter !== 'all') {
+      const budget = parseFloat(project.budget) || 0;
+      switch (budgetFilter) {
+        case 'low':
+          matchesBudget = budget < 10000;
+          break;
+        case 'medium':
+          matchesBudget = budget >= 10000 && budget < 50000;
+          break;
+        case 'high':
+          matchesBudget = budget >= 50000;
+          break;
+      }
+    }
+
+    // Date filter
+    let matchesDate = true;
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const startDate = new Date(project.startDate);
+      const endDate = new Date(project.endDate);
+      
+      switch (dateFilter) {
+        case 'current':
+          matchesDate = startDate <= now && endDate >= now;
+          break;
+        case 'upcoming':
+          matchesDate = startDate > now;
+          break;
+        case 'past':
+          matchesDate = endDate < now;
+          break;
+        case 'thisYear':
+          matchesDate = startDate.getFullYear() === now.getFullYear() || endDate.getFullYear() === now.getFullYear();
+          break;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesBudget && matchesDate;
   }) : [];
 
 
@@ -589,15 +630,15 @@ export default function Projects() {
           <Card className="p-12 text-center">
             <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              {searchTerm || statusFilter !== 'all' ? 'Nenhum projeto encontrado' : 'Nenhum projeto criado'}
+              {searchTerm || statusFilter !== 'all' || budgetFilter !== 'all' || dateFilter !== 'all' ? 'Nenhum projeto encontrado' : 'Nenhum projeto criado'}
             </h3>
             <p className="text-muted-foreground mb-6">
-              {searchTerm || statusFilter !== 'all' 
+              {searchTerm || statusFilter !== 'all' || budgetFilter !== 'all' || dateFilter !== 'all'
                 ? 'Tente ajustar os filtros para encontrar o que procura.' 
                 : 'Comece criando seu primeiro projeto para gerenciar as atividades da organização.'
               }
             </p>
-            {!searchTerm && statusFilter === 'all' && (
+            {!searchTerm && statusFilter === 'all' && budgetFilter === 'all' && dateFilter === 'all' && (
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Primeiro Projeto
