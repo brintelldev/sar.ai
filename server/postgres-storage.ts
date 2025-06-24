@@ -77,6 +77,13 @@ import {
   type InsertCourseModule,
   type InsertCourseAssessment
 } from '../shared/schema';
+import { 
+  volunteerCourseApplications,
+  courseEnrollments,
+  courseAttendance,
+  userModuleProgress,
+  courseInstructors
+} from '../shared/schema';
 import { IStorage } from './storage';
 
 export class PostgresStorage implements IStorage {

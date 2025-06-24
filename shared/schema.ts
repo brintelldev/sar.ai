@@ -467,11 +467,6 @@ export const volunteerCourseApplications = pgTable("volunteer_course_application
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
 });
-  volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
-  role: text("role").default("instructor"), // 'instructor', 'assistant', 'coordinator'
-  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow(),
-  assignedBy: uuid("assigned_by").references(() => users.id).notNull()
-});
 
 // Course Enrollments (beneficiários inscritos em cursos)
 export const courseEnrollments = pgTable("course_enrollments", {
