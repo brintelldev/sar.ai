@@ -124,6 +124,13 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 24, 2025. Sistema completo de capacitação tecnológica implementado:
+  * Inscrições de beneficiários em cursos
+  * Atribuição de voluntários como instrutores
+  * Controle de frequência para cursos presenciais
+  * Acompanhamento de progresso para cursos online
+  * Interface de gerenciamento de cursos com múltiplas abas
+  * Página de inscrições para beneficiários visualizarem cursos disponíveis
 - June 23, 2025. Sistema de Super Admin implementado com painel completo de gerenciamento SaaS
 - June 23, 2025. Criada conta de super admin com credenciais de acesso
 - June 23, 2025. Initial setup

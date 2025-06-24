@@ -18,8 +18,7 @@ import {
   Star,
   Download,
   Share2,
-  User,
-  Users
+  User
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
 
@@ -73,7 +72,7 @@ interface UserProgress {
 
 export default function CourseDetailPage() {
   const { id: courseId } = useParams();
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
 
   // Fetch course details
   const { data: course, isLoading: courseLoading } = useQuery<Course>({

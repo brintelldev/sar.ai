@@ -150,6 +150,16 @@ function Router() {
           <Certificate />
         </ProtectedRoute>
       </Route>
+      <Route path="/course-enrollment">
+        <ProtectedRoute>
+          <LazyComponent loader={() => import('./pages/course-enrollment')} />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/courses/:courseId/manage">
+        <ProtectedRoute>
+          <LazyComponent loader={() => import('./pages/course-management')} />
+        </ProtectedRoute>
+      </Route>
       <Route path="/course-admin">
         <ProtectedRoute>
           <CourseAdmin />
