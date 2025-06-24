@@ -468,21 +468,7 @@ export const volunteerCourseApplications = pgTable("volunteer_course_application
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
 });
 
-// Volunteer Course Applications (candidaturas de voluntários para ministrar cursos)
-export const volunteerCourseApplications = pgTable("volunteer_course_applications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
-  courseId: uuid("course_id").references(() => courses.id).notNull(),
-  applicationMessage: text("application_message"),
-  qualifications: jsonb("qualifications"),
-  status: text("status").default("pending"), // 'pending', 'approved', 'rejected', 'withdrawn'
-  reviewedBy: uuid("reviewed_by").references(() => users.id),
-  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
-  reviewNotes: text("review_notes"),
-  appliedAt: timestamp("applied_at", { withTimezone: true }).defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
-});
+
 
 // Training Notifications
 export const trainingNotifications = pgTable("training_notifications", {
