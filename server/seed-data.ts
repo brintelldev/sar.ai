@@ -335,8 +335,24 @@ export async function seedTestData() {
       }
     });
 
+    // Criar usuário para o segundo voluntário
+    const volunteer2User = await storage.createUser({
+      email: 'lucia.mendes@email.com',
+      passwordHash: await bcrypt.hash('vol123', 10),
+      name: 'Lucia Mendes Ferreira'
+    });
+
+    // Atribuir role de voluntário
+    await storage.createUserRole({
+      userId: volunteer2User.id,
+      organizationId: testOrg.id,
+      role: 'volunteer',
+      permissions: ['read'],
+      isActive: true
+    });
+
     await storage.createVolunteer({
-      userId: crypto.randomUUID(),
+      userId: volunteer2User.id,
       organizationId: testOrg.id,
       volunteerNumber: 'VOL-002',
       skills: ['Saúde', 'Psicologia', 'Serviço Social'],

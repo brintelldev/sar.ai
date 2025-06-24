@@ -471,7 +471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beneficiaries routes
   app.get("/api/beneficiaries", requireAuth, requireOrganization, async (req, res) => {
     try {
+      console.log('🔍 Buscando beneficiários para organização:', req.session.organizationId);
       const beneficiaries = await storage.getBeneficiaries(req.session.organizationId!);
+      console.log('📊 Beneficiários encontrados:', beneficiaries.length, beneficiaries.map(b => ({ id: b.id, name: b.name })));
       res.json(beneficiaries);
     } catch (error) {
       console.error("Get beneficiaries error:", error);
@@ -498,7 +500,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Volunteers routes
   app.get("/api/volunteers", requireAuth, requireOrganization, async (req, res) => {
     try {
+      console.log('🔍 Buscando voluntários para organização:', req.session.organizationId);
       const volunteers = await storage.getVolunteers(req.session.organizationId!);
+      console.log('📊 Voluntários encontrados:', volunteers.length, volunteers.map(v => ({ id: v.id, name: v.volunteerNumber })));
       res.json(volunteers);
     } catch (error) {
       console.error("Get volunteers error:", error);

@@ -214,7 +214,9 @@ export class PostgresStorage implements IStorage {
 
   // Beneficiaries
   async getBeneficiaries(organizationId: string): Promise<Beneficiary[]> {
+    console.log('🗃️ PostgresStorage: Buscando beneficiários para org:', organizationId);
     const result = await db.select().from(beneficiaries).where(eq(beneficiaries.organizationId, organizationId));
+    console.log('🗃️ PostgresStorage: Resultado da query beneficiários:', result.length);
     return result;
   }
 
@@ -243,7 +245,9 @@ export class PostgresStorage implements IStorage {
 
   // Volunteers
   async getVolunteers(organizationId: string): Promise<Volunteer[]> {
+    console.log('🗃️ PostgresStorage: Buscando voluntários para org:', organizationId);
     const result = await db.select().from(volunteers).where(eq(volunteers.organizationId, organizationId));
+    console.log('🗃️ PostgresStorage: Resultado da query voluntários:', result.length);
     return result;
   }
 
