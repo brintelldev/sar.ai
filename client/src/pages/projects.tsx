@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as React from 'react';
 import { Plus, Search, Filter, Calendar, DollarSign, Users, Target, Edit, Eye, X, CheckSquare, Square } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -17,6 +18,69 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { useProjects, useCreateProject, useUpdateProject } from '@/hooks/use-organization';
 import { insertProjectSchema } from '@/../../shared/schema';
 import { useToast } from '@/hooks/use-toast';
+
+// Component to view and edit milestones in project details
+function MilestonesViewer({ project, onUpdate }: { project: any, onUpdate: (project: any) => void }) {
+  const [milestones, setMilestones] = useState<Array<{id: string, text: string, completed: boolean}>>([]);
+  const updateProjectMutation = useUpdateProject();
+
+  React.useEffect(() => {
+    try {
+      const parsedMilestones = typeof project.milestones === 'string' 
+        ? JSON.parse(project.milestones) 
+        : project.milestones || [];
+      setMilestones(Array.isArray(parsedMilestones) ? parsedMilestones : []);
+    } catch {
+      setMilestones([]);
+    }
+  }, [project.milestones]);
+
+  const handleToggleMilestone = async (index: number) => {
+    const updated = [...milestones];
+    updated[index].completed = !updated[index].completed;
+    setMilestones(updated);
+
+    // Update project in database
+    const updatedProject = {
+      ...project,
+      milestones: JSON.stringify(updated)
+    };
+
+    try {
+      await updateProjectMutation.mutateAsync({
+        id: project.id,
+        data: updatedProject
+      });
+      onUpdate(updatedProject);
+    } catch (error) {
+      // Revert on error
+      setMilestones(milestones);
+    }
+  };
+
+  if (!milestones.length) {
+    return <p className="text-sm text-muted-foreground">Nenhum marco definido</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {milestones.map((milestone, index) => (
+        <div key={milestone.id} className="flex items-center gap-3 p-2 border rounded">
+          <Checkbox
+            checked={milestone.completed}
+            onCheckedChange={() => handleToggleMilestone(index)}
+          />
+          <span className={`text-sm flex-1 ${milestone.completed ? 'line-through text-muted-foreground' : ''}`}>
+            {milestone.text}
+          </span>
+        </div>
+      ))}
+      <div className="mt-2 text-xs text-muted-foreground">
+        {milestones.filter(m => m.completed).length} de {milestones.length} marcos concluídos
+      </div>
+    </div>
+  );
+}
 
 export default function Projects() {
   const { data: projects, isLoading } = useProjects();
@@ -136,8 +200,24 @@ export default function Projects() {
   };
 
   const calculateProgress = (project: any) => {
-    if (!project.budget || !project.spentAmount) return 0;
-    return Math.round((parseFloat(project.spentAmount) / parseFloat(project.budget)) * 100);
+    try {
+      const milestones = typeof project.milestones === 'string' 
+        ? JSON.parse(project.milestones) 
+        : project.milestones || [];
+      
+      if (!Array.isArray(milestones) || milestones.length === 0) {
+        // Fallback to budget-based progress if no milestones
+        if (!project.budget || !project.spentAmount) return 0;
+        return Math.round((parseFloat(project.spentAmount) / parseFloat(project.budget)) * 100);
+      }
+      
+      const completedCount = milestones.filter(m => m.completed).length;
+      return Math.round((completedCount / milestones.length) * 100);
+    } catch {
+      // Fallback to budget-based progress on error
+      if (!project.budget || !project.spentAmount) return 0;
+      return Math.round((parseFloat(project.spentAmount) / parseFloat(project.budget)) * 100);
+    }
   };
 
   const openDetailDialog = (project: any) => {
@@ -147,6 +227,17 @@ export default function Projects() {
 
   const openEditDialog = (project: any) => {
     setSelectedProject(project);
+    
+    // Parse milestones for editing
+    try {
+      const milestones = typeof project.milestones === 'string' 
+        ? JSON.parse(project.milestones) 
+        : project.milestones || [];
+      setMilestonesList(Array.isArray(milestones) ? milestones : []);
+    } catch {
+      setMilestonesList([]);
+    }
+    
     editForm.reset({
       name: project.name,
       description: project.description || '',
@@ -156,7 +247,7 @@ export default function Projects() {
       budget: project.budget || '',
       spentAmount: project.spentAmount || '0',
       goals: project.goals || '',
-      milestones: project.milestones || '',
+      milestones: project.milestones || '[]',
     });
     setIsEditDialogOpen(true);
   };
@@ -533,17 +624,15 @@ export default function Projects() {
                     )}
                     
                     {/* Progress */}
-                    {project.budget && (
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm text-muted-foreground">Progresso</span>
-                          <span className="text-sm font-medium text-foreground">
-                            {calculateProgress(project)}%
-                          </span>
-                        </div>
-                        <Progress value={calculateProgress(project)} className="h-2" />
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-muted-foreground">Progresso</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {calculateProgress(project)}%
+                        </span>
                       </div>
-                    )}
+                      <Progress value={calculateProgress(project)} className="h-2" />
+                    </div>
                   </div>
                   
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
@@ -605,7 +694,17 @@ export default function Projects() {
                 {selectedProject.milestones && (
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-2">Marcos e Etapas</h4>
-                    <p className="text-sm">{selectedProject.milestones}</p>
+                    <MilestonesViewer 
+                      project={selectedProject} 
+                      onUpdate={(updatedProject) => {
+                        setSelectedProject(updatedProject);
+                        // Update the project in the list
+                        const updatedProjects = projects?.map(p => 
+                          p.id === updatedProject.id ? updatedProject : p
+                        );
+                        // You might want to trigger a mutation here to save changes
+                      }}
+                    />
                   </div>
                 )}
 
