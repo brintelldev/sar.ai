@@ -18,7 +18,8 @@ import {
   Star,
   Download,
   Share2,
-  User
+  User,
+  Users
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
 

@@ -718,6 +718,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course Enrollments
+  app.get("/api/courses/:courseId/enrollments", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const enrollments = await storage.getCourseEnrollments(courseId);
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Get course enrollments error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses/:courseId/enrollments", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { beneficiaryId, status } = req.body;
+      
+      const enrollment = await storage.createCourseEnrollment({
+        courseId,
+        beneficiaryId,
+        status: status || 'enrolled'
+      });
+      
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Create course enrollment error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.patch("/api/enrollments/:enrollmentId/status", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { enrollmentId } = req.params;
+      const { status, notes } = req.body;
+      
+      const enrollment = await storage.updateEnrollmentStatus(enrollmentId, status, notes);
+      res.json(enrollment);
+    } catch (error) {
+      console.error("Update enrollment status error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Course Instructors
+  app.get("/api/courses/:courseId/instructors", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const instructors = await storage.getCourseInstructors(courseId);
+      res.json(instructors);
+    } catch (error) {
+      console.error("Get course instructors error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses/:courseId/instructors", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { volunteerId, role } = req.body;
+      
+      const assignment = await storage.assignCourseInstructor({
+        courseId,
+        volunteerId,
+        role: role || 'instructor',
+        assignedBy: req.session.userId
+      });
+      
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Assign course instructor error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Course Attendance (for in-person courses)
+  app.get("/api/enrollments/:enrollmentId/attendance", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { enrollmentId } = req.params;
+      const attendance = await storage.getCourseAttendance(enrollmentId);
+      res.json(attendance);
+    } catch (error) {
+      console.error("Get course attendance error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/enrollments/:enrollmentId/attendance", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { enrollmentId } = req.params;
+      const attendanceData = {
+        enrollmentId,
+        ...req.body,
+        markedBy: req.session.userId
+      };
+      
+      const attendance = await storage.markAttendance(attendanceData);
+      res.status(201).json(attendance);
+    } catch (error) {
+      console.error("Mark attendance error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.patch("/api/attendance/:attendanceId", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { attendanceId } = req.params;
+      const attendance = await storage.updateAttendance(attendanceId, req.body);
+      res.json(attendance);
+    } catch (error) {
+      console.error("Update attendance error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Module Progress (for online courses)
+  app.get("/api/enrollments/:enrollmentId/progress", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { enrollmentId } = req.params;
+      const progress = await storage.getModuleProgress(enrollmentId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Get module progress error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/enrollments/:enrollmentId/progress/:moduleId", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { enrollmentId, moduleId } = req.params;
+      const progress = await storage.updateModuleProgress(enrollmentId, moduleId, req.body);
+      res.json(progress);
+    } catch (error) {
+      console.error("Update module progress error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // General courses routes
   app.get("/api/courses", requireAuth, requireOrganization, async (req, res) => {
     try {

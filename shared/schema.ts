@@ -394,6 +394,59 @@ export const certificates = pgTable("certificates", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
 });
 
+// Course Instructors (voluntários que ministram cursos)
+export const courseInstructors = pgTable("course_instructors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
+  role: text("role").default("instructor"), // 'instructor', 'assistant', 'coordinator'
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow(),
+  assignedBy: uuid("assigned_by").references(() => users.id).notNull()
+});
+
+// Course Enrollments (beneficiários inscritos em cursos)
+export const courseEnrollments = pgTable("course_enrollments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  beneficiaryId: uuid("beneficiary_id").references(() => beneficiaries.id).notNull(),
+  status: text("status").notNull().default("enrolled"), // 'enrolled', 'active', 'completed', 'dropped', 'suspended'
+  enrolledAt: timestamp("enrolled_at", { withTimezone: true }).defaultNow(),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  droppedAt: timestamp("dropped_at", { withTimezone: true }),
+  dropReason: text("drop_reason"),
+  finalScore: integer("final_score"), // 0-100
+  certificateIssued: boolean("certificate_issued").default(false),
+  notes: text("notes") // Notas do instrutor sobre o aluno
+});
+
+// Attendance tracking para cursos presenciais
+export const courseAttendance = pgTable("course_attendance", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
+  sessionDate: date("session_date").notNull(),
+  sessionTitle: text("session_title").notNull(), // e.g., "Módulo 1: Introdução"
+  attendanceStatus: text("attendance_status").notNull(), // 'present', 'absent', 'late', 'excused'
+  arrivalTime: text("arrival_time"), // formato HH:MM
+  departureTime: text("departure_time"), // formato HH:MM
+  notes: text("notes"), // Notas do instrutor
+  markedBy: uuid("marked_by").references(() => users.id).notNull(), // Instrutor que marcou presença
+  markedAt: timestamp("marked_at", { withTimezone: true }).defaultNow()
+});
+
+// Progress tracking para módulos de cursos online
+export const userModuleProgress = pgTable("user_module_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
+  moduleId: uuid("module_id").references(() => courseModules.id).notNull(),
+  status: text("status").notNull().default("not_started"), // 'not_started', 'in_progress', 'completed'
+  progress: integer("progress").default(0), // porcentagem 0-100
+  timeSpent: integer("time_spent").default(0), // tempo em minutos
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true })
+});
+
 // Training Notifications
 export const trainingNotifications = pgTable("training_notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -436,6 +489,20 @@ export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
   updatedAt: true
 });
 
+
+
+export const insertCourseAssessmentSchema = createInsertSchema(courseAssessments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertUserCourseProgressSchema = createInsertSchema(userCourseProgress).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertCourseEnrollmentSchema = createInsertSchema(courseEnrollments).omit({
   id: true,
   enrolledAt: true
@@ -455,24 +522,24 @@ export const insertUserModuleProgressSchema = createInsertSchema(userModuleProgr
   id: true
 });
 
-export const insertCourseAssessmentSchema = createInsertSchema(courseAssessments).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-
-export const insertUserCourseProgressSchema = createInsertSchema(userCourseProgress).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-
 // Types for training module
 export type Course = typeof courses.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 
 export type CourseModule = typeof courseModules.$inferSelect;
 export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
+
+
+
+export type UserCourseProgress = typeof userCourseProgress.$inferSelect;
+export type InsertUserCourseProgress = z.infer<typeof insertUserCourseProgressSchema>;
+
+export type CourseAssessment = typeof courseAssessments.$inferSelect;
+export type InsertCourseAssessment = z.infer<typeof insertCourseAssessmentSchema>;
+
+export type UserAssessmentAttempt = typeof userAssessmentAttempts.$inferSelect;
+export type Certificate = typeof certificates.$inferSelect;
+export type TrainingNotification = typeof trainingNotifications.$inferSelect;
 
 export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
 export type InsertCourseEnrollment = z.infer<typeof insertCourseEnrollmentSchema>;
@@ -485,16 +552,6 @@ export type InsertCourseAttendance = z.infer<typeof insertCourseAttendanceSchema
 
 export type UserModuleProgress = typeof userModuleProgress.$inferSelect;
 export type InsertUserModuleProgress = z.infer<typeof insertUserModuleProgressSchema>;
-
-export type UserCourseProgress = typeof userCourseProgress.$inferSelect;
-export type InsertUserCourseProgress = z.infer<typeof insertUserCourseProgressSchema>;
-
-export type CourseAssessment = typeof courseAssessments.$inferSelect;
-export type InsertCourseAssessment = z.infer<typeof insertCourseAssessmentSchema>;
-
-export type UserAssessmentAttempt = typeof userAssessmentAttempts.$inferSelect;
-export type Certificate = typeof certificates.$inferSelect;
-export type TrainingNotification = typeof trainingNotifications.$inferSelect;
 
 // Site Whitelabel tables
 export const whitelabelSites = pgTable("whitelabel_sites", {
