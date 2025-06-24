@@ -137,6 +137,18 @@ export function CourseEditor() {
     }
   });
 
+  const reorderModulesMutation = useMutation({
+    mutationFn: (moduleIds: string[]) => 
+      apiRequest(`/api/courses/${courseId}/modules/reorder`, 'PUT', { moduleIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
+      toast({
+        title: "Módulos reordenados",
+        description: "A ordem dos módulos foi atualizada."
+      });
+    }
+  });
+
   const handleSaveCourse = (formData: FormData) => {
     const data = {
       title: formData.get('title'),

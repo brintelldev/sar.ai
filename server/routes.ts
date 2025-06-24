@@ -1090,6 +1090,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reordenar módulos
+  app.put("/api/courses/:courseId/modules/reorder", requireAuth, async (req, res) => {
+    try {
+      const { moduleIds } = req.body;
+      
+      if (!Array.isArray(moduleIds)) {
+        return res.status(400).json({ message: "Lista de IDs de módulos é obrigatória" });
+      }
+
+      // Atualizar a ordem dos módulos
+      for (let i = 0; i < moduleIds.length; i++) {
+        await storage.updateCourseModule(moduleIds[i], { orderIndex: i + 1 });
+      }
+
+      res.json({ message: "Ordem dos módulos atualizada com sucesso" });
+    } catch (error) {
+      console.error("Reorder modules error:", error);
+      res.status(500).json({ message: "Erro ao reordenar módulos" });
+    }
+  });
+
   app.get("/api/courses/:id/progress", requireAuth, async (req, res) => {
     try {
       const courseId = req.params.id;
