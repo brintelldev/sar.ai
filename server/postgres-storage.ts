@@ -579,9 +579,26 @@ export class PostgresStorage implements IStorage {
   }
 
   async createCourseModule(module: InsertCourseModule): Promise<CourseModule> {
+    // Garantir que campos numéricos tenham valores válidos
+    const moduleData = {
+      ...module,
+      duration: module.duration && !isNaN(Number(module.duration)) ? Number(module.duration) : 30,
+      orderIndex: module.orderIndex && !isNaN(Number(module.orderIndex)) ? Number(module.orderIndex) : undefined
+    };
+
+    // Se não foi fornecido order_index, calcular o próximo valor
+    if (!moduleData.orderIndex) {
+      const maxOrder = await db
+        .select({ maxOrder: sql<number>`COALESCE(MAX(order_index), 0)` })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, moduleData.courseId));
+      
+      moduleData.orderIndex = (maxOrder[0]?.maxOrder || 0) + 1;
+    }
+
     const [result] = await db
       .insert(courseModules)
-      .values(module)
+      .values(moduleData)
       .returning();
     return result;
   }
