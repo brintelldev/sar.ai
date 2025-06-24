@@ -227,15 +227,34 @@ export function CourseAdmin() {
                     </div>
                   </div>
                   
-                  <div className="grid gap-2">
-                    <Label htmlFor="duration">Duração Estimada</Label>
-                    <Input
-                      id="duration"
-                      name="duration"
-                      placeholder="Ex: 4 horas"
-                      required
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="courseType">Tipo de Curso</Label>
+                      <Select name="courseType" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="online">Online (EAD)</SelectItem>
+                          <SelectItem value="in_person">Presencial</SelectItem>
+                          <SelectItem value="hybrid">Híbrido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="duration">Duração (horas)</Label>
+                      <Input
+                        id="duration"
+                        name="duration"
+                        type="number"
+                        placeholder="Ex: 25"
+                        required
+                      />
+                    </div>
                   </div>
+                  
+
                 </div>
                 
                 <DialogFooter>

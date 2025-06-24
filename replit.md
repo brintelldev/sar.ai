@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 24, 2025. Implementada distinção completa entre cursos online e presenciais:
+  * Campo "Tipo de Curso" adicionado na criação (Online/Presencial/Híbrido)
+  * Interface atualizada para mostrar tipo de curso com badges coloridos
+  * Filtro por tipo na página de inscrições
+  * Estatísticas separadas para cursos online vs presenciais
+  * Informações específicas por tipo (24/7 para online, local para presencial)
 - June 24, 2025. Criados cursos completos com estrutura abrangente:
   * Curso presencial: "Empreendedorismo para Mulheres Sobreviventes" (40h, 8 módulos)
   * Curso online: "Tecnologia e Segurança Digital para Mulheres" (25h, 8 módulos)
