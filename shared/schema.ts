@@ -468,47 +468,20 @@ export const volunteerCourseApplications = pgTable("volunteer_course_application
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
 });
 
-// Course Enrollments (beneficiários inscritos em cursos)
-export const courseEnrollments = pgTable("course_enrollments", {
+// Volunteer Course Applications (candidaturas de voluntários para ministrar cursos)
+export const volunteerCourseApplications = pgTable("volunteer_course_applications", {
   id: uuid("id").primaryKey().defaultRandom(),
+  volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
   courseId: uuid("course_id").references(() => courses.id).notNull(),
-  beneficiaryId: uuid("beneficiary_id").references(() => beneficiaries.id).notNull(),
-  status: text("status").notNull().default("enrolled"), // 'enrolled', 'active', 'completed', 'dropped', 'suspended'
-  enrolledAt: timestamp("enrolled_at", { withTimezone: true }).defaultNow(),
-  startedAt: timestamp("started_at", { withTimezone: true }),
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  droppedAt: timestamp("dropped_at", { withTimezone: true }),
-  dropReason: text("drop_reason"),
-  finalScore: integer("final_score"), // 0-100
-  certificateIssued: boolean("certificate_issued").default(false),
-  notes: text("notes") // Notas do instrutor sobre o aluno
-});
-
-// Attendance tracking para cursos presenciais
-export const courseAttendance = pgTable("course_attendance", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
-  sessionDate: date("session_date").notNull(),
-  sessionTitle: text("session_title").notNull(), // e.g., "Módulo 1: Introdução"
-  attendanceStatus: text("attendance_status").notNull(), // 'present', 'absent', 'late', 'excused'
-  arrivalTime: text("arrival_time"), // formato HH:MM
-  departureTime: text("departure_time"), // formato HH:MM
-  notes: text("notes"), // Notas do instrutor
-  markedBy: uuid("marked_by").references(() => users.id).notNull(), // Instrutor que marcou presença
-  markedAt: timestamp("marked_at", { withTimezone: true }).defaultNow()
-});
-
-// Progress tracking para módulos de cursos online
-export const userModuleProgress = pgTable("user_module_progress", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
-  moduleId: uuid("module_id").references(() => courseModules.id).notNull(),
-  status: text("status").notNull().default("not_started"), // 'not_started', 'in_progress', 'completed'
-  progress: integer("progress").default(0), // porcentagem 0-100
-  timeSpent: integer("time_spent").default(0), // tempo em minutos
-  startedAt: timestamp("started_at", { withTimezone: true }),
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true })
+  applicationMessage: text("application_message"),
+  qualifications: jsonb("qualifications"),
+  status: text("status").default("pending"), // 'pending', 'approved', 'rejected', 'withdrawn'
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewNotes: text("review_notes"),
+  appliedAt: timestamp("applied_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
 });
 
 // Training Notifications
