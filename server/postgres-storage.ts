@@ -528,41 +528,39 @@ export class PostgresStorage implements IStorage {
         return false;
       }
 
-      // Deletar todos os dados relacionados usando transação
-      await db.transaction(async (tx) => {
-        // 1. Deletar progress de módulos
-        await tx.execute(sql`
-          DELETE FROM user_module_progress 
-          WHERE module_id IN (
-            SELECT id FROM course_modules WHERE course_id = ${id}
-          )
-        `);
+      // Deletar todos os dados relacionados em sequência (sem transação devido ao neon-http driver)
+      // 1. Deletar progress de módulos
+      await db.execute(sql`
+        DELETE FROM user_module_progress 
+        WHERE module_id IN (
+          SELECT id FROM course_modules WHERE course_id = ${id}
+        )
+      `);
 
-        // 2. Deletar registros de frequência
-        await tx.execute(sql`
-          DELETE FROM course_attendance 
-          WHERE enrollment_id IN (
-            SELECT id FROM course_enrollments WHERE course_id = ${id}
-          )
-        `);
+      // 2. Deletar registros de frequência
+      await db.execute(sql`
+        DELETE FROM course_attendance 
+        WHERE enrollment_id IN (
+          SELECT id FROM course_enrollments WHERE course_id = ${id}
+        )
+      `);
 
-        // 3. Deletar inscrições
-        await tx.execute(sql`DELETE FROM course_enrollments WHERE course_id = ${id}`);
+      // 3. Deletar inscrições
+      await db.execute(sql`DELETE FROM course_enrollments WHERE course_id = ${id}`);
 
-        // 4. Deletar instrutores
-        await tx.execute(sql`DELETE FROM course_instructors WHERE course_id = ${id}`);
+      // 4. Deletar instrutores
+      await db.execute(sql`DELETE FROM course_instructors WHERE course_id = ${id}`);
 
-        // 5. Deletar avaliações
-        await tx.execute(sql`DELETE FROM course_assessments WHERE course_id = ${id}`);
+      // 5. Deletar avaliações
+      await db.execute(sql`DELETE FROM course_assessments WHERE course_id = ${id}`);
 
-        // 6. Deletar módulos
-        await tx.execute(sql`DELETE FROM course_modules WHERE course_id = ${id}`);
+      // 6. Deletar módulos
+      await db.execute(sql`DELETE FROM course_modules WHERE course_id = ${id}`);
 
-        // 7. Finalmente deletar o curso
-        await tx.execute(sql`
-          DELETE FROM courses WHERE id = ${id} AND organization_id = ${organizationId}
-        `);
-      });
+      // 7. Finalmente deletar o curso
+      await db.execute(sql`
+        DELETE FROM courses WHERE id = ${id} AND organization_id = ${organizationId}
+      `);
 
       return true;
     } catch (error) {

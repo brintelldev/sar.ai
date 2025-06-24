@@ -106,9 +106,7 @@ export function ModuleEditor() {
   // Delete module mutation
   const deleteModuleMutation = useMutation({
     mutationFn: (moduleId: string) => 
-      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, {
-        method: 'DELETE'
-      }),
+      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'DELETE'),
     onSuccess: () => {
       toast({
         title: "Sucesso",
