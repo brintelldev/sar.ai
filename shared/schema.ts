@@ -400,6 +400,75 @@ export const courseInstructors = pgTable("course_instructors", {
   courseId: uuid("course_id").references(() => courses.id).notNull(),
   volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
   role: text("role").default("instructor"), // 'instructor', 'assistant', 'coordinator'
+  assignedBy: uuid("assigned_by").references(() => users.id),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow(),
+  status: text("status").default("active"), // 'active', 'inactive'
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// Course Enrollments (inscrições de beneficiários em cursos)
+export const courseEnrollments = pgTable("course_enrollments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  beneficiaryId: uuid("beneficiary_id").references(() => beneficiaries.id).notNull(),
+  status: text("status").default("enrolled"), // 'enrolled', 'active', 'completed', 'dropped', 'suspended'
+  enrolledAt: timestamp("enrolled_at", { withTimezone: true }).defaultNow(),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  finalScore: integer("final_score"),
+  certificateIssued: boolean("certificate_issued").default(false),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Course Attendance (frequência para cursos presenciais)
+export const courseAttendance = pgTable("course_attendance", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
+  sessionDate: date("session_date").notNull(),
+  sessionTitle: text("session_title"),
+  attendanceStatus: text("attendance_status").notNull(), // 'present', 'absent', 'late', 'excused'
+  arrivalTime: text("arrival_time"),
+  departureTime: text("departure_time"),
+  notes: text("notes"),
+  markedBy: uuid("marked_by").references(() => users.id),
+  markedAt: timestamp("marked_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+// User Module Progress (progresso individual por módulo)
+export const userModuleProgress = pgTable("user_module_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
+  moduleId: uuid("module_id").references(() => courseModules.id).notNull(),
+  status: text("status").default("not_started"), // 'not_started', 'in_progress', 'completed'
+  progress: integer("progress").default(0), // porcentagem de conclusão
+  timeSpent: integer("time_spent").default(0), // tempo em minutos
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Volunteer Course Applications (candidaturas de voluntários para ministrar cursos)
+export const volunteerCourseApplications = pgTable("volunteer_course_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  applicationMessage: text("application_message"), // motivação/experiência
+  qualifications: jsonb("qualifications"), // qualificações relevantes
+  status: text("status").default("pending"), // 'pending', 'approved', 'rejected', 'withdrawn'
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewNotes: text("review_notes"),
+  appliedAt: timestamp("applied_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+  volunteerId: uuid("volunteer_id").references(() => volunteers.id).notNull(),
+  role: text("role").default("instructor"), // 'instructor', 'assistant', 'coordinator'
   assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow(),
   assignedBy: uuid("assigned_by").references(() => users.id).notNull()
 });

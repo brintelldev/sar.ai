@@ -855,6 +855,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Volunteer Course Applications
+  app.get("/api/courses/:courseId/applications", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const applications = await storage.getVolunteerApplications(courseId);
+      res.json(applications);
+    } catch (error) {
+      console.error("Get volunteer applications error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses/:courseId/apply", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { volunteerId, applicationMessage, qualifications } = req.body;
+      
+      const application = await storage.createVolunteerApplication({
+        volunteerId,
+        courseId,
+        applicationMessage,
+        qualifications
+      });
+      
+      res.status(201).json(application);
+    } catch (error) {
+      console.error("Create volunteer application error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.patch("/api/applications/:applicationId", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const updates = {
+        ...req.body,
+        reviewedBy: req.session.userId,
+        reviewedAt: new Date()
+      };
+      
+      const application = await storage.updateVolunteerApplication(applicationId, updates);
+      res.json(application);
+    } catch (error) {
+      console.error("Update volunteer application error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // General courses routes
   app.get("/api/courses", requireAuth, requireOrganization, async (req, res) => {
     try {
