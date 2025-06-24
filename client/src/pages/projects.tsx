@@ -249,9 +249,9 @@ export default function Projects() {
     
     // Parse milestones for editing
     try {
-      const milestones = typeof project.milestones === 'string' 
-        ? JSON.parse(project.milestones) 
-        : project.milestones || [];
+      const milestones = Array.isArray(project.milestones) 
+        ? project.milestones 
+        : (typeof project.milestones === 'string' ? JSON.parse(project.milestones) : []);
       setMilestonesList(Array.isArray(milestones) ? milestones : []);
     } catch {
       setMilestonesList([]);
@@ -266,7 +266,7 @@ export default function Projects() {
       budget: project.budget || '',
       spentAmount: project.spentAmount || '0',
       goals: project.goals || '',
-      milestones: project.milestones || '[]',
+      milestones: JSON.stringify(project.milestones || []),
     });
     setIsEditDialogOpen(true);
   };
