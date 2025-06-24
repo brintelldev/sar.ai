@@ -91,6 +91,8 @@ export default function Projects() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [budgetFilter, setBudgetFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [milestonesList, setMilestonesList] = useState<Array<{id: string, text: string, completed: boolean}>>([]);
   const { toast } = useToast();
@@ -592,36 +594,148 @@ export default function Projects() {
             </Button>
           </div>
 
-          {showFilters && (
-            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Status:</label>
+
+        </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="planning">Planejamento</SelectItem>
+                    <SelectItem value="all">Todos os Status</SelectItem>
                     <SelectItem value="active">Em Andamento</SelectItem>
-                    <SelectItem value="paused">Pausado</SelectItem>
+                    <SelectItem value="planning">Planejamento</SelectItem>
                     <SelectItem value="completed">Concluído</SelectItem>
+                    <SelectItem value="paused">Pausado</SelectItem>
                     <SelectItem value="cancelled">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Budget Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Orçamento</label>
+                <Select value={budgetFilter} onValueChange={setBudgetFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Orçamentos</SelectItem>
+                    <SelectItem value="low">Até R$ 10.000</SelectItem>
+                    <SelectItem value="medium">R$ 10.000 - R$ 50.000</SelectItem>
+                    <SelectItem value="high">Acima de R$ 50.000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Período</label>
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Períodos</SelectItem>
+                    <SelectItem value="current">Em Andamento Agora</SelectItem>
+                    <SelectItem value="upcoming">Futuros</SelectItem>
+                    <SelectItem value="past">Finalizados</SelectItem>
+                    <SelectItem value="thisYear">Este Ano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            {(searchTerm || statusFilter !== 'all' || budgetFilter !== 'all' || dateFilter !== 'all') && (
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setBudgetFilter('all');
+                    setDateFilter('all');
+                    setSearchTerm('');
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Limpar Todos os Filtros
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Active Filter Pills */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {statusFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Status: {statusFilter === 'active' ? 'Em Andamento' : 
+                      statusFilter === 'planning' ? 'Planejamento' :
+                      statusFilter === 'completed' ? 'Concluído' :
+                      statusFilter === 'paused' ? 'Pausado' : 'Cancelado'}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setStatusFilter('all');
-                  setSearchTerm('');
-                }}
+                className="h-4 w-4 p-0"
+                onClick={() => setStatusFilter('all')}
               >
-                <X className="h-4 w-4 mr-2" />
-                Limpar Filtros
+                <X className="h-3 w-3" />
               </Button>
-            </div>
+            </Badge>
+          )}
+          
+          {budgetFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Orçamento: {budgetFilter === 'low' ? 'Até R$ 10k' :
+                         budgetFilter === 'medium' ? 'R$ 10k-50k' : 'Acima R$ 50k'}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0"
+                onClick={() => setBudgetFilter('all')}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
+
+          {dateFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Período: {dateFilter === 'current' ? 'Atual' :
+                       dateFilter === 'upcoming' ? 'Futuros' :
+                       dateFilter === 'past' ? 'Finalizados' : 'Este Ano'}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0"
+                onClick={() => setDateFilter('all')}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
+
+          {searchTerm && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Busca: "{searchTerm}"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0"
+                onClick={() => setSearchTerm('')}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
           )}
         </div>
 
