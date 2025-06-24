@@ -155,16 +155,12 @@ function Router() {
       </Route>
       <Route path="/course-enrollment">
         <ProtectedRoute>
-          <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <CourseEnrollment />
-          </Suspense>
+          <CourseEnrollment />
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:courseId/manage">
         <ProtectedRoute>
-          <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <CourseManagement />
-          </Suspense>
+          <CourseManagement />
         </ProtectedRoute>
       </Route>
       <Route path="/course-admin">
