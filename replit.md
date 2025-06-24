@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 24, 2025. Criados cursos completos com estrutura abrangente:
+  * Curso presencial: "Empreendedorismo para Mulheres Sobreviventes" (40h, 8 módulos)
+  * Curso online: "Tecnologia e Segurança Digital para Mulheres" (25h, 8 módulos)
+  * Módulos com conteúdo detalhado, atividades práticas e materiais
+  * Vídeos educativos e recursos complementares para curso online
+  * Estrutura presencial com workshops, dinâmicas e certificação
 - June 24, 2025. Sistema completo de capacitação tecnológica implementado:
   * Inscrições de beneficiários em cursos
   * Atribuição de voluntários como instrutores
