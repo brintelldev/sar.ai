@@ -179,6 +179,61 @@ export function CourseEditor() {
     updateCourseMutation.mutate({ status: 'draft' });
   };
 
+  const handleDeleteModule = (moduleId: string) => {
+    if (confirm('Tem certeza que deseja excluir este módulo?')) {
+      deleteModuleMutation.mutate(moduleId);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, module: CourseModule) => {
+    setDraggedModule(module);
+    e.dataTransfer.effectAllowed = 'move';
+    dragCounter.current = 0;
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current++;
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    dragCounter.current--;
+  };
+
+  const handleDrop = (e: React.DragEvent, targetModule: CourseModule) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+
+    if (!draggedModule || draggedModule.id === targetModule.id) {
+      setDraggedModule(null);
+      return;
+    }
+
+    const modulesList = Array.isArray(modules) ? [...modules] : [];
+    const draggedIndex = modulesList.findIndex(m => m.id === draggedModule.id);
+    const targetIndex = modulesList.findIndex(m => m.id === targetModule.id);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedModule(null);
+      return;
+    }
+
+    // Reordenar a lista
+    const [removed] = modulesList.splice(draggedIndex, 1);
+    modulesList.splice(targetIndex, 0, removed);
+
+    // Extrair apenas os IDs na nova ordem
+    const newOrder = modulesList.map(m => m.id);
+    
+    reorderModulesMutation.mutate(newOrder);
+    setDraggedModule(null);
+  };
+
   const modulesList = Array.isArray(modules) ? modules : [];
 
   if (isLoading) {
