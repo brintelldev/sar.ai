@@ -520,57 +520,51 @@ export class PostgresStorage implements IStorage {
   async deleteCourse(id: string, organizationId: string): Promise<boolean> {
     try {
       // Verificar se o curso existe na organização
-      const courseCheck = await this.db.raw(`
-        SELECT id FROM courses WHERE id = $1 AND organization_id = $2
-      `, [id, organizationId]);
+      const courseCheck = await db.execute(sql`
+        SELECT id FROM courses WHERE id = ${id} AND organization_id = ${organizationId}
+      `);
       
       if (courseCheck.rows.length === 0) {
         return false;
       }
 
-      // Deletar todos os dados relacionados em ordem correta usando raw SQL
-      await this.db.raw('BEGIN');
-      
-      try {
+      // Deletar todos os dados relacionados usando transação
+      await db.transaction(async (tx) => {
         // 1. Deletar progress de módulos
-        await this.db.raw(`
+        await tx.execute(sql`
           DELETE FROM user_module_progress 
           WHERE module_id IN (
-            SELECT id FROM course_modules WHERE course_id = $1
+            SELECT id FROM course_modules WHERE course_id = ${id}
           )
-        `, [id]);
+        `);
 
         // 2. Deletar registros de frequência
-        await this.db.raw(`
+        await tx.execute(sql`
           DELETE FROM course_attendance 
           WHERE enrollment_id IN (
-            SELECT id FROM course_enrollments WHERE course_id = $1
+            SELECT id FROM course_enrollments WHERE course_id = ${id}
           )
-        `, [id]);
+        `);
 
         // 3. Deletar inscrições
-        await this.db.raw(`DELETE FROM course_enrollments WHERE course_id = $1`, [id]);
+        await tx.execute(sql`DELETE FROM course_enrollments WHERE course_id = ${id}`);
 
         // 4. Deletar instrutores
-        await this.db.raw(`DELETE FROM course_instructors WHERE course_id = $1`, [id]);
+        await tx.execute(sql`DELETE FROM course_instructors WHERE course_id = ${id}`);
 
         // 5. Deletar avaliações
-        await this.db.raw(`DELETE FROM course_assessments WHERE course_id = $1`, [id]);
+        await tx.execute(sql`DELETE FROM course_assessments WHERE course_id = ${id}`);
 
         // 6. Deletar módulos
-        await this.db.raw(`DELETE FROM course_modules WHERE course_id = $1`, [id]);
+        await tx.execute(sql`DELETE FROM course_modules WHERE course_id = ${id}`);
 
         // 7. Finalmente deletar o curso
-        const deleteResult = await this.db.raw(`
-          DELETE FROM courses WHERE id = $1 AND organization_id = $2
-        `, [id, organizationId]);
+        await tx.execute(sql`
+          DELETE FROM courses WHERE id = ${id} AND organization_id = ${organizationId}
+        `);
+      });
 
-        await this.db.raw('COMMIT');
-        return true;
-      } catch (error) {
-        await this.db.raw('ROLLBACK');
-        throw error;
-      }
+      return true;
     } catch (error) {
       console.error('Delete course error:', error);
       throw error;
