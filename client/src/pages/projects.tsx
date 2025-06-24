@@ -278,11 +278,7 @@ export default function Projects() {
     return matchesSearch && matchesStatus;
   }) : [];
 
-  // Debug logging
-  console.log('Projects data:', projects);
-  console.log('Filtered projects:', filteredProjects);
-  console.log('Search term:', searchTerm);
-  console.log('Status filter:', statusFilter);
+
 
   if (isLoading) {
     return (
@@ -609,30 +605,30 @@ export default function Projects() {
             )}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {filteredProjects.map((project: any) => (
-              <Card key={project.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-foreground leading-tight">
+              <Card key={project.id} className="hover:shadow-md transition-shadow flex flex-col h-full">
+                <CardHeader className="pb-3 flex-shrink-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-foreground leading-tight text-sm md:text-base flex-1 min-w-0">
                       {project.name}
                     </h3>
-                    <Badge className={`status-badge ${getStatusVariant(project.status)} ml-2`}>
+                    <Badge className={`status-badge ${getStatusVariant(project.status)} flex-shrink-0 text-xs`}>
                       {getStatusLabel(project.status)}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                <CardContent className="pt-0 flex-1 flex flex-col">
+                  <p className="text-xs md:text-sm text-muted-foreground mb-4 line-clamp-2 flex-shrink-0">
                     {project.description}
                   </p>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-2 md:space-y-3 flex-1">
                     {/* Dates */}
                     {project.startDate && project.endDate && (
                       <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs md:text-sm text-muted-foreground truncate">
                           {formatDate(project.startDate)} - {formatDate(project.endDate)}
                         </span>
                       </div>
@@ -641,8 +637,8 @@ export default function Projects() {
                     {/* Budget */}
                     {project.budget && (
                       <div className="flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs md:text-sm text-muted-foreground truncate">
                           {formatCurrency(project.budget)}
                         </span>
                       </div>
@@ -651,30 +647,32 @@ export default function Projects() {
                     {/* Progress */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-muted-foreground">Progresso</span>
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-xs md:text-sm text-muted-foreground">Progresso</span>
+                        <span className="text-xs md:text-sm font-medium text-foreground">
                           {calculateProgress(project)}%
                         </span>
                       </div>
-                      <Progress value={calculateProgress(project)} className="h-2" />
+                      <Progress value={calculateProgress(project)} className="h-1.5 md:h-2" />
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                    <Button variant="outline" size="sm" onClick={() => openDetailDialog(project)}>
-                      <Eye className="h-4 w-4 mr-2" />
+                  <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border flex-shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => openDetailDialog(project)} className="w-full">
+                      <Eye className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                       Ver Detalhes
                     </Button>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(project)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
+                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(project)} className="flex-1">
+                        <Edit className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                        <span className="hidden sm:inline">Editar</span>
+                        <span className="sm:hidden">Edit</span>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive flex-1">
+                            <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                            <span className="hidden sm:inline">Excluir</span>
+                            <span className="sm:hidden">Del</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
