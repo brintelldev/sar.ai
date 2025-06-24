@@ -31,6 +31,167 @@ import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useBeneficiaries, useVolunteers } from '@/hooks/use-organization';
 
+// Attendance Manager Component for In-Person Courses
+function AttendanceManager({ courseId, enrollments, courseType }: { courseId: string, enrollments: any[], courseType: string }) {
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [sessionTitle, setSessionTitle] = useState('');
+  const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+
+  const markAttendanceMutation = useMutation({
+    mutationFn: (data: any) => apiRequest(`/api/enrollments/${data.enrollmentId}/attendance`, 'POST', data),
+    onSuccess: () => {
+      toast({
+        title: "Frequência marcada",
+        description: "Presença registrada com sucesso!"
+      });
+      setAttendanceData({});
+    }
+  });
+
+  const handleMarkAllAttendance = () => {
+    if (!selectedDate || !sessionTitle) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma data e título da sessão",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    enrollments?.filter(e => e.status === 'active')?.forEach(enrollment => {
+      const status = attendanceData[enrollment.id] || 'present';
+      markAttendanceMutation.mutate({
+        enrollmentId: enrollment.id,
+        sessionDate: selectedDate,
+        sessionTitle,
+        attendanceStatus: status
+      });
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="sessionDate">Data da Sessão</Label>
+          <Input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="sessionTitle">Título da Sessão</Label>
+          <Input
+            placeholder="Ex: Módulo 1 - Introdução"
+            value={sessionTitle}
+            onChange={(e) => setSessionTitle(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="border rounded-lg p-4">
+        <h3 className="font-medium mb-4">Marcar Presença</h3>
+        <div className="space-y-2">
+          {enrollments?.filter(e => e.status === 'active')?.map(enrollment => (
+            <div key={enrollment.id} className="flex items-center justify-between p-2 border rounded">
+              <span className="font-medium">{enrollment.beneficiaryName}</span>
+              <Select
+                value={attendanceData[enrollment.id] || 'present'}
+                onValueChange={(value) => setAttendanceData({
+                  ...attendanceData,
+                  [enrollment.id]: value
+                })}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="present">Presente</SelectItem>
+                  <SelectItem value="absent">Ausente</SelectItem>
+                  <SelectItem value="late">Atrasado</SelectItem>
+                  <SelectItem value="excused">Justificado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+        <Button 
+          onClick={handleMarkAllAttendance}
+          disabled={markAttendanceMutation.isPending}
+          className="mt-4"
+        >
+          {markAttendanceMutation.isPending ? 'Salvando...' : 'Salvar Frequência'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Progress Manager Component for Online Courses
+function ProgressManager({ courseId, enrollments, courseType }: { courseId: string, enrollments: any[], courseType: string }) {
+  const [selectedEnrollment, setSelectedEnrollment] = useState<string>('');
+  
+  const { data: modules } = useQuery({
+    queryKey: ['/api/courses', courseId, 'modules'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/modules`),
+    enabled: !!courseId
+  });
+
+  const { data: progressData } = useQuery({
+    queryKey: ['/api/enrollments', selectedEnrollment, 'progress'],
+    queryFn: () => apiRequest(`/api/enrollments/${selectedEnrollment}/progress`),
+    enabled: !!selectedEnrollment
+  });
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="enrollment">Selecionar Aluno</Label>
+        <Select value={selectedEnrollment} onValueChange={setSelectedEnrollment}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione um aluno" />
+          </SelectTrigger>
+          <SelectContent>
+            {enrollments?.filter(e => e.status === 'active')?.map(enrollment => (
+              <SelectItem key={enrollment.id} value={enrollment.id}>
+                {enrollment.beneficiaryName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedEnrollment && (
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-4">Progresso dos Módulos</h3>
+          <div className="space-y-2">
+            {modules?.map((module: any, index: number) => {
+              const progress = progressData?.find((p: any) => p.moduleId === module.id);
+              return (
+                <div key={module.id} className="flex items-center justify-between p-2 border rounded">
+                  <div>
+                    <span className="font-medium">Módulo {index + 1}: {module.title}</span>
+                    <p className="text-sm text-gray-600">{module.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{progress?.progress || 0}%</span>
+                    <Badge variant={progress?.status === 'completed' ? 'default' : 'secondary'}>
+                      {progress?.status === 'completed' ? 'Concluído' : 
+                       progress?.status === 'in_progress' ? 'Em Progresso' : 'Não Iniciado'}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Course {
   id: string;
   title: string;
@@ -319,7 +480,7 @@ export default function CourseManagement() {
                           <SelectContent>
                             {beneficiaries?.map((beneficiary: any) => (
                               <SelectItem key={beneficiary.id} value={beneficiary.id}>
-                                {beneficiary.personalInfo?.name || beneficiary.email}
+                                {beneficiary.name || beneficiary.email}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -401,6 +562,68 @@ export default function CourseManagement() {
                                   variant="outline"
                                   onClick={() => updateStatusMutation.mutate({
                                     enrollmentId: enrollment.id,
+                                    status: 'completed'
+                                  })}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Concluir
+                                </Button>
+                              )}
+                              {course.courseType === 'in_person' && enrollment.status === 'active' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedEnrollment(enrollment);
+                                    setIsAttendanceDialogOpen(true);
+                                  }}
+                                >
+                                  <Calendar className="h-4 w-4 mr-1" />
+                                  Frequência
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Attendance Tab (In-Person Courses) */}
+          {course.courseType === 'in_person' && (
+            <TabsContent value="attendance">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Controle de Frequência</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AttendanceManager 
+                    courseId={courseId} 
+                    enrollments={enrollments} 
+                    courseType={course.courseType}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Progress Tab (Online Courses) */}
+          {course.courseType === 'online' && (
+            <TabsContent value="progress">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Progresso dos Módulos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ProgressManager 
+                    courseId={courseId} 
+                    enrollments={enrollments} 
+                    courseType={course.courseType}
+                  />llmentId: enrollment.id,
                                     status: 'completed'
                                   })}
                                 >
