@@ -227,6 +227,97 @@ export async function seedTestData() {
       status: 'active'
     });
 
+    // Criar mais beneficiários
+    await storage.createBeneficiary({
+      organizationId: testOrg.id,
+      registrationNumber: 'BEN-003',
+      name: 'José Carlos Pereira',
+      cpf: '123.456.789-00',
+      rg: '11.222.333-4',
+      birthDate: '1990-12-05',
+      email: 'jose.pereira@email.com',
+      phone: '(11) 94567-8901',
+      address: {
+        street: 'Rua das Flores, 123',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '05678-901'
+      },
+      status: 'active'
+    });
+
+    await storage.createBeneficiary({
+      organizationId: testOrg.id,
+      registrationNumber: 'BEN-004',
+      name: 'Maria das Graças Silva',
+      cpf: '987.123.456-00',
+      rg: '22.333.444-5',
+      birthDate: '1982-07-18',
+      email: 'maria.gracas@email.com',
+      phone: '(11) 93456-7890',
+      address: {
+        street: 'Av. das Palmeiras, 456',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '06789-012'
+      },
+      status: 'active'
+    });
+
+    await storage.createBeneficiary({
+      organizationId: testOrg.id,
+      registrationNumber: 'BEN-005',
+      name: 'Lucas Oliveira Santos',
+      cpf: '456.789.123-00',
+      rg: '33.444.555-6',
+      birthDate: '1995-02-28',
+      email: 'lucas.santos@email.com',
+      phone: '(11) 92345-6789',
+      address: {
+        street: 'Rua dos Girassóis, 789',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '07890-123'
+      },
+      status: 'active'
+    });
+
+    await storage.createBeneficiary({
+      organizationId: testOrg.id,
+      registrationNumber: 'BEN-006',
+      name: 'Ana Beatriz Costa',
+      cpf: '789.123.456-00',
+      rg: '44.555.666-7',
+      birthDate: '1988-11-10',
+      email: 'ana.beatriz@email.com',
+      phone: '(11) 91234-5678',
+      address: {
+        street: 'Rua das Violetas, 321',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '08901-234'
+      },
+      status: 'active'
+    });
+
+    await storage.createBeneficiary({
+      organizationId: testOrg.id,
+      registrationNumber: 'BEN-007',
+      name: 'Pedro Henrique Lima',
+      cpf: '321.654.987-00',
+      rg: '55.666.777-8',
+      birthDate: '1975-04-15',
+      email: 'pedro.lima@email.com',
+      phone: '(11) 98765-4321',
+      address: {
+        street: 'Av. dos Cravos, 654',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '09012-345'
+      },
+      status: 'active'
+    });
+
     console.log('✅ Beneficiários criados');
 
     // 7. Criar voluntários
@@ -255,6 +346,64 @@ export async function seedTestData() {
         name: 'Lucia Mendes',
         relationship: 'Mãe',
         phone: '(11) 98765-1111'
+      }
+    });
+
+    // Criar novos usuários para os voluntários adicionais
+    const volunteer3User = await storage.createUser({
+      email: 'carlos.souza@email.com',
+      passwordHash: await bcrypt.hash('vol123', 10),
+      name: 'Carlos Eduardo Souza'
+    });
+
+    const volunteer4User = await storage.createUser({
+      email: 'patricia.lima@email.com',
+      passwordHash: await bcrypt.hash('vol123', 10),
+      name: 'Patrícia Lima Ferreira'
+    });
+
+    // Atribuir roles de voluntário aos novos usuários
+    await storage.createUserRole({
+      userId: volunteer3User.id,
+      organizationId: testOrg.id,
+      role: 'volunteer',
+      permissions: ['read'],
+      isActive: true
+    });
+
+    await storage.createUserRole({
+      userId: volunteer4User.id,
+      organizationId: testOrg.id,
+      role: 'volunteer',
+      permissions: ['read'],
+      isActive: true
+    });
+
+    await storage.createVolunteer({
+      userId: volunteer3User.id,
+      organizationId: testOrg.id,
+      volunteerNumber: 'VOL-003',
+      skills: ['Marketing', 'Design Gráfico', 'Fotografia'],
+      availability: ['monday_afternoon', 'wednesday_morning', 'saturday_afternoon'],
+      backgroundCheckStatus: 'approved',
+      emergencyContact: {
+        name: 'Marina Souza',
+        relationship: 'Esposa',
+        phone: '(11) 97654-3210'
+      }
+    });
+
+    await storage.createVolunteer({
+      userId: volunteer4User.id,
+      organizationId: testOrg.id,
+      volunteerNumber: 'VOL-004',
+      skills: ['Administração', 'Contabilidade', 'Gestão Financeira'],
+      availability: ['tuesday_afternoon', 'thursday_morning', 'friday_afternoon'],
+      backgroundCheckStatus: 'pending',
+      emergencyContact: {
+        name: 'Roberto Lima',
+        relationship: 'Pai',
+        phone: '(11) 96543-2109'
       }
     });
 
@@ -545,7 +694,14 @@ export async function seedTestData() {
     console.log('🔑 SUPER ADMIN: superadmin@sarai.com.br / superadmin123');
     console.log('Admin: admin@institutoesperanca.org.br / admin123');
     console.log('Gerente: gerente@institutoesperanca.org.br / gerente123');
-    console.log('Voluntário: voluntario@institutoesperanca.org.br / voluntario123');
+    console.log('Voluntário 1: voluntario@institutoesperanca.org.br / voluntario123');
+    console.log('Voluntário 2: carlos.souza@email.com / vol123');
+    console.log('Voluntário 3: patricia.lima@email.com / vol123');
+    console.log('\n📊 Resumo dos dados:');
+    console.log('- 4 Voluntários criados (incluindo Ana Paula)');
+    console.log('- 7 Beneficiários criados');
+    console.log('- 2 Projetos ativos');
+    console.log('- 2 Doadores cadastrados');
 
     // Create some activity logs for notifications
     await storage.createActivityLog({
