@@ -978,9 +978,71 @@ export default function Projects() {
                     render={({ field }) => (
                       <FormItem className="col-span-2">
                         <FormLabel>Marcos e Etapas</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} placeholder="Liste os principais marcos do projeto" />
-                        </FormControl>
+                        <div className="space-y-3">
+                          {/* Existing milestones */}
+                          {milestonesList.map((milestone, index) => (
+                            <div key={milestone.id || index} className="flex items-center space-x-3 p-3 border rounded-lg bg-gray-50">
+                              <Checkbox
+                                checked={milestone.completed || false}
+                                onCheckedChange={(checked) => {
+                                  const newMilestones = [...milestonesList];
+                                  newMilestones[index] = { ...milestone, completed: !!checked };
+                                  setMilestonesList(newMilestones);
+                                  field.onChange(JSON.stringify(newMilestones));
+                                }}
+                                className="w-5 h-5"
+                              />
+                              <Input
+                                value={milestone.text || ''}
+                                onChange={(e) => {
+                                  const newMilestones = [...milestonesList];
+                                  newMilestones[index] = { ...milestone, text: e.target.value };
+                                  setMilestonesList(newMilestones);
+                                  field.onChange(JSON.stringify(newMilestones));
+                                }}
+                                placeholder="Descrição do marco"
+                                className="flex-1 border-none bg-transparent focus:ring-0 focus:border-none"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const newMilestones = milestonesList.filter((_, i) => i !== index);
+                                  setMilestonesList(newMilestones);
+                                  field.onChange(JSON.stringify(newMilestones));
+                                }}
+                                className="text-gray-400 hover:text-destructive p-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          
+                          {/* Add new milestone button */}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                              const newMilestone = {
+                                id: Date.now().toString(),
+                                text: '',
+                                completed: false
+                              };
+                              const newMilestones = [...milestonesList, newMilestone];
+                              setMilestonesList(newMilestones);
+                              field.onChange(JSON.stringify(newMilestones));
+                            }}
+                            className="w-fit flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span>Adicionar Marco</span>
+                          </Button>
+                          
+                          <p className="text-sm text-gray-500 mt-2">
+                            Principais entregas e pontos de controle do projeto
+                          </p>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
