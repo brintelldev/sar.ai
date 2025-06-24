@@ -53,6 +53,18 @@ export function useUpdateProject() {
   });
 }
 
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/projects/${id}`, 'DELETE'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+    },
+  });
+}
+
 export function useDonors() {
   return useQuery({
     queryKey: ['/api/donors'],

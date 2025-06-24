@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as React from 'react';
-import { Plus, Search, Filter, Calendar, DollarSign, Users, Target, Edit, Eye, X, CheckSquare, Square } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, DollarSign, Users, Target, Edit, Eye, X, CheckSquare, Square, Trash2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { useProjects, useCreateProject, useUpdateProject } from '@/hooks/use-organization';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '@/hooks/use-organization';
 import { insertProjectSchema } from '@/../../shared/schema';
 import { useToast } from '@/hooks/use-toast';
 
@@ -95,6 +96,7 @@ export default function Projects() {
   const { toast } = useToast();
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
+  const deleteProjectMutation = useDeleteProject();
 
   const createForm = useForm({
     resolver: zodResolver(insertProjectSchema),
@@ -640,10 +642,39 @@ export default function Projects() {
                       <Eye className="h-4 w-4 mr-2" />
                       Ver Detalhes
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(project)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(project)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o projeto "{project.name}"?
+                              <br /><br />
+                              <strong>Esta ação não pode ser desfeita.</strong> Todos os dados do projeto, incluindo marcos, orçamento e histórico serão permanentemente removidos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => onDeleteProject(project.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Sim, Excluir Projeto
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -742,13 +773,45 @@ export default function Projects() {
               <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
                 Fechar
               </Button>
-              <Button onClick={() => {
-                setIsDetailDialogOpen(false);
-                openEditDialog(selectedProject);
-              }}>
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Projeto
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => {
+                  setIsDetailDialogOpen(false);
+                  openEditDialog(selectedProject);
+                }}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Projeto
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir Projeto
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o projeto "{selectedProject?.name}"?
+                        <br /><br />
+                        <strong>Esta ação não pode ser desfeita.</strong> Todos os dados do projeto, incluindo marcos, orçamento e histórico serão permanentemente removidos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => {
+                          onDeleteProject(selectedProject?.id);
+                          setIsDetailDialogOpen(false);
+                        }}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Sim, Excluir Projeto
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
