@@ -23,6 +23,7 @@ export interface AuthState {
   user: AuthUser | null;
   organizations: Organization[];
   currentOrganization: Organization | null;
+  userRole?: string;
 }
 
 export async function login(email: string, password: string): Promise<AuthState> {

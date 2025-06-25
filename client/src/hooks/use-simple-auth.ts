@@ -88,6 +88,7 @@ export function useSimpleAuth() {
     user: authState?.user || null,
     organizations: authState?.organizations || [],
     currentOrganization: authState?.currentOrganization || null,
+    userRole: authState?.userRole || null,
     isLoading,
     isAuthenticated: !!authState?.user,
     error: hasChecked && !authState ? new Error('Not authenticated') : null,

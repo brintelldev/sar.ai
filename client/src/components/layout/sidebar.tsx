@@ -31,7 +31,12 @@ const superAdminNavigation = [
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
-// Navegação padrão para ONGs
+// Navegação restrita para beneficiários - apenas cursos
+const beneficiaryNavigation = [
+  { name: "Meus Cursos", href: "/course-enrollments", icon: BookOpen },
+];
+
+// Navegação padrão para ONGs (admin, manager, volunteer)
 const standardNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Projetos", href: "/projects", icon: FolderOpen },
@@ -49,11 +54,20 @@ const standardNavigation = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, user, userRole } = useAuth();
   
-  // Verificar se é organização de super admin
+  // Determinar navegação baseada no tipo de usuário
   const isSuperAdmin = currentOrganization?.slug === 'super-admin';
-  const navigation = isSuperAdmin ? superAdminNavigation : standardNavigation;
+  const isBeneficiary = userRole === 'beneficiary';
+  
+  let navigation;
+  if (isSuperAdmin) {
+    navigation = superAdminNavigation;
+  } else if (isBeneficiary) {
+    navigation = beneficiaryNavigation;
+  } else {
+    navigation = standardNavigation;
+  }
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-white border-gray-200">
