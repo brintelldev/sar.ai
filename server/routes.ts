@@ -512,6 +512,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/beneficiaries/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const organizationId = req.session.organizationId!;
+      
+      // Validate input data
+      const validatedData = insertBeneficiarySchema.partial().parse(req.body);
+      
+      // Update beneficiary
+      const updatedBeneficiary = await storage.updateBeneficiary(id, organizationId, validatedData);
+      
+      if (!updatedBeneficiary) {
+        return res.status(404).json({ message: "Beneficiário não encontrado" });
+      }
+      
+      res.json(updatedBeneficiary);
+    } catch (error) {
+      console.error("Update beneficiary error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Volunteers routes
   app.get("/api/volunteers", requireAuth, requireOrganization, async (req, res) => {
     try {
