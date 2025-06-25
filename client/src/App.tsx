@@ -35,6 +35,27 @@ import SuperAdminPage from "@/pages/super-admin";
 import CourseEnrollment from "@/pages/course-enrollment";
 import CourseEnrollments from "@/pages/course-enrollments";
 import CourseManagement from "@/pages/course-management";
+import BeneficiaryProjects from "@/pages/beneficiary-projects";
+
+function BeneficiaryHomeRedirect() {
+  const { userRole } = useAuth();
+  
+  if (userRole === 'beneficiary') {
+    return <CourseEnrollments />;
+  }
+  
+  return <Dashboard />;
+}
+
+function BeneficiaryProjectRedirect() {
+  const { userRole } = useAuth();
+  
+  if (userRole === 'beneficiary') {
+    return <BeneficiaryProjects />;
+  }
+  
+  return <Projects />;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, currentOrganization, organizations, userRole } = useAuth();
@@ -68,11 +89,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <OrganizationSetup />;
   }
 
-  // Redirect beneficiaries to course enrollments page
-  if (userRole === 'beneficiary') {
-    return <CourseEnrollments />;
-  }
-
   return <>{children}</>;
 }
 
@@ -82,12 +98,13 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/">
         <ProtectedRoute>
-          <Dashboard />
+          {/* Beneficiaries see course enrollments, others see dashboard */}
+          <BeneficiaryHomeRedirect />
         </ProtectedRoute>
       </Route>
       <Route path="/projects">
         <ProtectedRoute>
-          <Projects />
+          <BeneficiaryProjectRedirect />
         </ProtectedRoute>
       </Route>
       <Route path="/donors">

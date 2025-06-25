@@ -744,8 +744,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enrollment = await storage.updateUserCourseProgress(userId, courseId, {
         status: "in_progress",
         progress: 0,
-        enrolledAt: new Date().toISOString(),
-        lastAccessedAt: new Date().toISOString()
+        enrolledAt: new Date(),
+        lastAccessedAt: new Date()
       });
       
       res.status(201).json(enrollment);
