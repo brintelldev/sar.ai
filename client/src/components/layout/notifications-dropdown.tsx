@@ -53,6 +53,9 @@ export function NotificationsDropdown() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Safe access to notifications array
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const response = await fetch(`/api/notifications/${notificationId}/read`, {
