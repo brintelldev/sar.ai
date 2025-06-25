@@ -27,12 +27,71 @@ export default function Beneficiaries() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: beneficiaries = [], isLoading } = useBeneficiaries() as { data: Beneficiary[], isLoading: boolean };
   const createBeneficiaryMutation = useCreateBeneficiary();
 
+  // Mutation para atualizar beneficiário
+  const updateBeneficiaryMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await fetch(`/api/beneficiaries/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao atualizar beneficiário');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Beneficiário atualizado",
+        description: "As informações foram salvas com sucesso.",
+      });
+      setIsEditDialogOpen(false);
+      setSelectedBeneficiary(null);
+      // Invalidar cache para recarregar a lista
+      queryClient.invalidateQueries({ queryKey: ['/api/beneficiaries'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message || "Não foi possível salvar as alterações.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const form = useForm({
+    resolver: zodResolver(insertBeneficiarySchema.extend({
+      name: insertBeneficiarySchema.shape.name.min(1, 'Nome é obrigatório'),
+      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de atendimento é obrigatório'),
+    })),
+    defaultValues: {
+      name: '',
+      registrationNumber: '',
+      email: '',
+      document: '',
+      birthDate: '',
+      address: '',
+      contactInfo: '',
+      emergencyContact: '',
+      needs: '',
+      servicesReceived: '',
+      status: 'active',
+    },
+  });
+
+  // Formulário separado para edição
+  const editForm = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
       name: insertBeneficiarySchema.shape.name.min(1, 'Nome é obrigatório'),
       registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de atendimento é obrigatório'),
@@ -82,6 +141,38 @@ export default function Beneficiaries() {
   const handleViewDetails = (beneficiary: Beneficiary) => {
     setSelectedBeneficiary(beneficiary);
     setIsDetailDialogOpen(true);
+  };
+
+  const handleEditBeneficiary = (beneficiary: Beneficiary) => {
+    setSelectedBeneficiary(beneficiary);
+    // Preencher o formulário de edição com os dados atuais
+    editForm.reset({
+      name: beneficiary.name || '',
+      registrationNumber: beneficiary.registrationNumber || '',
+      email: beneficiary.email || '',
+      document: beneficiary.document || '',
+      birthDate: beneficiary.birthDate || '',
+      address: beneficiary.address || '',
+      contactInfo: beneficiary.contactInfo || '',
+      emergencyContact: beneficiary.emergencyContact || '',
+      needs: beneficiary.needs || '',
+      servicesReceived: beneficiary.servicesReceived || '',
+      status: beneficiary.status || 'active',
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const onEditSubmit = async (data: any) => {
+    if (!selectedBeneficiary) return;
+    
+    try {
+      await updateBeneficiaryMutation.mutateAsync({
+        id: selectedBeneficiary.id,
+        data: data
+      });
+    } catch (error) {
+      // Error is handled by the mutation
+    }
   };
 
   return (
@@ -476,7 +567,7 @@ export default function Beneficiaries() {
                         <Button variant="ghost" size="sm" onClick={() => handleViewDetails(beneficiary)} className="h-8 w-8 p-0">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditBeneficiary(beneficiary)} className="h-8 w-8 p-0">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
@@ -581,6 +672,240 @@ export default function Beneficiaries() {
                   </div>
                 </div>
               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Beneficiário</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do beneficiário com cuidado e respeitando a privacidade
+              </DialogDescription>
+            </DialogHeader>
+            {selectedBeneficiary && (
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+                  <Tabs defaultValue="basic" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+                      <TabsTrigger value="contact">Contato</TabsTrigger>
+                      <TabsTrigger value="support">Acompanhamento</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="basic" className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={editForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome Completo *</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Nome da pessoa" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={editForm.control}
+                          name="registrationNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Código de Atendimento *</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Ex: BEN-001" />
+                              </FormControl>
+                              <FormDescription>
+                                Código único para identificação interna
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={editForm.control}
+                          name="document"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Documento de Identificação</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="RG, CPF ou outro documento (opcional)" />
+                              </FormControl>
+                              <FormDescription>
+                                Apenas se necessário para atendimento
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={editForm.control}
+                          name="birthDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Data de Nascimento</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="date" />
+                              </FormControl>
+                              <FormDescription>
+                                Para adequar atendimento por faixa etária
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={editForm.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status do Atendimento</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="active">Em Atendimento</SelectItem>
+                                <SelectItem value="inactive">Pausa no Atendimento</SelectItem>
+                                <SelectItem value="completed">Atendimento Concluído</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="contact" className="space-y-4">
+                      <FormField
+                        control={editForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email (para acesso aos cursos)</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" placeholder="email@exemplo.com" />
+                            </FormControl>
+                            <FormDescription>
+                              Email para criar conta e acessar cursos de capacitação (opcional)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={editForm.control}
+                        name="contactInfo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contato Principal</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Telefone, WhatsApp ou outro contato" />
+                            </FormControl>
+                            <FormDescription>
+                              Como podemos entrar em contato de forma segura
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={editForm.control}
+                        name="emergencyContact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contato de Confiança</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Nome e telefone de pessoa de confiança" />
+                            </FormControl>
+                            <FormDescription>
+                              Pessoa de confiança para emergências (opcional)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={editForm.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Endereço de Referência (opcional)</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} placeholder="Local seguro para correspondência ou referência" />
+                            </FormControl>
+                            <FormDescription>
+                              Apenas se necessário e se for seguro compartilhar
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="support" className="space-y-4">
+                      <FormField
+                        control={editForm.control}
+                        name="needs"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tipos de Apoio Necessário</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={4} placeholder="Descreva os tipos de apoio que podem ser úteis (psicológico, jurídico, social, etc.)" />
+                            </FormControl>
+                            <FormDescription>
+                              Informações que nos ajudam a oferecer o melhor acolhimento
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={editForm.control}
+                        name="servicesReceived"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Histórico de Atendimentos</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} placeholder="Breve histórico de serviços já recebidos (opcional)" />
+                            </FormControl>
+                            <FormDescription>
+                              Ajuda a continuidade do cuidado
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TabsContent>
+                  </Tabs>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={updateBeneficiaryMutation.isPending}>
+                      {updateBeneficiaryMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             )}
           </DialogContent>
         </Dialog>
