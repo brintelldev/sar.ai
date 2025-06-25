@@ -218,16 +218,12 @@ function Router() {
       </Route>
       <Route path="/course-admin/:id">
         <ProtectedRoute>
-          <AdminGuard>
-            <CourseEditor />
-          </AdminGuard>
+          <CourseEditor />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/courses/:courseId/modules">
         <ProtectedRoute>
-          <AdminGuard>
-            <ModuleEditor />
-          </AdminGuard>
+          <ModuleEditor />
         </ProtectedRoute>
       </Route>
       <Route path="/support">
@@ -237,9 +233,7 @@ function Router() {
       </Route>
       <Route path="/whitelabel">
         <ProtectedRoute>
-          <AdminGuard>
-            <Whitelabel />
-          </AdminGuard>
+          <Whitelabel />
         </ProtectedRoute>
       </Route>
       <Route path="/site/:subdomain">
@@ -247,9 +241,7 @@ function Router() {
       </Route>
       <Route path="/super-admin">
         <ProtectedRoute>
-          <SuperAdminGuard>
-            <SuperAdminPage />
-          </SuperAdminGuard>
+          <SuperAdminPage />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />
