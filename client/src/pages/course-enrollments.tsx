@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { BookOpen, Clock, Users, Award, Search, Play, CheckCircle } from "lucide-react";
 import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { MainLayout } from "@/components/layout/main-layout";
 
 interface Course {
   id: string;
@@ -69,14 +70,17 @@ export default function CourseEnrollments() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-7xl">
+    <MainLayout>
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Meus Cursos</h1>
         <p className="text-gray-600">
@@ -201,6 +205,7 @@ export default function CourseEnrollments() {
           })}
         </div>
       )}
-    </div>
+      </div>
+    </MainLayout>
   );
 }

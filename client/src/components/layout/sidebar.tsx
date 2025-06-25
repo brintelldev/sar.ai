@@ -31,10 +31,10 @@ const superAdminNavigation = [
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
-// Navegação restrita para beneficiários - apenas cursos
+// Navegação restrita para beneficiários - apenas cursos e projetos
 const beneficiaryNavigation = [
   { name: "Meus Cursos", href: "/course-enrollments", icon: BookOpen },
-  { name: "Projetos", href: "/projects", icon: Folder },
+  { name: "Projetos", href: "/projects", icon: FolderOpen },
 ];
 
 // Navegação padrão para ONGs (admin, manager, volunteer)
