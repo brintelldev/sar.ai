@@ -220,7 +220,7 @@ export default function Volunteers() {
 
   const filteredVolunteers = volunteers?.filter((volunteer: any) =>
     volunteer.volunteerNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (volunteer.personalInfo?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (volunteer.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleSkillToggle = (skill: string) => {
@@ -507,7 +507,7 @@ export default function Volunteers() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">
-                          {volunteer.personalInfo?.name || 'Nome não informado'}
+                          {volunteer.name || 'Nome não informado'}
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {volunteer.volunteerNumber}
@@ -521,20 +521,20 @@ export default function Volunteers() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-3">
-                    {volunteer.personalInfo?.email && (
+                    {volunteer.email && (
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground truncate">
-                          {volunteer.personalInfo.email}
+                          {volunteer.email}
                         </span>
                       </div>
                     )}
                     
-                    {volunteer.personalInfo?.phone && (
+                    {volunteer.phone && (
                       <div className="flex items-center space-x-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">
-                          {volunteer.personalInfo.phone}
+                          {volunteer.phone}
                         </span>
                       </div>
                     )}

@@ -292,8 +292,30 @@ export class PostgresStorage implements IStorage {
   // Volunteers
   async getVolunteers(organizationId: string): Promise<Volunteer[]> {
     console.log('🗃️ PostgresStorage: Buscando voluntários para org:', organizationId);
-    const result = await db.select().from(volunteers).where(eq(volunteers.organizationId, organizationId));
+    const result = await db
+      .select({
+        id: volunteers.id,
+        organizationId: volunteers.organizationId,
+        userId: volunteers.userId,
+        volunteerNumber: volunteers.volunteerNumber,
+        name: volunteers.name,
+        email: volunteers.email,
+        phone: volunteers.phone,
+        skills: volunteers.skills,
+        availability: volunteers.availability,
+        backgroundCheckStatus: volunteers.backgroundCheckStatus,
+        emergencyContact: volunteers.emergencyContact,
+        totalHours: volunteers.totalHours,
+        participationScore: volunteers.participationScore,
+        status: volunteers.status,
+        joinedDate: volunteers.joinedDate,
+        createdAt: volunteers.createdAt,
+        updatedAt: volunteers.updatedAt
+      })
+      .from(volunteers)
+      .where(eq(volunteers.organizationId, organizationId));
     console.log('🗃️ PostgresStorage: Resultado da query voluntários:', result.length);
+    console.log('🗃️ PostgresStorage: Dados dos voluntários:', result.map(v => ({ id: v.id, name: v.name, volunteerNumber: v.volunteerNumber })));
     return result;
   }
 
