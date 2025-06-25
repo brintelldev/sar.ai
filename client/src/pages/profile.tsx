@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,10 +11,128 @@ import { getInitials } from '@/lib/utils';
 import { User, Mail, Phone, MapPin, Calendar, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+
+// Função para formatar telefone brasileiro
+const formatPhoneNumber = (value: string) => {
+  // Remove todos os caracteres não numéricos
+  const numbers = value.replace(/\D/g, '');
+  
+  // Aplica a máscara baseada no tamanho
+  if (numbers.length <= 10) {
+    // Telefone fixo: (11) 1234-5678
+    return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  } else {
+    // Celular: (11) 91234-5678
+    return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+};
+
+// Função para validar telefone brasileiro
+const isValidPhoneNumber = (phone: string) => {
+  const numbers = phone.replace(/\D/g, '');
+  // Deve ter 10 dígitos (fixo) ou 11 dígitos (celular)
+  return numbers.length === 10 || numbers.length === 11;
+};
 
 export default function Profile() {
   const { user, currentOrganization } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone ? formatPhoneNumber(user.phone) : '',
+    position: user?.position || ''
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Carregar dados do usuário no estado local
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone ? formatPhoneNumber(user.phone) : '',
+        position: user.position || ''
+      });
+    }
+  }, [user]);
+
+  // Mutation para atualizar perfil
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/user/update', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao atualizar perfil');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso.",
+      });
+      setIsEditing(false);
+      // Invalidar cache do usuário
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar as alterações.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formattedPhone = formatPhoneNumber(value);
+    setFormData(prev => ({ ...prev, phone: formattedPhone }));
+  };
+
+  const handleSave = () => {
+    // Validar telefone se foi preenchido
+    if (formData.phone && !isValidPhoneNumber(formData.phone)) {
+      toast({
+        title: "Telefone inválido",
+        description: "Por favor, digite um telefone válido no formato (11) 99999-9999.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Preparar dados para envio (remover máscara do telefone)
+    const dataToSend = {
+      ...formData,
+      phone: formData.phone.replace(/\D/g, '') // Remove máscara para salvar apenas números
+    };
+
+    updateProfileMutation.mutate(dataToSend);
+  };
+
+  const handleCancel = () => {
+    // Resetar formulário para os valores originais
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone ? formatPhoneNumber(user.phone) : '',
+      position: user?.position || ''
+    });
+    setIsEditing(false);
+  };
 
   return (
     <MainLayout>
@@ -29,6 +147,7 @@ export default function Profile() {
           <Button 
             variant={isEditing ? "outline" : "default"}
             onClick={() => setIsEditing(!isEditing)}
+            disabled={updateProfileMutation.isPending}
           >
             {isEditing ? 'Cancelar' : 'Editar Perfil'}
           </Button>
@@ -80,7 +199,8 @@ export default function Profile() {
                   <Label htmlFor="name">Nome Completo</Label>
                   <Input
                     id="name"
-                    value={user?.name || ''}
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     disabled={!isEditing}
                     className={!isEditing ? 'bg-muted' : ''}
                   />
@@ -89,7 +209,9 @@ export default function Profile() {
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
-                    value={user?.email || ''}
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     disabled={!isEditing}
                     className={!isEditing ? 'bg-muted' : ''}
                   />
@@ -101,15 +223,20 @@ export default function Profile() {
                   <Label htmlFor="phone">Telefone</Label>
                   <Input
                     id="phone"
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
                     placeholder="(11) 99999-9999"
                     disabled={!isEditing}
                     className={!isEditing ? 'bg-muted' : ''}
+                    maxLength={15} // Limite para telefone formatado
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="department">Departamento</Label>
+                  <Label htmlFor="position">Cargo</Label>
                   <Input
-                    id="department"
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
                     placeholder="Administração"
                     disabled={!isEditing}
                     className={!isEditing ? 'bg-muted' : ''}
@@ -119,11 +246,18 @@ export default function Profile() {
 
               {isEditing && (
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancel}
+                    disabled={updateProfileMutation.isPending}
+                  >
                     Cancelar
                   </Button>
-                  <Button onClick={() => setIsEditing(false)}>
-                    Salvar Alterações
+                  <Button 
+                    onClick={handleSave}
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    {updateProfileMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
                 </div>
               )}
