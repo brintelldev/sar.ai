@@ -75,7 +75,7 @@ export function NotificationsDropdown() {
     markAsReadMutation.mutate(notificationId);
   };
 
-  const unreadCount = notifications.length;
+  const unreadCount = safeNotifications.filter(n => !n.read).length;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -116,14 +116,14 @@ export function NotificationsDropdown() {
                 </div>
               ))}
             </div>
-          ) : notifications.length === 0 ? (
+          ) : safeNotifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Nenhuma notificação</p>
             </div>
           ) : (
             <div className="space-y-1">
-              {notifications.map((notification: Notification) => (
+              {safeNotifications.map((notification: Notification) => (
                 <div
                   key={notification.id}
                   className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors"

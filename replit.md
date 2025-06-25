@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 25, 2025. Correção do sistema de perfil para beneficiários:
+  * Corrigido bug que mostrava "Admin da ONG" para todas as contas
+  * Perfil agora exibe corretamente "Beneficiária" para role beneficiary
+  * Configurações pessoais carregam dados corretos do usuário
+  * Erro de notificações corrigido com verificação de array
+  * Sistema de navegação para beneficiários funcionando corretamente
 - June 24, 2025. Interface de capacitação simplificada e clarificada:
   * Removido botão "Módulos" duplicado da listagem de cursos
   * Mantido apenas "Editar Curso" como ponto único de edição

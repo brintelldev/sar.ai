@@ -24,7 +24,7 @@ export default function Settings() {
     name: '',
     email: '',
     phone: '',
-    position: 'Administrador'
+    position: ''
   });
 
   // Update form when user data loads
@@ -33,7 +33,9 @@ export default function Settings() {
       setAccountForm(prev => ({
         ...prev,
         name: user.name || '',
-        email: user.email || ''
+        email: user.email || '',
+        phone: user.phone || '',
+        position: user.position || ''
       }));
     }
   }, [user]);

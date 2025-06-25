@@ -46,7 +46,7 @@ export default function Profile() {
                 </Avatar>
               </div>
               <CardTitle>{user?.name}</CardTitle>
-              <CardDescription>Admin da ONG</CardDescription>
+              <CardDescription>{user?.position || 'Usuário'}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center space-x-2 text-sm">
@@ -55,7 +55,7 @@ export default function Profile() {
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Shield className="h-4 w-4 text-muted-foreground" />
-                <span>Administrador</span>
+                <span>{user?.position || 'Usuário'}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
