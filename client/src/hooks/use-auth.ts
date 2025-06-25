@@ -91,6 +91,7 @@ export function useAuth() {
     user: currentData?.user || null,
     organizations: currentData?.organizations || [],
     currentOrganization: currentData?.currentOrganization || null,
+    userRole: currentData?.userRole || null,
     isLoading: !sessionChecked || isLoading,
     isAuthenticated: !!currentData?.user,
     error: sessionChecked && !currentData ? new Error('Not authenticated') : null,

@@ -22,7 +22,7 @@ import { NotificationsDropdown } from './notifications-dropdown';
 import logoSarai from '@/assets/logo_sarai.png';
 
 export function Navbar() {
-  const { user, organizations, currentOrganization, logout, switchOrganization } = useAuth();
+  const { user, organizations, currentOrganization, userRole, logout, switchOrganization } = useAuth();
   const [location, setLocation] = useLocation();
 
   const handleOrganizationChange = (organizationId: string) => {
@@ -83,8 +83,8 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <NotificationsDropdown />
+          {/* Notifications - only show for admins */}
+          {userRole === 'admin' && <NotificationsDropdown />}
 
           {/* User Menu */}
           <DropdownMenu>
@@ -92,7 +92,12 @@ export function Navbar() {
               <Button variant="ghost" className="flex items-center space-x-3 px-3 py-2">
                 <div className="text-right">
                   <div className="text-sm font-medium text-foreground">{user?.name}</div>
-                  <div className="text-xs text-muted-foreground">Admin da ONG</div>
+                  <div className="text-xs text-muted-foreground">
+                    {userRole === 'admin' ? 'Admin da ONG' : 
+                     userRole === 'beneficiary' ? 'Beneficiário' : 
+                     userRole === 'volunteer' ? 'Voluntário' : 
+                     user?.position || 'Usuário'}
+                  </div>
                 </div>
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-primary-foreground text-sm font-medium">
