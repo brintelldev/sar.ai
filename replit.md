@@ -124,6 +124,13 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 25, 2025. Sistema de segurança e proteção de rotas implementado:
+  * Corrigida vulnerabilidade de navegação que mostrava links não autorizados temporariamente
+  * Sidebar agora verifica role imediatamente, sem delay de carregamento
+  * Componente RoleGuard criado para proteger rotas por nível de acesso
+  * AdminGuard protege todas as páginas administrativas (doadores, voluntários, financeiro)
+  * BeneficiaryGuard e SuperAdminGuard para controle específico por tipo de usuário
+  * Sistema de redirecionamento automático para páginas apropriadas por role
 - June 25, 2025. Correção do sistema de perfil para beneficiários:
   * Corrigido bug que mostrava "Admin da ONG" para todas as contas
   * Perfil agora exibe corretamente "Beneficiária" para role beneficiary

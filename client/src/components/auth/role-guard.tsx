@@ -1,5 +1,6 @@
 import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 interface RoleGuardProps {
   allowedRoles: string[];
@@ -21,13 +22,18 @@ export function RoleGuard({ allowedRoles, children, fallbackPath = "/" }: RoleGu
   }
 
   // Se não tem role ou role não é permitido, redirecionar
-  if (!userRole || !allowedRoles.includes(userRole)) {
-    // Para beneficiários, redirecionar para cursos
-    if (userRole === 'beneficiary') {
-      setLocation('/course-enrollments');
-    } else {
-      setLocation(fallbackPath);
+  useEffect(() => {
+    if (!isLoading && (!userRole || !allowedRoles.includes(userRole))) {
+      // Para beneficiários, redirecionar para cursos
+      if (userRole === 'beneficiary') {
+        setLocation('/course-enrollments');
+      } else {
+        setLocation(fallbackPath);
+      }
     }
+  }, [userRole, isLoading, allowedRoles, setLocation, fallbackPath]);
+
+  if (!userRole || !allowedRoles.includes(userRole)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-red-500">Acesso não autorizado. Redirecionando...</div>
