@@ -134,10 +134,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.organizationId = organizations[0].id;
       }
 
+      // Get user role in the organization
+      let userRole = null;
+      if (organizations.length > 0) {
+        const roleData = await storage.getUserRole(user.id, organizations[0].id);
+        userRole = roleData?.role || null;
+      }
+
       res.json({ 
         user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
         organizations,
-        currentOrganization: organizations[0] || null
+        currentOrganization: organizations[0] || null,
+        userRole
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -221,19 +229,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const organizations = await storage.getUserOrganizations(user.id);
       let currentOrganization = null;
+      let userRole = null;
       
       if (req.session.organizationId) {
         currentOrganization = await storage.getOrganization(req.session.organizationId);
+        // Get user role in current organization
+        const roleData = await storage.getUserRole(user.id, req.session.organizationId);
+        userRole = roleData?.role || null;
       } else if (organizations.length > 0) {
         // If no organization is set in session, use the first one
         currentOrganization = organizations[0];
         req.session.organizationId = organizations[0].id;
+        const roleData = await storage.getUserRole(user.id, organizations[0].id);
+        userRole = roleData?.role || null;
       }
 
       res.json({ 
         user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
         organizations,
-        currentOrganization
+        currentOrganization,
+        userRole
       });
     } catch (error) {
       console.error("Get user error:", error);
@@ -677,6 +692,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Training Courses routes
   // ALL specific routes must come before parameterized routes to avoid UUID parsing conflicts
   
+  // Course enrollment routes for beneficiaries
+  app.get("/api/courses/enrollments", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const organizationId = req.session.organizationId!;
+      
+      // Get all published courses in organization
+      const allCourses = await storage.getCourses(organizationId);
+      const publishedCourses = allCourses.filter(course => course.status === 'published');
+      
+      // Get user's enrollments and progress
+      const userProgress = await storage.getUserCourseProgressList(userId);
+      
+      // Combine course data with enrollment status
+      const coursesWithEnrollment = publishedCourses.map(course => {
+        const progress = userProgress.find(p => p.courseId === course.id);
+        return {
+          ...course,
+          isEnrolled: !!progress,
+          progress: progress?.progress || 0
+        };
+      });
+      
+      res.json(coursesWithEnrollment);
+    } catch (error) {
+      console.error("Get course enrollments error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/api/courses/:courseId/enroll", requireAuth, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const userId = req.session.userId!;
+      const organizationId = req.session.organizationId!;
+      
+      // Check if course exists and is published
+      const course = await storage.getCourse(courseId, organizationId);
+      if (!course || course.status !== 'published') {
+        return res.status(404).json({ message: "Curso não encontrado ou não disponível" });
+      }
+      
+      // Check if already enrolled
+      const existingProgress = await storage.getUserCourseProgress(userId, courseId);
+      if (existingProgress) {
+        return res.status(400).json({ message: "Você já está inscrito neste curso" });
+      }
+      
+      // Create enrollment
+      const enrollment = await storage.updateUserCourseProgress(userId, courseId, {
+        status: "in_progress",
+        progress: 0,
+        enrolledAt: new Date().toISOString(),
+        lastAccessedAt: new Date().toISOString()
+      });
+      
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Enroll in course error:", error);
+      res.status(500).json({ message: "Erro ao se inscrever no curso" });
+    }
+  });
+
   // Admin and progress routes first
   app.get("/api/courses/admin", requireAuth, requireOrganization, async (req, res) => {
     try {

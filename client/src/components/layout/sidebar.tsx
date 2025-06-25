@@ -60,6 +60,8 @@ export function Sidebar() {
   const isSuperAdmin = currentOrganization?.slug === 'super-admin';
   const isBeneficiary = userRole === 'beneficiary';
   
+  console.log('Sidebar debug:', { userRole, isBeneficiary }); // Debug log
+  
   let navigation;
   if (isSuperAdmin) {
     navigation = superAdminNavigation;

@@ -33,17 +33,19 @@ import { Suspense } from 'react';
 import PublicSite from "@/pages/public-site";
 import SuperAdminPage from "@/pages/super-admin";
 import CourseEnrollment from "@/pages/course-enrollment";
+import CourseEnrollments from "@/pages/course-enrollments";
 import CourseManagement from "@/pages/course-management";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, currentOrganization, organizations } = useAuth();
+  const { isAuthenticated, isLoading, currentOrganization, organizations, userRole } = useAuth();
 
   // Debug logging
   console.log('ProtectedRoute debug:', { 
     isAuthenticated, 
     isLoading, 
     currentOrganization, 
-    organizationsCount: organizations?.length 
+    organizationsCount: organizations?.length,
+    userRole 
   });
 
   if (isLoading) {
@@ -64,6 +66,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Only show organization setup if user has NO organizations at all
   if (organizations && organizations.length === 0) {
     return <OrganizationSetup />;
+  }
+
+  // Redirect beneficiaries to course enrollments page
+  if (userRole === 'beneficiary') {
+    return <CourseEnrollments />;
   }
 
   return <>{children}</>;
@@ -156,6 +163,11 @@ function Router() {
       <Route path="/course-enrollment">
         <ProtectedRoute>
           <CourseEnrollment />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/course-enrollments">
+        <ProtectedRoute>
+          <CourseEnrollments />
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:courseId/manage">
