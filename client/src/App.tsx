@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
+import { AdminGuard, BeneficiaryGuard, SuperAdminGuard } from "@/components/auth/role-guard";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -109,42 +110,58 @@ function Router() {
       </Route>
       <Route path="/donors">
         <ProtectedRoute>
-          <Donors />
+          <AdminGuard>
+            <Donors />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/beneficiaries">
         <ProtectedRoute>
-          <Beneficiaries />
+          <AdminGuard>
+            <Beneficiaries />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/volunteers">
         <ProtectedRoute>
-          <Volunteers />
+          <AdminGuard>
+            <Volunteers />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/donations">
         <ProtectedRoute>
-          <Donations />
+          <AdminGuard>
+            <Donations />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/accounts-receivable">
         <ProtectedRoute>
-          <AccountsReceivable />
+          <AdminGuard>
+            <AccountsReceivable />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/accounts-payable">
         <ProtectedRoute>
-          <AccountsPayable />
+          <AdminGuard>
+            <AccountsPayable />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/reports">
         <ProtectedRoute>
-          <FinancialReports />
+          <AdminGuard>
+            <FinancialReports />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/funders">
         <ProtectedRoute>
-          <Funders />
+          <AdminGuard>
+            <Funders />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/profile">
@@ -194,7 +211,9 @@ function Router() {
       </Route>
       <Route path="/course-admin">
         <ProtectedRoute>
-          <CourseAdmin />
+          <AdminGuard>
+            <CourseAdmin />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/course-admin/:id">

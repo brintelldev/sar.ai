@@ -57,7 +57,19 @@ export function Sidebar() {
   const [location] = useLocation();
   const { currentOrganization, user, userRole } = useAuth();
   
-  // Determinar navegação baseada no tipo de usuário
+  // CORREÇÃO DE SEGURANÇA: Verificação imediata sem delay
+  // Se userRole não estiver definido, não renderizar menu até ter o role
+  if (!userRole) {
+    return (
+      <div className="flex h-full w-64 flex-col border-r bg-white border-gray-200">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="animate-pulse text-gray-400">Carregando...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Determinar navegação baseada no tipo de usuário - IMEDIATAMENTE
   const isSuperAdmin = currentOrganization?.slug === 'super-admin';
   const isBeneficiary = userRole === 'beneficiary';
   
@@ -67,7 +79,7 @@ export function Sidebar() {
   if (isSuperAdmin) {
     navigation = superAdminNavigation;
   } else if (isBeneficiary) {
-    navigation = beneficiaryNavigation;
+    navigation = beneficiaryNavigation; // APENAS cursos e projetos
   } else {
     navigation = standardNavigation;
   }
