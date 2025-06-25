@@ -90,8 +90,10 @@ export const donors = pgTable("donors", {
 export const beneficiaries = pgTable("beneficiaries", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  userId: uuid("user_id").references(() => users.id), // linked user account for course access
   registrationNumber: text("registration_number").unique().notNull(),
   name: text("name").notNull(),
+  email: text("email"), // email for account creation
   birthDate: date("birth_date"),
   document: text("document"),
   contactInfo: text("contact_info"), // encrypted contact information

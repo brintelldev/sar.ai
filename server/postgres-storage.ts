@@ -1,5 +1,6 @@
 import { eq, and, count, desc, sql, asc } from 'drizzle-orm';
 import { db } from './db';
+import bcrypt from 'bcrypt';
 import { 
   organizations, 
   users, 
@@ -237,7 +238,45 @@ export class PostgresStorage implements IStorage {
   }
 
   async createBeneficiary(beneficiary: InsertBeneficiary): Promise<Beneficiary> {
-    const result = await db.insert(beneficiaries).values(beneficiary).returning();
+    // Create user account if email is provided
+    let userId = beneficiary.userId;
+    
+    if (beneficiary.email && !userId) {
+      try {
+        // Generate temporary password (first 4 chars of name + last 4 chars of registration number)
+        const tempPassword = beneficiary.name.substring(0, 4).toLowerCase() + 
+                           beneficiary.registrationNumber.slice(-4);
+        
+        // Create user account
+        const newUser = await this.createUser({
+          email: beneficiary.email,
+          passwordHash: await bcrypt.hash(tempPassword, 10),
+          name: beneficiary.name,
+          phone: beneficiary.contactInfo || undefined,
+          position: 'Beneficiária'
+        });
+
+        // Create user role as beneficiary
+        await this.createUserRole({
+          userId: newUser.id,
+          organizationId: beneficiary.organizationId,
+          role: 'beneficiary',
+          grantedBy: null // system-generated
+        });
+
+        userId = newUser.id;
+        
+        console.log(`✅ Conta criada para beneficiária: ${beneficiary.email} | Senha temporária: ${tempPassword}`);
+      } catch (error) {
+        console.error('❌ Erro ao criar conta para beneficiária:', error);
+        // Continue without user account if creation fails
+      }
+    }
+
+    const result = await db.insert(beneficiaries).values({
+      ...beneficiary,
+      userId
+    }).returning();
     return result[0];
   }
 

@@ -40,6 +40,7 @@ export default function Beneficiaries() {
     defaultValues: {
       name: '',
       registrationNumber: '',
+      email: '',
       document: '',
       birthDate: '',
       address: '',
@@ -59,9 +60,13 @@ export default function Beneficiaries() {
   const onSubmit = async (data: any) => {
     try {
       await createBeneficiaryMutation.mutateAsync(data);
+      const message = data.email 
+        ? 'Pessoa cadastrada com sucesso. Uma conta de acesso aos cursos foi criada automaticamente.'
+        : 'Pessoa cadastrada com sucesso. Para acessar cursos, adicione um email posteriormente.';
+      
       toast({
-        title: 'Pessoa cadastrada com sucesso',
-        description: 'O cadastro foi realizado respeitando todos os protocolos de privacidade.',
+        title: 'Cadastro realizado',
+        description: message,
       });
       form.reset();
       setIsDialogOpen(false);
@@ -219,12 +224,29 @@ export default function Beneficiaries() {
                     <TabsContent value="contact" className="space-y-4">
                       <FormField
                         control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email (para acesso aos cursos)</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" placeholder="email@exemplo.com" />
+                            </FormControl>
+                            <FormDescription>
+                              Email para criar conta e acessar cursos de capacitação (opcional)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
                         name="contactInfo"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Contato Principal</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Telefone, WhatsApp ou email preferido" />
+                              <Input {...field} placeholder="Telefone, WhatsApp ou outro contato" />
                             </FormControl>
                             <FormDescription>
                               Como podemos entrar em contato de forma segura
