@@ -504,9 +504,9 @@ function PagesManager({ siteId }: { siteId: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: pagesData } = useQuery({
+  const { data: pagesData, isLoading: pagesLoading } = useQuery({
     queryKey: ['/api/whitelabel/pages'],
-    queryFn: () => fetch('/api/whitelabel/pages').then(res => res.json())
+    queryFn: () => apiRequest('/api/whitelabel/pages')
   });
 
   useEffect(() => {
@@ -968,27 +968,95 @@ function MenuManager({ siteId }: { siteId: string }) {
 }
 
 function FormsManager({ siteId }: { siteId: string }) {
-  const [forms, setForms] = useState([
-    {
-      id: '1',
-      name: 'Formulário de Contato',
-      type: 'contact',
-      isActive: true,
-      fields: ['name', 'email', 'message']
-    },
-    {
-      id: '2', 
-      name: 'Formulário de Doação',
-      type: 'donation',
-      isActive: true,
-      fields: ['name', 'email', 'amount', 'message']
-    }
-  ]);
+  const [forms, setForms] = useState<any[]>([]);
   const [showNewFormModal, setShowNewFormModal] = useState(false);
+  const [editingForm, setEditingForm] = useState<any>(null);
+  const [viewingSubmissions, setViewingSubmissions] = useState<any>(null);
   const [newForm, setNewForm] = useState({
     name: '',
     type: 'contact',
     fields: ['name', 'email']
+  });
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Get forms
+  const { data: formsData, isLoading: formsLoading } = useQuery({
+    queryKey: ['/api/whitelabel/forms'],
+    queryFn: () => apiRequest('/api/whitelabel/forms')
+  });
+
+  // Get form submissions
+  const { data: submissions } = useQuery({
+    queryKey: ['/api/whitelabel/forms', viewingSubmissions?.id, 'submissions'],
+    queryFn: () => apiRequest(`/api/whitelabel/forms/${viewingSubmissions.id}/submissions`),
+    enabled: !!viewingSubmissions
+  });
+
+  useEffect(() => {
+    if (formsData) {
+      setForms(formsData);
+    }
+  }, [formsData]);
+
+  const createFormMutation = useMutation({
+    mutationFn: (formData: any) => apiRequest('/api/whitelabel/forms', 'POST', {
+      ...formData,
+      siteId
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whitelabel/forms'] });
+      setNewForm({ name: '', type: 'contact', fields: ['name', 'email'] });
+      setShowNewFormModal(false);
+      toast({
+        title: "Sucesso",
+        description: "Formulário criado com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao criar formulário",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateFormMutation = useMutation({
+    mutationFn: ({ id, ...data }: any) => apiRequest(`/api/whitelabel/forms/${id}`, 'PUT', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whitelabel/forms'] });
+      setEditingForm(null);
+      toast({
+        title: "Sucesso",
+        description: "Formulário atualizado com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar formulário",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteFormMutation = useMutation({
+    mutationFn: (formId: string) => apiRequest(`/api/whitelabel/forms/${formId}`, 'DELETE'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whitelabel/forms'] });
+      toast({
+        title: "Sucesso",
+        description: "Formulário excluído com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir formulário",
+        variant: "destructive",
+      });
+    },
   });
 
   const formTypes = [
@@ -1009,25 +1077,28 @@ function FormsManager({ siteId }: { siteId: string }) {
   ];
 
   const handleCreateForm = () => {
-    const form = {
-      id: Date.now().toString(),
-      ...newForm,
-      isActive: true
-    };
-    setForms(prev => [...prev, form]);
-    setNewForm({ name: '', type: 'contact', fields: ['name', 'email'] });
-    setShowNewFormModal(false);
+    if (!newForm.name.trim()) return;
+    createFormMutation.mutate(newForm);
+  };
+
+  const handleUpdateForm = (formData: any) => {
+    updateFormMutation.mutate(formData);
+  };
+
+  const handleDeleteForm = (formId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este formulário?')) return;
+    deleteFormMutation.mutate(formId);
+  };
+
+  const handleEditForm = (form: any) => {
+    setEditingForm(form);
   };
 
   const toggleFormStatus = (formId: string) => {
-    setForms(prev => prev.map(form => 
-      form.id === formId ? { ...form, isActive: !form.isActive } : form
-    ));
-  };
-
-  const deleteForm = (formId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este formulário?')) return;
-    setForms(prev => prev.filter(form => form.id !== formId));
+    const form = forms.find(f => f.id === formId);
+    if (form) {
+      handleUpdateForm({ ...form, isActive: !form.isActive });
+    }
   };
 
   return (
@@ -1077,7 +1148,7 @@ function FormsManager({ siteId }: { siteId: string }) {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => deleteForm(form.id)}
+                    onClick={() => handleDeleteForm(form.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -1154,13 +1225,71 @@ function FormsManager({ siteId }: { siteId: string }) {
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button onClick={handleCreateForm}>
-                Criar Formulário
+              <Button 
+                onClick={handleCreateForm}
+                disabled={createFormMutation.isPending}
+              >
+                {createFormMutation.isPending ? 'Criando...' : 'Criar Formulário'}
               </Button>
               <Button variant="outline" onClick={() => setShowNewFormModal(false)}>
                 Cancelar
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal para visualizar submissões */}
+      {viewingSubmissions && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Submissões - {viewingSubmissions.name}</CardTitle>
+              <CardDescription>
+                Visualize e gerencie as submissões recebidas neste formulário
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={() => setViewingSubmissions(null)}>
+              Fechar
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {submissions && submissions.length > 0 ? (
+              <div className="space-y-4">
+                {submissions.map((submission: any) => (
+                  <div key={submission.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm text-gray-500">
+                        {new Date(submission.createdAt).toLocaleString('pt-BR')}
+                      </span>
+                      <Badge variant="outline">
+                        {submission.status || 'Nova'}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(submission.data || {}).map(([key, value]) => (
+                        <div key={key}>
+                          <Label className="text-sm font-medium capitalize">
+                            {availableFields.find(f => f.value === key)?.label || key}
+                          </Label>
+                          <p className="text-sm text-gray-700 mt-1">
+                            {typeof value === 'string' ? value : JSON.stringify(value)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Nenhuma submissão recebida ainda</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  As submissões aparecerão aqui quando os visitantes preencherem o formulário
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
