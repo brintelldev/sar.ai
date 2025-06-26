@@ -30,16 +30,16 @@ export function useSimpleAuth() {
           setAuthState(data);
           setIsLoading(false);
           setHasChecked(true);
-          // Aplicar tema automaticamente após autenticação
-          applyStoredTheme();
+          // Aplicar tema apenas se já estiver autenticado (refresh da página)
+          if (data && window.location.pathname !== '/login') {
+            applyStoredTheme();
+          }
         })
         .catch((error) => {
           console.log('Auth error:', error); // Debug log
           setAuthState(null);
           setIsLoading(false);
           setHasChecked(true);
-          // Aplicar tema mesmo se não autenticado
-          applyStoredTheme();
         });
     }
   }, [hasChecked]);
