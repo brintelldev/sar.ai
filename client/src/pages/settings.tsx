@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/hooks/use-theme';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Bell, Shield, Database, Users, Mail, Globe, Palette } from 'lucide-react';
@@ -18,6 +19,7 @@ import { Bell, Shield, Database, Users, Mail, Globe, Palette } from 'lucide-reac
 export default function Settings() {
   const { user, currentOrganization } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
   
   const [accountForm, setAccountForm] = useState({
@@ -50,9 +52,14 @@ export default function Settings() {
   const [preferences, setPreferences] = useState({
     language: 'pt-BR',
     timezone: 'America/Sao_Paulo',
-    theme: 'light',
+    theme: theme, // Usa o tema do hook
     currency: 'BRL',
   });
+
+  // Sincroniza as preferências quando o tema muda
+  useEffect(() => {
+    setPreferences(prev => ({ ...prev, theme }));
+  }, [theme]);
 
   const updateAccountMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -501,16 +508,17 @@ export default function Settings() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Tema</Label>
-                    <Select value={preferences.theme} onValueChange={(value) => 
-                      setPreferences({ ...preferences, theme: value })
-                    }>
+                    <Select value={preferences.theme} onValueChange={(value) => {
+                      const newPreferences = { ...preferences, theme: value };
+                      setPreferences(newPreferences);
+                      applyTheme(value);
+                    }}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="light">Claro</SelectItem>
                         <SelectItem value="dark">Escuro</SelectItem>
-                        <SelectItem value="system">Sistema</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
