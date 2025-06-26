@@ -52,14 +52,8 @@ export default function Settings() {
   const [preferences, setPreferences] = useState({
     language: 'pt-BR',
     timezone: 'America/Sao_Paulo',
-    theme: theme, // Usa o tema do hook
     currency: 'BRL',
   });
-
-  // Sincroniza as preferências quando o tema muda
-  useEffect(() => {
-    setPreferences(prev => ({ ...prev, theme }));
-  }, [theme]);
 
   const updateAccountMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -508,10 +502,8 @@ export default function Settings() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Tema</Label>
-                    <Select value={preferences.theme} onValueChange={(value) => {
-                      const newPreferences = { ...preferences, theme: value };
-                      setPreferences(newPreferences);
-                      applyTheme(value);
+                    <Select value={theme} onValueChange={(value) => {
+                      setTheme(value as 'light' | 'dark');
                     }}>
                       <SelectTrigger>
                         <SelectValue />
