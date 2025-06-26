@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Mail, Phone, Building2, User, Clock, Heart } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, Building2, User, Clock, Heart, Eye } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ export default function Donors() {
   const [editingDonor, setEditingDonor] = useState<any>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedDonorForHistory, setSelectedDonorForHistory] = useState<any>(null);
+  const [isDonationViewModalOpen, setIsDonationViewModalOpen] = useState(false);
+  const [selectedDonationForView, setSelectedDonationForView] = useState<any>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     type: 'all', // all, individual, corporate
@@ -34,8 +36,6 @@ export default function Donors() {
     hasHistory: 'all', // all, yes, no
   });
   const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [selectedDonationForView, setSelectedDonationForView] = useState<any>(null);
-  const [isDonationViewModalOpen, setIsDonationViewModalOpen] = useState(false);
 
   const [newDonor, setNewDonor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -1021,12 +1021,11 @@ export default function Donors() {
                           <th className="text-left p-3 font-medium">Projeto</th>
                           <th className="text-left p-3 font-medium">Método</th>
                           <th className="text-left p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {donorDonations
-                          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                          .map((donation: any) => (
+                        {filteredDonorDonations.map((donation: any) => (
                           <tr key={donation.id} className="border-b hover:bg-muted/10">
                             <td className="p-3">
                               {formatDate(donation.date)}
@@ -1060,6 +1059,16 @@ export default function Donors() {
                                 {!donation.status && 'N/A'}
                               </span>
                             </td>
+                            <td className="p-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openDonationViewModal(donation)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1067,6 +1076,109 @@ export default function Donors() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Visualização Detalhada da Doação */}
+      <Dialog open={isDonationViewModalOpen} onOpenChange={setIsDonationViewModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Doação</DialogTitle>
+            <DialogDescription>
+              Informações completas sobre esta doação
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDonationForView && (
+            <div className="space-y-6">
+              {/* Informações Principais */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-medium mb-2">Valor</h3>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {formatCurrency(parseFloat(selectedDonationForView.amount))}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-medium mb-2">Data</h3>
+                    <p className="text-lg">
+                      {formatDate(selectedDonationForView.date)}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-medium mb-2">Projeto</h3>
+                    <p className="text-lg">
+                      {selectedDonationForView.projectName || 'Doação Geral'}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-medium mb-2">Método de Pagamento</h3>
+                    <p className="text-lg capitalize">
+                      {selectedDonationForView.paymentMethod || 'N/A'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Status */}
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-medium mb-2">Status</h3>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    selectedDonationForView.status === 'confirmed' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : selectedDonationForView.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                  }`}>
+                    {selectedDonationForView.status === 'confirmed' && 'Confirmada'}
+                    {selectedDonationForView.status === 'pending' && 'Pendente'}
+                    {selectedDonationForView.status === 'cancelled' && 'Cancelada'}
+                    {!selectedDonationForView.status && 'N/A'}
+                  </span>
+                </CardContent>
+              </Card>
+
+              {/* Observações */}
+              {selectedDonationForView.notes && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-medium mb-2">Observações</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDonationForView.notes}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Informações de Sistema */}
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-medium mb-2">Informações do Sistema</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">ID da Doação:</span>
+                      <p className="font-mono text-xs break-all">{selectedDonationForView.id}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Criado em:</span>
+                      <p>{formatDate(selectedDonationForView.createdAt)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
