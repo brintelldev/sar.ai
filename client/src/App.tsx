@@ -37,6 +37,7 @@ import CourseEnrollment from "@/pages/course-enrollment";
 import CourseEnrollments from "@/pages/course-enrollments";
 import CourseManagement from "@/pages/course-management";
 import BeneficiaryProjects from "@/pages/beneficiary-projects";
+import AccessControl from "@/pages/access-control";
 
 function BeneficiaryHomeRedirect() {
   const { userRole } = useAuth();
@@ -172,6 +173,13 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/access-control">
+        <ProtectedRoute>
+          <AdminGuard>
+            <AccessControl />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/courses">

@@ -51,6 +51,7 @@ const standardNavigation = [
   { name: "Contas a Pagar", href: "/accounts-payable", icon: CreditCard },
   { name: "Relatórios", href: "/reports", icon: TrendingUp },
   { name: "Financiadores", href: "/funders", icon: Building2 },
+  { name: "Controle de Acesso", href: "/access-control", icon: Shield },
 ];
 
 export function Sidebar() {

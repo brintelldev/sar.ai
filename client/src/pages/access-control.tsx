@@ -131,8 +131,15 @@ export default function AccessControlPage() {
 
   // Mutation para atualizar configurações
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: Partial<AccessControlSettings>) =>
-      apiRequest('/api/access-control', { method: 'PUT', body: data }),
+    mutationFn: async (data: Partial<AccessControlSettings>) => {
+      const response = await fetch('/api/access-control', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Erro ao salvar');
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/access-control'] });
       toast({
@@ -151,17 +158,19 @@ export default function AccessControlPage() {
 
   // Mutation para criar/atualizar template
   const templateMutation = useMutation({
-    mutationFn: (data: { template: any; isEdit: boolean; id?: string }) => {
-      if (data.isEdit && data.id) {
-        return apiRequest(`/api/permission-templates/${data.id}`, {
-          method: 'PUT',
-          body: data.template,
-        });
-      }
-      return apiRequest('/api/permission-templates', {
-        method: 'POST',
-        body: data.template,
+    mutationFn: async (data: { template: any; isEdit: boolean; id?: string }) => {
+      const url = data.isEdit && data.id 
+        ? `/api/permission-templates/${data.id}` 
+        : '/api/permission-templates';
+      const method = data.isEdit ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data.template),
       });
+      if (!response.ok) throw new Error('Erro ao salvar template');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/permission-templates'] });
@@ -183,8 +192,13 @@ export default function AccessControlPage() {
 
   // Mutation para deletar template
   const deleteTemplateMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiRequest(`/api/permission-templates/${id}`, { method: 'DELETE' }),
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/permission-templates/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Erro ao remover template');
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/permission-templates'] });
       toast({
@@ -215,12 +229,12 @@ export default function AccessControlPage() {
 
   // Função para atualizar permissão de módulo
   const updateModulePermission = (module: string, role: string, permission: string, enabled: boolean) => {
-    if (!accessControlSettings) return;
+    if (!accessControlSettings || !accessControlSettings.modulePermissions) return;
 
     const currentPermissions = accessControlSettings.modulePermissions[module]?.[role] || [];
     const newPermissions = enabled
-      ? [...currentPermissions, permission].filter((p, i, arr) => arr.indexOf(p) === i)
-      : currentPermissions.filter(p => p !== permission);
+      ? [...currentPermissions, permission].filter((p: string, i: number, arr: string[]) => arr.indexOf(p) === i)
+      : currentPermissions.filter((p: string) => p !== permission);
 
     const updatedSettings = {
       ...accessControlSettings,
