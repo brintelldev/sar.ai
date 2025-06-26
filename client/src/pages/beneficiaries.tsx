@@ -4,7 +4,7 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, FileText, Shield, Heart, Eye, Edit, Calendar, Phone, MapPin, AlertTriangle } from 'lucide-react';
+import { Plus, Search, FileText, Shield, Heart, Eye, Edit, Calendar, Phone, MapPin, AlertTriangle, Filter, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,6 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export default function Beneficiaries() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +31,14 @@ export default function Beneficiaries() {
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // Estados dos filtros
+  const [filters, setFilters] = useState({
+    status: [] as string[],
+    dateRange: 'all' as 'all' | 'last30' | 'last90' | 'thisYear',
+    hasEmail: 'all' as 'all' | 'yes' | 'no',
+    hasContact: 'all' as 'all' | 'yes' | 'no'
+  });
   const { toast } = useToast();
 
   const { data: beneficiaries = [], isLoading } = useBeneficiaries() as { data: Beneficiary[], isLoading: boolean };
@@ -126,10 +137,68 @@ export default function Beneficiaries() {
     },
   });
 
-  const filteredBeneficiaries = beneficiaries.filter(beneficiary =>
-    beneficiary.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    beneficiary.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Lógica de filtros
+  const filteredBeneficiaries = beneficiaries.filter(beneficiary => {
+    // Filtro de busca por texto
+    const matchesSearch = searchTerm === '' || 
+      beneficiary.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      beneficiary.registrationNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Filtro por status
+    const matchesStatus = filters.status.length === 0 || 
+      filters.status.includes(beneficiary.status || 'active');
+
+    // Filtro por email
+    const matchesEmail = filters.hasEmail === 'all' ||
+      (filters.hasEmail === 'yes' && beneficiary.email && beneficiary.email.trim() !== '') ||
+      (filters.hasEmail === 'no' && (!beneficiary.email || beneficiary.email.trim() === ''));
+
+    // Filtro por contato
+    const matchesContact = filters.hasContact === 'all' ||
+      (filters.hasContact === 'yes' && beneficiary.contactInfo && beneficiary.contactInfo.trim() !== '') ||
+      (filters.hasContact === 'no' && (!beneficiary.contactInfo || beneficiary.contactInfo.trim() === ''));
+
+    // Filtro por data
+    let matchesDate = true;
+    if (filters.dateRange !== 'all' && beneficiary.createdAt) {
+      const beneficiaryDate = new Date(beneficiary.createdAt);
+      const now = new Date();
+      
+      switch (filters.dateRange) {
+        case 'last30':
+          const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          matchesDate = beneficiaryDate >= last30Days;
+          break;
+        case 'last90':
+          const last90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          matchesDate = beneficiaryDate >= last90Days;
+          break;
+        case 'thisYear':
+          const thisYear = now.getFullYear();
+          matchesDate = beneficiaryDate.getFullYear() === thisYear;
+          break;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesEmail && matchesContact && matchesDate;
+  });
+
+  // Contagem de filtros ativos
+  const activeFiltersCount = 
+    filters.status.length + 
+    (filters.hasEmail !== 'all' ? 1 : 0) + 
+    (filters.hasContact !== 'all' ? 1 : 0) + 
+    (filters.dateRange !== 'all' ? 1 : 0);
+
+  // Função para limpar todos os filtros
+  const clearAllFilters = () => {
+    setFilters({
+      status: [],
+      dateRange: 'all',
+      hasEmail: 'all',
+      hasContact: 'all'
+    });
+  };
 
   const onSubmit = async (data: any) => {
     try {
@@ -451,16 +520,145 @@ export default function Beneficiaries() {
           </Dialog>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar with Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou código de atendimento..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
-            />
+          <div className="flex items-center gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou código de atendimento..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Filter Button */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2 relative">
+                  <Filter className="h-4 w-4" />
+                  Filtros
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="start">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-sm">Filtros</h3>
+                    {activeFiltersCount > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-auto p-1 text-xs">
+                        <X className="h-3 w-3 mr-1" />
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Status do Atendimento</Label>
+                    <div className="space-y-2">
+                      {[
+                        { value: 'active', label: 'Em Atendimento', icon: CheckCircle2, color: 'text-blue-600' },
+                        { value: 'completed', label: 'Concluído', icon: CheckCircle2, color: 'text-green-600' },
+                        { value: 'inactive', label: 'Pausado', icon: Clock, color: 'text-gray-600' }
+                      ].map(status => {
+                        const Icon = status.icon;
+                        return (
+                          <div key={status.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`status-${status.value}`}
+                              checked={filters.status.includes(status.value)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    status: [...prev.status, status.value]
+                                  }));
+                                } else {
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    status: prev.status.filter(s => s !== status.value)
+                                  }));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`status-${status.value}`} className="flex items-center gap-2 cursor-pointer">
+                              <Icon className={`h-4 w-4 ${status.color}`} />
+                              {status.label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Date Range Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Período de Cadastro</Label>
+                    <Select value={filters.dateRange} onValueChange={(value: any) => setFilters(prev => ({ ...prev, dateRange: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os períodos</SelectItem>
+                        <SelectItem value="last30">Últimos 30 dias</SelectItem>
+                        <SelectItem value="last90">Últimos 90 dias</SelectItem>
+                        <SelectItem value="thisYear">Este ano</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  {/* Email Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Possui Email</Label>
+                    <Select value={filters.hasEmail} onValueChange={(value: any) => setFilters(prev => ({ ...prev, hasEmail: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="yes">Com email</SelectItem>
+                        <SelectItem value="no">Sem email</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  {/* Contact Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Possui Contato</Label>
+                    <Select value={filters.hasContact} onValueChange={(value: any) => setFilters(prev => ({ ...prev, hasContact: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="yes">Com contato</SelectItem>
+                        <SelectItem value="no">Sem contato</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Active Filters Display */}
+            {activeFiltersCount > 0 && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{filteredBeneficiaries.length} de {beneficiaries.length} resultados</span>
+              </div>
+            )}
           </div>
         </div>
 
