@@ -50,6 +50,8 @@ export default function Volunteers() {
   const [customSkills, setCustomSkills] = useState<string[]>([]);
   const [newSkillInput, setNewSkillInput] = useState('');
   const [isAddingSkill, setIsAddingSkill] = useState(false);
+  const [editNewSkillInput, setEditNewSkillInput] = useState('');
+  const [isAddingSkillEdit, setIsAddingSkillEdit] = useState(false);
 
   const [newVolunteer, setNewVolunteer] = useState({
     userId: '', // In real app, this would be created during user registration
@@ -267,6 +269,41 @@ export default function Volunteers() {
 
   // Combinar habilidades padrão e customizadas
   const getAllSkills = () => [...skillsOptions, ...customSkills];
+
+  // Funções para o modal de edição
+  const handleAddCustomSkillEdit = () => {
+    const trimmedSkill = editNewSkillInput.trim();
+    if (trimmedSkill && !getAllSkills().includes(trimmedSkill)) {
+      setCustomSkills(prev => [...prev, trimmedSkill]);
+      const currentSkills = selectedVolunteer.skills || [];
+      setSelectedVolunteer({
+        ...selectedVolunteer,
+        skills: [...currentSkills, trimmedSkill]
+      });
+      setEditNewSkillInput('');
+      setIsAddingSkillEdit(false);
+      
+      toast({
+        title: 'Habilidade adicionada',
+        description: `"${trimmedSkill}" foi adicionada à lista de habilidades.`,
+      });
+    }
+  };
+
+  const handleSkillToggleEdit = (skill: string) => {
+    const currentSkills = selectedVolunteer.skills || [];
+    if (currentSkills.includes(skill)) {
+      setSelectedVolunteer({
+        ...selectedVolunteer,
+        skills: currentSkills.filter((s: string) => s !== skill)
+      });
+    } else {
+      setSelectedVolunteer({
+        ...selectedVolunteer,
+        skills: [...currentSkills, skill]
+      });
+    }
+  };
 
   const handleAvailabilityToggle = (period: string) => {
     setNewVolunteer(prev => ({
@@ -863,33 +900,107 @@ export default function Volunteers() {
                   </div>
                 </div>
 
-                <div>
-                  <Label>Habilidades</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                    {skillsOptions.map((skill) => (
-                      <div key={skill} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`edit-skill-${skill}`}
-                          checked={selectedVolunteer.skills?.includes(skill) || false}
-                          onCheckedChange={(checked) => {
-                            const currentSkills = selectedVolunteer.skills || [];
-                            if (checked) {
-                              setSelectedVolunteer({
-                                ...selectedVolunteer,
-                                skills: [...currentSkills, skill]
-                              });
-                            } else {
-                              setSelectedVolunteer({
-                                ...selectedVolunteer,
-                                skills: currentSkills.filter((s: string) => s !== skill)
-                              });
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`edit-skill-${skill}`} className="text-sm">{skill}</Label>
-                      </div>
-                    ))}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Habilidades e Competências</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingSkillEdit(true)}
+                      className="gap-2"
+                    >
+                      <Tag className="h-4 w-4" />
+                      Adicionar nova
+                    </Button>
                   </div>
+
+                  {/* Campo para adicionar nova habilidade no edit */}
+                  {isAddingSkillEdit && (
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <Input
+                        placeholder="Digite uma nova habilidade..."
+                        value={editNewSkillInput}
+                        onChange={(e) => setEditNewSkillInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomSkillEdit();
+                          }
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddCustomSkillEdit}
+                        disabled={!editNewSkillInput.trim()}
+                      >
+                        Adicionar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsAddingSkillEdit(false);
+                          setEditNewSkillInput('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {getAllSkills().map((skill) => {
+                      const isCustom = customSkills.includes(skill);
+                      return (
+                        <div key={skill} className="flex items-center space-x-2 group">
+                          <Checkbox
+                            id={`edit-skill-${skill}`}
+                            checked={selectedVolunteer.skills?.includes(skill) || false}
+                            onCheckedChange={() => handleSkillToggleEdit(skill)}
+                          />
+                          <Label htmlFor={`edit-skill-${skill}`} className="text-sm flex-1 cursor-pointer">
+                            {skill}
+                          </Label>
+                          {isCustom && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveCustomSkill(skill)}
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Habilidades selecionadas no edit */}
+                  {selectedVolunteer.skills && selectedVolunteer.skills.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Habilidades selecionadas:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedVolunteer.skills.map((skill: string) => (
+                          <Badge
+                            key={skill}
+                            variant="secondary"
+                            className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => handleSkillToggleEdit(skill)}
+                          >
+                            {skill}
+                            <X className="h-3 w-3" />
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end space-x-4">
