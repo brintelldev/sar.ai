@@ -222,7 +222,12 @@ export default function Donors() {
                     <Input
                       id="document"
                       value={newDonor.document}
-                      onChange={(e) => setNewDonor(prev => ({ ...prev, document: e.target.value }))}
+                      onChange={(e) => {
+                        const maskedValue = newDonor.type === 'individual' 
+                          ? maskCPF(e.target.value)
+                          : maskCNPJ(e.target.value);
+                        setNewDonor(prev => ({ ...prev, document: maskedValue }));
+                      }}
                       placeholder={newDonor.type === 'individual' ? '000.000.000-00' : '00.000.000/0000-00'}
                     />
                   </div>
@@ -243,7 +248,10 @@ export default function Donors() {
                     <Input
                       id="phone"
                       value={newDonor.phone}
-                      onChange={(e) => setNewDonor(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => {
+                        const maskedPhone = maskPhone(e.target.value);
+                        setNewDonor(prev => ({ ...prev, phone: maskedPhone }));
+                      }}
                       placeholder="(11) 99999-9999"
                     />
                   </div>
@@ -355,7 +363,12 @@ export default function Donors() {
                       <Input
                         id="edit-document"
                         value={editingDonor.document || ''}
-                        onChange={(e) => setEditingDonor((prev: any) => ({ ...prev, document: e.target.value }))}
+                        onChange={(e) => {
+                          const maskedValue = editingDonor.type === 'individual' 
+                            ? maskCPF(e.target.value)
+                            : maskCNPJ(e.target.value);
+                          setEditingDonor((prev: any) => ({ ...prev, document: maskedValue }));
+                        }}
                         placeholder={editingDonor.type === 'individual' ? '000.000.000-00' : '00.000.000/0000-00'}
                       />
                     </div>
@@ -376,7 +389,10 @@ export default function Donors() {
                       <Input
                         id="edit-phone"
                         value={editingDonor.phone || ''}
-                        onChange={(e) => setEditingDonor((prev: any) => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) => {
+                          const maskedPhone = maskPhone(e.target.value);
+                          setEditingDonor((prev: any) => ({ ...prev, phone: maskedPhone }));
+                        }}
                         placeholder="(11) 99999-9999"
                       />
                     </div>
@@ -413,6 +429,19 @@ export default function Donors() {
                             ...prev,
                             address: { ...prev.address, state: e.target.value }
                           }))}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="CEP"
+                          value={editingDonor.address?.zipCode || ''}
+                          onChange={(e) => {
+                            const maskedCEP = maskCEP(e.target.value);
+                            setEditingDonor((prev: any) => ({
+                              ...prev,
+                              address: { ...prev.address, zipCode: maskedCEP }
+                            }));
+                          }}
                         />
                       </div>
                     </div>
