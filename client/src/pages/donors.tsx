@@ -68,6 +68,7 @@ export default function Donors() {
     e.preventDefault();
     
     try {
+      console.log('Sending donor data:', editingDonor);
       await updateDonor.mutateAsync({ 
         id: editingDonor.id, 
         data: editingDonor 
@@ -79,9 +80,11 @@ export default function Donors() {
       setIsEditModalOpen(false);
       setEditingDonor(null);
     } catch (error) {
+      console.error('Error updating donor:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast({
         title: 'Erro ao atualizar doador',
-        description: 'Não foi possível atualizar o doador. Tente novamente.',
+        description: `Erro: ${errorMessage}`,
         variant: 'destructive',
       });
     }
