@@ -260,8 +260,8 @@ export default function WhitelabelPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Site Whitelabel</h1>
-              <p className="text-gray-600 mt-2">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Site Whitelabel</h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-2">
                 Crie um site personalizado para sua organização com domínio próprio
               </p>
             </div>

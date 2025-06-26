@@ -149,6 +149,31 @@
     @apply bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300;
   }
 
+  /* Badges coloridos para tema escuro */
+  .badge-green {
+    @apply bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300;
+  }
+
+  .badge-yellow {
+    @apply bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300;
+  }
+
+  .badge-red {
+    @apply bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300;
+  }
+
+  .badge-blue {
+    @apply bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300;
+  }
+
+  .badge-purple {
+    @apply bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300;
+  }
+
   /* Melhorias específicas para tabelas */
   .table-header {
     @apply bg-gray-50 dark:bg-gray-800;

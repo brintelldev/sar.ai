@@ -136,8 +136,8 @@ export default function CourseEnrollment() {
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Capacitação Tecnológica</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Capacitação Tecnológica</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Desenvolva suas habilidades com nossos cursos especializados. 
             Inscreva-se e comece sua jornada de aprendizado hoje mesmo.
           </p>

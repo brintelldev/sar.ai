@@ -446,7 +446,7 @@ export default function Volunteers() {
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg border shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -476,7 +476,7 @@ export default function Volunteers() {
             ))}
           </div>
         ) : filteredVolunteers.length === 0 ? (
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardContent className="p-12 text-center">
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {searchTerm ? 'Nenhum voluntário encontrado' : 'Nenhum voluntário cadastrado'}
@@ -498,7 +498,7 @@ export default function Volunteers() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVolunteers.map((volunteer: any) => (
-              <Card key={volunteer.id} className="hover:shadow-md transition-shadow">
+              <Card key={volunteer.id} className="bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
