@@ -1,743 +1,344 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { 
-  Settings, 
-  Shield, 
-  Users, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  Lock, 
-  Unlock, 
-  Check, 
-  X,
-  AlertTriangle,
-  Info,
-  Save
-} from 'lucide-react';
+import { Shield, Users, Settings, Eye, Edit, Trash2, Save, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { toast } from '@/hooks/use-toast';
 
-// Tipos para as permissões
-interface ModulePermissions {
-  [module: string]: {
-    [role: string]: string[];
-  };
+interface Permission {
+  id: string;
+  module: string;
+  action: string;
+  description: string;
+}
+
+interface RolePermission {
+  roleId: string;
+  roleName: string;
+  permissions: Record<string, boolean>;
 }
 
 interface AccessControlSettings {
-  id?: string;
+  id: string;
   organizationId: string;
-  modulePermissions: ModulePermissions;
-  roleHierarchy: { [role: string]: string[] };
-  restrictionSettings: {
-    allowDataExport: { [role: string]: boolean };
-    allowUserManagement: { [role: string]: boolean };
-    requireApproval: { [action: string]: boolean };
-  };
-  auditSettings: {
-    logUserActions: boolean;
-    logDataAccess: boolean;
-    retentionDays: number;
-  };
-  lastModifiedBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  modulePermissions: Record<string, Record<string, boolean>>;
+  restrictionSettings: Record<string, any>;
 }
 
-interface PermissionTemplate {
-  id?: string;
-  name: string;
-  description: string;
-  role: string;
-  permissions: Record<string, any>;
-  isDefault: boolean;
-  isActive: boolean;
-  organizationId?: string;
-  createdBy?: string;
-  createdAt?: string;
-}
+const modules = [
+  {
+    name: 'Beneficiários',
+    key: 'beneficiaries',
+    permissions: [
+      { key: 'view', label: 'Visualizar', description: 'Ver lista e detalhes dos beneficiários' },
+      { key: 'edit', label: 'Editar', description: 'Modificar dados dos beneficiários' },
+      { key: 'delete', label: 'Excluir', description: 'Remover beneficiários do sistema' },
+      { key: 'export', label: 'Exportar', description: 'Baixar dados dos beneficiários' }
+    ]
+  },
+  {
+    name: 'Projetos',
+    key: 'projects',
+    permissions: [
+      { key: 'view', label: 'Visualizar', description: 'Ver lista e detalhes dos projetos' },
+      { key: 'edit', label: 'Editar', description: 'Modificar projetos existentes' },
+      { key: 'delete', label: 'Excluir', description: 'Remover projetos do sistema' },
+      { key: 'create', label: 'Criar', description: 'Adicionar novos projetos' }
+    ]
+  },
+  {
+    name: 'Voluntários',
+    key: 'volunteers',
+    permissions: [
+      { key: 'view', label: 'Visualizar', description: 'Ver lista e detalhes dos voluntários' },
+      { key: 'edit', label: 'Editar', description: 'Modificar dados dos voluntários' },
+      { key: 'delete', label: 'Excluir', description: 'Remover voluntários do sistema' },
+      { key: 'assign', label: 'Atribuir', description: 'Atribuir voluntários a projetos' }
+    ]
+  },
+  {
+    name: 'Finanças',
+    key: 'finances',
+    permissions: [
+      { key: 'view', label: 'Visualizar', description: 'Ver dados financeiros' },
+      { key: 'edit', label: 'Editar', description: 'Modificar registros financeiros' },
+      { key: 'approve', label: 'Aprovar', description: 'Aprovar transações financeiras' },
+      { key: 'reports', label: 'Relatórios', description: 'Gerar relatórios financeiros' }
+    ]
+  },
+  {
+    name: 'Cursos',
+    key: 'courses',
+    permissions: [
+      { key: 'view', label: 'Visualizar', description: 'Ver lista e detalhes dos cursos' },
+      { key: 'edit', label: 'Editar', description: 'Modificar cursos existentes' },
+      { key: 'create', label: 'Criar', description: 'Adicionar novos cursos' },
+      { key: 'enroll', label: 'Inscrever', description: 'Inscrever beneficiários em cursos' }
+    ]
+  }
+];
 
-// Schema para validação do formulário de template
-const templateSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  description: z.string().optional(),
-  role: z.string().min(1, 'Cargo é obrigatório'),
-  permissions: z.record(z.any()),
-  isDefault: z.boolean().default(false)
-});
+const roles = [
+  { key: 'admin', label: 'Administrador', color: 'bg-red-100 text-red-800' },
+  { key: 'manager', label: 'Gestor', color: 'bg-blue-100 text-blue-800' },
+  { key: 'volunteer', label: 'Voluntário', color: 'bg-green-100 text-green-800' },
+  { key: 'beneficiary', label: 'Beneficiário', color: 'bg-purple-100 text-purple-800' }
+];
 
-// Mapeamento dos módulos do sistema
-const MODULES = {
-  dashboard: 'Painel',
-  projects: 'Projetos',
-  beneficiaries: 'Beneficiárias',
-  volunteers: 'Voluntários',
-  donors: 'Doadores',
-  donations: 'Doações',
-  financials: 'Financeiro',
-  courses: 'Capacitação',
-  reports: 'Relatórios',
-  settings: 'Configurações'
-};
+export default function AccessControl() {
+  const { currentOrganization } = useAuth();
+  const [settings, setSettings] = useState<AccessControlSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [permissions, setPermissions] = useState<Record<string, Record<string, boolean>>>({});
 
-const ROLES = {
-  admin: 'Administrador',
-  manager: 'Gestor',
-  volunteer: 'Voluntário',
-  beneficiary: 'Beneficiária'
-};
+  useEffect(() => {
+    loadAccessControlSettings();
+  }, [currentOrganization]);
 
-const PERMISSIONS = {
-  read: 'Visualizar',
-  write: 'Editar',
-  delete: 'Excluir'
-};
+  const loadAccessControlSettings = async () => {
+    if (!currentOrganization) return;
 
-export default function AccessControlPage() {
-  const [selectedTab, setSelectedTab] = useState('permissions');
-  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<PermissionTemplate | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/access-control');
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+        setPermissions(data.modulePermissions || {});
+      } else {
+        // Se não existir, criar estrutura padrão
+        const defaultPermissions: Record<string, Record<string, boolean>> = {};
+        modules.forEach(module => {
+          defaultPermissions[module.key] = {};
+          roles.forEach(role => {
+            defaultPermissions[module.key][role.key] = role.key === 'admin';
+          });
+        });
+        setPermissions(defaultPermissions);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as configurações de acesso.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Buscar configurações de controle de acesso
-  const { data: accessControlSettings, isLoading: loadingSettings } = useQuery({
-    queryKey: ['/api/access-control'],
-    staleTime: 5 * 60 * 1000,
-  });
+  const handlePermissionChange = (moduleKey: string, roleKey: string, permissionKey: string, enabled: boolean) => {
+    setPermissions(prev => ({
+      ...prev,
+      [moduleKey]: {
+        ...prev[moduleKey],
+        [`${roleKey}_${permissionKey}`]: enabled
+      }
+    }));
+  };
 
-  // Buscar templates de permissão
-  const { data: permissionTemplates = [], isLoading: loadingTemplates } = useQuery({
-    queryKey: ['/api/permission-templates'],
-    staleTime: 5 * 60 * 1000,
-  });
+  const saveSettings = async () => {
+    if (!currentOrganization) return;
 
-  // Mutation para atualizar configurações
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: Partial<AccessControlSettings>) => {
+    setIsSaving(true);
+    try {
       const response = await fetch('/api/access-control', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Erro ao salvar');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/access-control'] });
-      toast({
-        title: 'Configurações atualizadas',
-        description: 'As configurações de controle de acesso foram salvas com sucesso.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Erro ao salvar',
-        description: 'Ocorreu um erro ao salvar as configurações.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Mutation para criar/atualizar template
-  const templateMutation = useMutation({
-    mutationFn: async (data: { template: any; isEdit: boolean; id?: string }) => {
-      const url = data.isEdit && data.id 
-        ? `/api/permission-templates/${data.id}` 
-        : '/api/permission-templates';
-      const method = data.isEdit ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data.template),
-      });
-      if (!response.ok) throw new Error('Erro ao salvar template');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/permission-templates'] });
-      setIsTemplateDialogOpen(false);
-      setEditingTemplate(null);
-      toast({
-        title: 'Template salvo',
-        description: 'O template de permissões foi salvo com sucesso.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Erro ao salvar template',
-        description: 'Ocorreu um erro ao salvar o template.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Mutation para deletar template
-  const deleteTemplateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/permission-templates/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Erro ao remover template');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/permission-templates'] });
-      toast({
-        title: 'Template removido',
-        description: 'O template foi removido com sucesso.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Erro ao remover',
-        description: 'Ocorreu um erro ao remover o template.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Form para templates
-  const templateForm = useForm({
-    resolver: zodResolver(templateSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      role: '',
-      permissions: {},
-      isDefault: false,
-    },
-  });
-
-  // Função para atualizar permissão de módulo
-  const updateModulePermission = (module: string, role: string, permission: string, enabled: boolean) => {
-    if (!accessControlSettings || !accessControlSettings.modulePermissions) return;
-
-    const currentPermissions = accessControlSettings.modulePermissions[module]?.[role] || [];
-    const newPermissions = enabled
-      ? [...currentPermissions, permission].filter((p: string, i: number, arr: string[]) => arr.indexOf(p) === i)
-      : currentPermissions.filter((p: string) => p !== permission);
-
-    const updatedSettings = {
-      ...accessControlSettings,
-      modulePermissions: {
-        ...accessControlSettings.modulePermissions,
-        [module]: {
-          ...accessControlSettings.modulePermissions[module],
-          [role]: newPermissions,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      },
-    };
+        body: JSON.stringify({
+          organizationId: currentOrganization.id,
+          modulePermissions: permissions,
+          restrictionSettings: {}
+        }),
+      });
 
-    updateSettingsMutation.mutate(updatedSettings);
+      if (response.ok) {
+        toast({
+          title: "Sucesso",
+          description: "Configurações de acesso salvas com sucesso.",
+        });
+      } else {
+        throw new Error('Erro ao salvar');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as configurações.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Função para atualizar configurações de restrição
-  const updateRestrictionSetting = (setting: string, role: string, value: boolean) => {
-    if (!accessControlSettings || !accessControlSettings.restrictionSettings) return;
-
-    const updatedSettings = {
-      ...accessControlSettings,
-      restrictionSettings: {
-        ...accessControlSettings.restrictionSettings,
-        [setting]: {
-          ...(accessControlSettings.restrictionSettings as any)[setting],
-          [role]: value,
-        },
-      },
-    };
-
-    updateSettingsMutation.mutate(updatedSettings);
-  };
-
-  // Função para salvar template
-  const onSubmitTemplate = (data: any) => {
-    templateMutation.mutate({
-      template: data,
-      isEdit: !!editingTemplate,
-      id: editingTemplate?.id,
-    });
-  };
-
-  // Verificar se tem permissão
-  const hasPermission = (module: string, role: string, permission: string) => {
-    if (!accessControlSettings?.modulePermissions) return false;
-    return accessControlSettings.modulePermissions[module]?.[role]?.includes(permission) || false;
-  };
-
-  if (loadingSettings) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">Carregando configurações...</div>
-      </div>
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center space-x-2">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span>Carregando configurações...</span>
+          </div>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
             <Shield className="h-8 w-8 text-blue-600" />
-            Controle de Acesso
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Configure as permissões e restrições para cada grupo de usuários
-          </p>
-        </div>
-      </div>
-
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="permissions">Permissões por Módulo</TabsTrigger>
-          <TabsTrigger value="restrictions">Restrições</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="audit">Auditoria</TabsTrigger>
-        </TabsList>
-
-        {/* Aba de Permissões por Módulo */}
-        <TabsContent value="permissions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Permissões por Módulo</CardTitle>
-              <CardDescription>
-                Configure o que cada grupo de usuários pode fazer em cada módulo do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {Object.entries(MODULES).map(([moduleKey, moduleName]) => (
-                  <div key={moduleKey} className="border rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-4">{moduleName}</h3>
-                    
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="font-medium">Permissão</div>
-                      {Object.entries(ROLES).map(([roleKey, roleName]) => (
-                        <div key={roleKey} className="font-medium text-center">
-                          {roleName}
-                        </div>
-                      ))}
-                      
-                      {Object.entries(PERMISSIONS).map(([permKey, permName]) => (
-                        <div key={permKey} className="contents">
-                          <div className="py-2">{permName}</div>
-                          {Object.entries(ROLES).map(([roleKey]) => (
-                            <div key={roleKey} className="flex justify-center py-2">
-                              <Switch
-                                checked={hasPermission(moduleKey, roleKey, permKey)}
-                                onCheckedChange={(checked) =>
-                                  updateModulePermission(moduleKey, roleKey, permKey, checked)
-                                }
-                                disabled={updateSettingsMutation.isPending}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Aba de Restrições */}
-        <TabsContent value="restrictions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Restrição</CardTitle>
-              <CardDescription>
-                Configure restrições especiais para cada grupo de usuários
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Exportação de Dados */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    Exportação de Dados
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(ROLES).map(([roleKey, roleName]) => (
-                      <div key={roleKey} className="flex items-center justify-between">
-                        <Label htmlFor={`export-${roleKey}`}>{roleName}</Label>
-                        <Switch
-                          id={`export-${roleKey}`}
-                          checked={accessControlSettings?.restrictionSettings?.allowDataExport?.[roleKey] || false}
-                          onCheckedChange={(checked) =>
-                            updateRestrictionSetting('allowDataExport', roleKey, checked)
-                          }
-                          disabled={updateSettingsMutation.isPending}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Gerenciamento de Usuários */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Gerenciamento de Usuários
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(ROLES).map(([roleKey, roleName]) => (
-                      <div key={roleKey} className="flex items-center justify-between">
-                        <Label htmlFor={`users-${roleKey}`}>{roleName}</Label>
-                        <Switch
-                          id={`users-${roleKey}`}
-                          checked={accessControlSettings?.restrictionSettings?.allowUserManagement?.[roleKey] || false}
-                          onCheckedChange={(checked) =>
-                            updateRestrictionSetting('allowUserManagement', roleKey, checked)
-                          }
-                          disabled={updateSettingsMutation.isPending}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Aba de Templates */}
-        <TabsContent value="templates" className="space-y-4">
-          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Templates de Permissão</h2>
-              <p className="text-sm text-muted-foreground">
-                Crie templates reutilizáveis para facilitar a configuração de permissões
+              <h1 className="text-3xl font-bold tracking-tight">Controle de Acesso</h1>
+              <p className="text-muted-foreground">
+                Configure as permissões e restrições para cada grupo de usuários
               </p>
             </div>
-            <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Template
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingTemplate ? 'Editar Template' : 'Novo Template'}
-                  </DialogTitle>
-                  <DialogDescription>
-                    Configure um template de permissões que pode ser aplicado a usuários
-                  </DialogDescription>
-                </DialogHeader>
-                <Form {...templateForm}>
-                  <form onSubmit={templateForm.handleSubmit(onSubmitTemplate)} className="space-y-4">
-                    <FormField
-                      control={templateForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome do Template</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: Gestor de Projetos" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={templateForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Descrição</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Descreva as responsabilidades deste template..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={templateForm.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cargo Base</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione um cargo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(ROLES).map(([key, name]) => (
-                                <SelectItem key={key} value={key}>
-                                  {name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={templateForm.control}
-                      name="isDefault"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                          <div className="space-y-0.5">
-                            <FormLabel>Template Padrão</FormLabel>
-                            <FormDescription>
-                              Aplicar automaticamente para novos usuários deste cargo
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsTemplateDialogOpen(false)}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button type="submit" disabled={templateMutation.isPending}>
-                        {templateMutation.isPending ? 'Salvando...' : 'Salvar'}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
           </div>
-
-          <div className="grid gap-4">
-            {loadingTemplates ? (
-              <div className="text-center py-8">Carregando templates...</div>
-            ) : permissionTemplates.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum template encontrado</p>
-                    <p className="text-sm">Crie templates para facilitar a configuração de permissões</p>
-                  </div>
-                </CardContent>
-              </Card>
+          <Button onClick={saveSettings} disabled={isSaving} className="flex items-center space-x-2">
+            {isSaving ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
-              permissionTemplates.map((template: PermissionTemplate) => (
-                <Card key={template.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{template.name}</CardTitle>
-                        {template.isDefault && (
-                          <Badge variant="secondary">Padrão</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingTemplate(template);
-                            templateForm.reset({
-                              name: template.name,
-                              description: template.description || '',
-                              role: template.role,
-                              permissions: template.permissions,
-                              isDefault: template.isDefault,
-                            });
-                            setIsTemplateDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o template "{template.name}"?
-                                Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteTemplateMutation.mutate(template.id!)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                    <CardDescription>
-                      {template.description || 'Sem descrição'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>Cargo: {ROLES[template.role as keyof typeof ROLES]}</span>
-                      <span>•</span>
-                      <span>Criado em {new Date(template.createdAt!).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              <Save className="h-4 w-4" />
             )}
-          </div>
-        </TabsContent>
+            <span>{isSaving ? 'Salvando...' : 'Salvar Alterações'}</span>
+          </Button>
+        </div>
 
-        {/* Aba de Auditoria */}
-        <TabsContent value="audit" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Auditoria</CardTitle>
-              <CardDescription>
-                Configure o registro de atividades e logs de acesso do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="log-actions">Registrar Ações dos Usuários</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Manter log de todas as ações realizadas pelos usuários
-                  </p>
+        <Tabs defaultValue="permissions" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="permissions">Permissões por Módulo</TabsTrigger>
+            <TabsTrigger value="restrictions">Restrições</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="audit">Auditoria</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="permissions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Permissões por Módulo</CardTitle>
+                <CardDescription>
+                  Configure o que cada grupo de usuários pode fazer em cada módulo do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  {modules.map((module) => (
+                    <div key={module.key} className="border rounded-lg p-6">
+                      <div className="flex items-center space-x-3 mb-6">
+                        <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                        <h3 className="text-lg font-semibold">{module.name}</h3>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left py-3 px-4 font-medium text-gray-700">Permissão</th>
+                              {roles.map((role) => (
+                                <th key={role.key} className="text-center py-3 px-4 min-w-[120px]">
+                                  <Badge className={role.color}>
+                                    {role.label}
+                                  </Badge>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {module.permissions.map((permission) => (
+                              <tr key={permission.key} className="border-b hover:bg-gray-50">
+                                <td className="py-4 px-4">
+                                  <div>
+                                    <div className="font-medium text-gray-900">{permission.label}</div>
+                                    <div className="text-sm text-gray-500">{permission.description}</div>
+                                  </div>
+                                </td>
+                                {roles.map((role) => (
+                                  <td key={role.key} className="py-4 px-4 text-center">
+                                    <Switch
+                                      checked={permissions[module.key]?.[`${role.key}_${permission.key}`] || false}
+                                      onCheckedChange={(checked) =>
+                                        handlePermissionChange(module.key, role.key, permission.key, checked)
+                                      }
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <Switch
-                  id="log-actions"
-                  checked={accessControlSettings?.auditSettings?.logUserActions || false}
-                  onCheckedChange={(checked) => {
-                    if (accessControlSettings) {
-                      const updatedSettings = {
-                        ...accessControlSettings,
-                        auditSettings: {
-                          ...accessControlSettings.auditSettings,
-                          logUserActions: checked,
-                        },
-                      };
-                      updateSettingsMutation.mutate(updatedSettings);
-                    }
-                  }}
-                  disabled={updateSettingsMutation.isPending}
-                />
-              </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="log-access">Registrar Acesso a Dados</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Manter log de quando dados sensíveis são acessados
-                  </p>
+          <TabsContent value="restrictions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Restrições</CardTitle>
+                <CardDescription>
+                  Configure restrições específicas por grupo de usuários
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Funcionalidade em desenvolvimento</p>
                 </div>
-                <Switch
-                  id="log-access"
-                  checked={accessControlSettings?.auditSettings?.logDataAccess || false}
-                  onCheckedChange={(checked) => {
-                    if (accessControlSettings) {
-                      const updatedSettings = {
-                        ...accessControlSettings,
-                        auditSettings: {
-                          ...accessControlSettings.auditSettings,
-                          logDataAccess: checked,
-                        },
-                      };
-                      updateSettingsMutation.mutate(updatedSettings);
-                    }
-                  }}
-                  disabled={updateSettingsMutation.isPending}
-                />
-              </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="retention-days">Período de Retenção (dias)</Label>
-                <Input
-                  id="retention-days"
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={accessControlSettings?.auditSettings?.retentionDays || 90}
-                  onChange={(e) => {
-                    if (accessControlSettings) {
-                      const updatedSettings = {
-                        ...accessControlSettings,
-                        auditSettings: {
-                          ...accessControlSettings.auditSettings,
-                          retentionDays: parseInt(e.target.value) || 90,
-                        },
-                      };
-                      updateSettingsMutation.mutate(updatedSettings);
-                    }
-                  }}
-                  disabled={updateSettingsMutation.isPending}
-                  className="w-32"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Logs mais antigos que este período serão automaticamente removidos
-                </p>
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                      Conformidade LGPD
-                    </h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                      Estas configurações ajudam a manter conformidade com a Lei Geral de Proteção de Dados (LGPD).
-                      Logs de auditoria são essenciais para demonstrar controles de acesso adequados.
-                    </p>
-                  </div>
+          <TabsContent value="templates" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Templates</CardTitle>
+                <CardDescription>
+                  Modelos pré-configurados de permissões para diferentes tipos de usuários
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Funcionalidade em desenvolvimento</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Auditoria</CardTitle>
+                <CardDescription>
+                  Histórico de alterações nas configurações de acesso
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Funcionalidade em desenvolvimento</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </MainLayout>
   );
 }
