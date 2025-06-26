@@ -26,6 +26,13 @@ export default function Donors() {
   const [editingDonor, setEditingDonor] = useState<any>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedDonorForHistory, setSelectedDonorForHistory] = useState<any>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    type: 'all', // all, individual, corporate
+    status: 'all', // all, active, inactive, opted_out
+    communicationConsent: 'all', // all, yes, no
+    hasHistory: 'all', // all, yes, no
+  });
 
   const [newDonor, setNewDonor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -176,11 +183,51 @@ export default function Donors() {
     }
   };
 
-  const filteredDonors = donors?.filter((donor: any) =>
-    donor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    donor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    donor.document?.includes(searchTerm)
-  ) || [];
+  // Função para limpar filtros
+  const clearFilters = () => {
+    setFilters({
+      type: 'all',
+      status: 'all',
+      communicationConsent: 'all',
+      hasHistory: 'all',
+    });
+    setSearchTerm('');
+  };
+
+  // Verificar se doador tem histórico de doações
+  const donorHasHistory = (donorId: string) => {
+    return donations?.some((donation: any) => donation.donorId === donorId) || false;
+  };
+
+  // Filtros aplicados
+  const filteredDonors = donors?.filter((donor: any) => {
+    // Filtro de busca
+    const matchesSearch = !searchTerm || 
+      donor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      donor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      donor.document?.includes(searchTerm);
+
+    // Filtro de tipo
+    const matchesType = filters.type === 'all' || donor.type === filters.type;
+
+    // Filtro de status
+    const matchesStatus = filters.status === 'all' || donor.status === filters.status;
+
+    // Filtro de consentimento
+    const matchesConsent = filters.communicationConsent === 'all' || 
+      (filters.communicationConsent === 'yes' && donor.communicationConsent) ||
+      (filters.communicationConsent === 'no' && !donor.communicationConsent);
+
+    // Filtro de histórico
+    const matchesHistory = filters.hasHistory === 'all' ||
+      (filters.hasHistory === 'yes' && donorHasHistory(donor.id)) ||
+      (filters.hasHistory === 'no' && !donorHasHistory(donor.id));
+
+    return matchesSearch && matchesType && matchesStatus && matchesConsent && matchesHistory;
+  }) || [];
+
+  // Contar filtros ativos
+  const activeFiltersCount = Object.values(filters).filter(value => value !== 'all').length;
 
   return (
     <MainLayout>
@@ -544,11 +591,181 @@ export default function Donors() {
               className="pl-10"
             />
           </div>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </Button>
+          <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="relative">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+                {activeFiltersCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="ml-2 px-1.5 py-0.5 text-xs min-w-[1.25rem] h-5"
+                  >
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Filtrar Doadores</DialogTitle>
+                <DialogDescription>
+                  Aplique filtros para refinar a visualização dos doadores.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {/* Filtro por tipo */}
+                <div className="space-y-2">
+                  <Label>Tipo de doador</Label>
+                  <Select
+                    value={filters.type}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="individual">Pessoa Física</SelectItem>
+                      <SelectItem value="corporate">Pessoa Jurídica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtro por status */}
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                      <SelectItem value="opted_out">Descadastrado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtro por consentimento */}
+                <div className="space-y-2">
+                  <Label>Consentimento de comunicação</Label>
+                  <Select
+                    value={filters.communicationConsent}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, communicationConsent: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="yes">Com consentimento</SelectItem>
+                      <SelectItem value="no">Sem consentimento</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtro por histórico */}
+                <div className="space-y-2">
+                  <Label>Histórico de doações</Label>
+                  <Select
+                    value={filters.hasHistory}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, hasHistory: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="yes">Com doações</SelectItem>
+                      <SelectItem value="no">Sem doações</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Botões de ação */}
+                <div className="flex justify-between pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={clearFilters}
+                    disabled={activeFiltersCount === 0}
+                  >
+                    Limpar Filtros
+                  </Button>
+                  <Button onClick={() => setIsFilterModalOpen(false)}>
+                    Aplicar Filtros
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
+
+        {/* Filtros ativos */}
+        {activeFiltersCount > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Filtros ativos:</span>
+              {filters.type !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Tipo: {filters.type === 'individual' ? 'Pessoa Física' : 'Pessoa Jurídica'}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, type: 'all' }))}
+                    className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+              {filters.status !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Status: {getStatusLabel(filters.status)}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+                    className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+              {filters.communicationConsent !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Consentimento: {filters.communicationConsent === 'yes' ? 'Com' : 'Sem'}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, communicationConsent: 'all' }))}
+                    className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+              {filters.hasHistory !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Histórico: {filters.hasHistory === 'yes' ? 'Com doações' : 'Sem doações'}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, hasHistory: 'all' }))}
+                    className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="h-6 px-2 text-xs"
+              >
+                Limpar todos
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Donors Grid */}
         {isLoading ? (
