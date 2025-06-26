@@ -494,12 +494,15 @@ function PagesManager({ siteId }: { siteId: string }) {
   const [pages, setPages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewPageForm, setShowNewPageForm] = useState(false);
+  const [editingPage, setEditingPage] = useState<any>(null);
   const [newPage, setNewPage] = useState({
     title: '',
     slug: '',
     content: '',
     isPublished: true
   });
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: pagesData } = useQuery({
     queryKey: ['/api/whitelabel/pages'],
@@ -512,44 +515,89 @@ function PagesManager({ siteId }: { siteId: string }) {
     }
   }, [pagesData]);
 
-  const handleCreatePage = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/whitelabel/pages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newPage,
-          siteId
-        })
+  const createPageMutation = useMutation({
+    mutationFn: (pageData: any) => apiRequest('/api/whitelabel/pages', 'POST', {
+      ...pageData,
+      siteId
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whitelabel/pages'] });
+      setNewPage({ title: '', slug: '', content: '', isPublished: true });
+      setShowNewPageForm(false);
+      toast({
+        title: "Sucesso",
+        description: "Página criada com sucesso!",
       });
-      
-      if (response.ok) {
-        const createdPage = await response.json();
-        setPages(prev => [...prev, createdPage]);
-        setNewPage({ title: '', slug: '', content: '', isPublished: true });
-        setShowNewPageForm(false);
-      }
-    } catch (error) {
-      console.error('Error creating page:', error);
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao criar página",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePageMutation = useMutation({
+    mutationFn: ({ id, ...data }: any) => apiRequest(`/api/whitelabel/pages/${id}`, 'PUT', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whitelabel/pages'] });
+      setEditingPage(null);
+      toast({
+        title: "Sucesso",
+        description: "Página atualizada com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar página",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePageMutation = useMutation({
+    mutationFn: (pageId: string) => apiRequest(`/api/whitelabel/pages/${pageId}`, 'DELETE'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/whitelabel/pages'] });
+      toast({
+        title: "Sucesso",
+        description: "Página excluída com sucesso!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir página",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreatePage = () => {
+    if (!newPage.title.trim() || !newPage.slug.trim()) {
+      toast({
+        title: "Erro",
+        description: "Título e URL são obrigatórios",
+        variant: "destructive",
+      });
+      return;
     }
-    setIsLoading(false);
+    createPageMutation.mutate(newPage);
   };
 
-  const handleDeletePage = async (pageId: string) => {
+  const handleUpdatePage = (pageData: any) => {
+    updatePageMutation.mutate(pageData);
+  };
+
+  const handleDeletePage = (pageId: string) => {
     if (!confirm('Tem certeza que deseja excluir esta página?')) return;
-    
-    try {
-      const response = await fetch(`/api/whitelabel/pages/${pageId}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        setPages(prev => prev.filter(page => page.id !== pageId));
-      }
-    } catch (error) {
-      console.error('Error deleting page:', error);
-    }
+    deletePageMutation.mutate(pageId);
+  };
+
+  const handleEditPage = (page: any) => {
+    setEditingPage(page);
   };
 
   return (
@@ -568,7 +616,12 @@ function PagesManager({ siteId }: { siteId: string }) {
           </Button>
         </CardHeader>
         <CardContent>
-          {pages.length === 0 ? (
+          {pagesLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando páginas...</p>
+            </div>
+          ) : pages.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">Nenhuma página personalizada criada</p>
@@ -580,21 +633,36 @@ function PagesManager({ siteId }: { siteId: string }) {
             <div className="space-y-4">
               {pages.map((page) => (
                 <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
+                  <div className="flex-1">
                     <h4 className="font-medium">{page.title}</h4>
                     <p className="text-sm text-gray-600">/{page.slug}</p>
-                    <Badge variant={page.isPublished ? "default" : "secondary"}>
-                      {page.isPublished ? "Publicada" : "Rascunho"}
-                    </Badge>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Badge variant={page.isPublished ? "default" : "secondary"}>
+                        {page.isPublished ? "Publicada" : "Rascunho"}
+                      </Badge>
+                      {page.createdAt && (
+                        <span className="text-xs text-gray-500">
+                          Criada em {new Date(page.createdAt).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditPage(page)}
+                      disabled={updatePageMutation.isPending}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Editar
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => handleDeletePage(page.id)}
+                      disabled={deletePageMutation.isPending}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -606,61 +674,117 @@ function PagesManager({ siteId }: { siteId: string }) {
         </CardContent>
       </Card>
 
-      {showNewPageForm && (
+      {/* Modal para Criar/Editar Página */}
+      {(showNewPageForm || editingPage) && (
         <Card>
           <CardHeader>
-            <CardTitle>Nova Página</CardTitle>
+            <CardTitle>{editingPage ? 'Editar Página' : 'Nova Página'}</CardTitle>
             <CardDescription>
-              Crie uma nova página para o seu site
+              {editingPage ? 'Edite as informações da página' : 'Crie uma nova página para o seu site'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>Título da Página</Label>
-              <Input
-                value={newPage.title}
-                onChange={(e) => setNewPage(prev => ({ 
-                  ...prev, 
-                  title: e.target.value,
-                  slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-                }))}
-                placeholder="Ex: Sobre Nós"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Título da Página</Label>
+                <Input
+                  value={editingPage ? editingPage.title : newPage.title}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const slug = value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    if (editingPage) {
+                      setEditingPage(prev => ({ ...prev, title: value, slug }));
+                    } else {
+                      setNewPage(prev => ({ ...prev, title: value, slug }));
+                    }
+                  }}
+                  placeholder="Ex: Sobre Nós"
+                />
+              </div>
+              <div>
+                <Label>URL da Página</Label>
+                <div className="flex">
+                  <span className="bg-gray-100 border border-r-0 border-gray-300 px-3 py-2 text-sm text-gray-600 rounded-l-md">
+                    /
+                  </span>
+                  <Input
+                    value={editingPage ? editingPage.slug : newPage.slug}
+                    onChange={(e) => {
+                      if (editingPage) {
+                        setEditingPage(prev => ({ ...prev, slug: e.target.value }));
+                      } else {
+                        setNewPage(prev => ({ ...prev, slug: e.target.value }));
+                      }
+                    }}
+                    placeholder="sobre-nos"
+                    className="rounded-l-none"
+                  />
+                </div>
+              </div>
             </div>
+            
             <div>
-              <Label>URL da Página</Label>
-              <Input
-                value={newPage.slug}
-                onChange={(e) => setNewPage(prev => ({ ...prev, slug: e.target.value }))}
-                placeholder="sobre-nos"
+              <Label>Conteúdo da Página</Label>
+              <Textarea
+                value={editingPage ? editingPage.content : newPage.content}
+                onChange={(e) => {
+                  if (editingPage) {
+                    setEditingPage(prev => ({ ...prev, content: e.target.value }));
+                  } else {
+                    setNewPage(prev => ({ ...prev, content: e.target.value }));
+                  }
+                }}
+                rows={8}
+                placeholder="Digite o conteúdo da página... Você pode usar HTML simples para formatação."
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Dica: Use HTML para formatação (ex: &lt;h1&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;)
+              </p>
             </div>
-            <div>
-              <Label>Conteúdo</Label>
-              <textarea
-                value={newPage.content}
-                onChange={(e) => setNewPage(prev => ({ ...prev, content: e.target.value }))}
-                rows={6}
-                className="w-full mt-1 p-2 border rounded"
-                placeholder="Digite o conteúdo da página..."
-              />
-            </div>
+
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Switch
                 id="isPublished"
-                checked={newPage.isPublished}
-                onChange={(e) => setNewPage(prev => ({ ...prev, isPublished: e.target.checked }))}
+                checked={editingPage ? editingPage.isPublished : newPage.isPublished}
+                onCheckedChange={(checked) => {
+                  if (editingPage) {
+                    setEditingPage(prev => ({ ...prev, isPublished: checked }));
+                  } else {
+                    setNewPage(prev => ({ ...prev, isPublished: checked }));
+                  }
+                }}
               />
-              <Label htmlFor="isPublished">Publicar imediatamente</Label>
+              <Label htmlFor="isPublished">Publicar página</Label>
             </div>
-            <div className="flex space-x-2">
-              <Button onClick={handleCreatePage} disabled={isLoading}>
-                {isLoading ? 'Criando...' : 'Criar Página'}
-              </Button>
-              <Button variant="outline" onClick={() => setShowNewPageForm(false)}>
-                Cancelar
-              </Button>
+
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={editingPage ? () => handleUpdatePage(editingPage) : handleCreatePage}
+                  disabled={createPageMutation.isPending || updatePageMutation.isPending}
+                >
+                  {createPageMutation.isPending || updatePageMutation.isPending ? 
+                    'Salvando...' : 
+                    (editingPage ? 'Atualizar Página' : 'Criar Página')
+                  }
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowNewPageForm(false);
+                    setEditingPage(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+              
+              {editingPage && (
+                <div className="text-right text-sm text-gray-500">
+                  <p>Última atualização: {new Date(editingPage.updatedAt || editingPage.createdAt).toLocaleString('pt-BR')}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
