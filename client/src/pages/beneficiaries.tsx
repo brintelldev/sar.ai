@@ -257,10 +257,16 @@ export default function Beneficiaries() {
                             <FormItem>
                               <FormLabel>Código de Atendimento</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="ex: AT-2024-001" />
+                                <Input 
+                                  {...field} 
+                                  readOnly
+                                  disabled={isGeneratingCode}
+                                  placeholder={isGeneratingCode ? "Gerando código..." : "Código gerado automaticamente"}
+                                  className="bg-gray-50 dark:bg-gray-800"
+                                />
                               </FormControl>
                               <FormDescription>
-                                Código único para identificação interna
+                                Código gerado automaticamente no formato B + ano/mês + número sequencial (ex: B2501001)
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -733,10 +739,15 @@ export default function Beneficiaries() {
                             <FormItem>
                               <FormLabel>Código de Atendimento *</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="Ex: BEN-001" />
+                                <Input 
+                                  {...field} 
+                                  readOnly
+                                  className="bg-gray-50 dark:bg-gray-800"
+                                  placeholder="Código não pode ser alterado"
+                                />
                               </FormControl>
                               <FormDescription>
-                                Código único para identificação interna
+                                Código gerado automaticamente - não pode ser alterado
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
