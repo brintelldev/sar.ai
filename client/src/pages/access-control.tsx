@@ -699,7 +699,7 @@ export default function AccessControlPage() {
                   type="number"
                   min="1"
                   max="365"
-                  value={accessControlSettings?.auditSettings.retentionDays || 90}
+                  value={accessControlSettings?.auditSettings?.retentionDays || 90}
                   onChange={(e) => {
                     if (accessControlSettings) {
                       const updatedSettings = {
