@@ -33,6 +33,9 @@ export default function Donors() {
     communicationConsent: 'all', // all, yes, no
     hasHistory: 'all', // all, yes, no
   });
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
+  const [selectedDonationForView, setSelectedDonationForView] = useState<any>(null);
+  const [isDonationViewModalOpen, setIsDonationViewModalOpen] = useState(false);
 
   const [newDonor, setNewDonor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -147,14 +150,34 @@ export default function Donors() {
 
   // Filtrar doações do doador selecionado
   const donorDonations = selectedDonorForHistory && donations ? 
-    donations.filter((donation: any) => donation.donorId === selectedDonorForHistory.id) : [];
+    donations.filter((donation: any) => donation.donorId === selectedDonorForHistory.id)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
 
-  // Calcular estatísticas do histórico
+  // Filtrar doações no histórico por busca
+  const filteredDonorDonations = donorDonations.filter((donation: any) => {
+    if (!historySearchTerm) return true;
+    
+    const searchLower = historySearchTerm.toLowerCase();
+    return (
+      donation.projectName?.toLowerCase().includes(searchLower) ||
+      donation.paymentMethod?.toLowerCase().includes(searchLower) ||
+      donation.notes?.toLowerCase().includes(searchLower) ||
+      donation.amount?.toString().includes(searchLower)
+    );
+  });
+
+  // Calcular estatísticas do histórico (baseado em todas as doações, não nas filtradas)
   const historyStats = {
     totalDonations: donorDonations.length,
     totalAmount: donorDonations.reduce((sum: number, donation: any) => sum + parseFloat(donation.amount || 0), 0),
     avgAmount: donorDonations.length > 0 ? 
       donorDonations.reduce((sum: number, donation: any) => sum + parseFloat(donation.amount || 0), 0) / donorDonations.length : 0,
+  };
+
+  // Função para abrir modal de visualização de doação
+  const openDonationViewModal = (donation: any) => {
+    setSelectedDonationForView(donation);
+    setIsDonationViewModalOpen(true);
   };
 
   const getStatusVariant = (status: string) => {
@@ -197,6 +220,23 @@ export default function Donors() {
   // Verificar se doador tem histórico de doações
   const donorHasHistory = (donorId: string) => {
     return donations?.some((donation: any) => donation.donorId === donorId) || false;
+  };
+
+  // Calcular total doado por doador
+  const getTotalDonatedByDonor = (donorId: string) => {
+    if (!donations) return 0;
+    return donations
+      .filter((donation: any) => donation.donorId === donorId)
+      .reduce((total: number, donation: any) => total + (parseFloat(donation.amount) || 0), 0);
+  };
+
+  // Obter última data de doação do doador
+  const getLastDonationDate = (donorId: string) => {
+    if (!donations) return null;
+    const donorDonations = donations
+      .filter((donation: any) => donation.donorId === donorId)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return donorDonations.length > 0 ? donorDonations[0].createdAt : null;
   };
 
   // Filtros aplicados
@@ -848,14 +888,14 @@ export default function Donors() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Total doado:</span>
                         <span className="font-semibold text-foreground">
-                          {formatCurrency(donor.totalDonated || 0)}
+                          {formatCurrency(getTotalDonatedByDonor(donor.id))}
                         </span>
                       </div>
-                      {donor.lastDonationDate && (
+                      {getLastDonationDate(donor.id) && (
                         <div className="flex items-center justify-between text-sm mt-1">
                           <span className="text-muted-foreground">Última doação:</span>
                           <span className="text-muted-foreground">
-                            {formatDate(donor.lastDonationDate)}
+                            {formatDate(getLastDonationDate(donor.id))}
                           </span>
                         </div>
                       )}
@@ -942,19 +982,33 @@ export default function Donors() {
                 </Card>
               </div>
 
-              {/* Tabela de Doações */}
+              {/* Campo de Busca e Tabela de Doações */}
               <div className="border rounded-lg">
                 <div className="p-4 border-b bg-muted/30">
-                  <h3 className="font-semibold">Histórico Detalhado</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">Histórico Detalhado</h3>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar doações por projeto, método ou observações..."
+                      value={historySearchTerm}
+                      onChange={(e) => setHistorySearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
                 
-                {donorDonations.length === 0 ? (
+                {filteredDonorDonations.length === 0 ? (
                   <div className="p-8 text-center">
                     <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
                       <Heart className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <p className="text-muted-foreground">
-                      Este doador ainda não realizou nenhuma doação.
+                      {historySearchTerm 
+                        ? 'Nenhuma doação encontrada com os termos de busca.'
+                        : 'Este doador ainda não realizou nenhuma doação.'
+                      }
                     </p>
                   </div>
                 ) : (
