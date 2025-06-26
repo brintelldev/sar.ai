@@ -60,6 +60,129 @@ interface WhitelabelTemplate {
   isDefault: boolean;
 }
 
+function SitePreview({ site }: { site: WhitelabelSite }) {
+  const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+
+  const getPreviewUrl = () => {
+    if (site.customDomain) {
+      return `https://${site.customDomain}`;
+    }
+    return `https://${site.subdomain}.sarai.org.br`;
+  };
+
+  const getFrameClasses = () => {
+    switch (viewMode) {
+      case 'mobile':
+        return 'w-80 h-[600px]';
+      case 'tablet':
+        return 'w-[768px] h-[600px]';
+      default:
+        return 'w-full h-[800px]';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Preview do Site</CardTitle>
+              <CardDescription>
+                Visualize como seu site aparece para os visitantes
+              </CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={viewMode === 'desktop' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('desktop')}
+              >
+                <Monitor className="h-4 w-4 mr-1" />
+                Desktop
+              </Button>
+              <Button
+                variant={viewMode === 'tablet' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('tablet')}
+              >
+                <Tablet className="h-4 w-4 mr-1" />
+                Tablet
+              </Button>
+              <Button
+                variant={viewMode === 'mobile' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('mobile')}
+              >
+                <Smartphone className="h-4 w-4 mr-1" />
+                Mobile
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {site.isActive ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Globe className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-900">URL do Site:</span>
+                  <span className="font-mono text-blue-800">{getPreviewUrl()}</span>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={getPreviewUrl()} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Abrir em Nova Aba
+                  </a>
+                </Button>
+              </div>
+
+              <div className="border rounded-lg bg-gray-50 p-4 flex justify-center">
+                <div className={`bg-white border rounded-lg overflow-hidden shadow-lg transition-all duration-300 ${getFrameClasses()}`}>
+                  <iframe
+                    src={getPreviewUrl()}
+                    className="w-full h-full"
+                    title="Preview do Site"
+                    onError={() => console.log('Erro ao carregar preview')}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-1">Status</h4>
+                  <Badge variant="default">Site Ativo</Badge>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-1">Tema</h4>
+                  <p className="text-gray-600">{site.theme?.primaryColor || 'Padrão'}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-1">Última Atualização</h4>
+                  <p className="text-gray-600">
+                    {site.updatedAt ? new Date(site.updatedAt).toLocaleDateString('pt-BR') : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <EyeOff className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Site Inativo</h3>
+              <p className="text-gray-600 mb-4">
+                Ative seu site nas configurações para visualizar o preview
+              </p>
+              <Button variant="outline">
+                Ir para Configurações
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function WhitelabelPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
@@ -169,7 +292,7 @@ export default function WhitelabelPage() {
           <SiteSetupCard onSetup={handleSiteSetup} isLoading={siteUpsertMutation.isPending} />
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="overview">
                 <Globe className="h-4 w-4 mr-2" />
                 Visão Geral
@@ -189,6 +312,10 @@ export default function WhitelabelPage() {
               <TabsTrigger value="forms">
                 <Mail className="h-4 w-4 mr-2" />
                 Formulários
+              </TabsTrigger>
+              <TabsTrigger value="preview">
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
               </TabsTrigger>
               <TabsTrigger value="settings">
                 <Settings className="h-4 w-4 mr-2" />
@@ -214,6 +341,10 @@ export default function WhitelabelPage() {
 
             <TabsContent value="forms">
               <FormsManager siteId={site.id} />
+            </TabsContent>
+
+            <TabsContent value="preview">
+              <SitePreview site={site} />
             </TabsContent>
 
             <TabsContent value="settings">

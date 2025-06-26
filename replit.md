@@ -124,6 +124,14 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 26, 2025. Melhorias abrangentes na seção "Site Whitelabel":
+  * Sistema completo de gerenciamento de páginas com editor visual e API backend
+  * Formulários dinâmicos com builder de campos e visualização de submissões
+  * Preview responsivo do site com visualização desktop/tablet/mobile
+  * Editor de menus com drag-and-drop e organização hierárquica
+  * Configurações avançadas de SEO, analytics e domínios personalizados
+  * Interface unificada com tabs para melhor experiência do usuário
+  * Todas as funcionalidades conectadas ao backend PostgreSQL
 - June 25, 2025. Correção do sistema de perfil para beneficiários:
   * Corrigido bug que mostrava "Admin da ONG" para todas as contas
   * Perfil agora exibe corretamente "Beneficiária" para role beneficiary
