@@ -290,6 +290,19 @@ export default function Donors() {
                         }))}
                       />
                     </div>
+                    <div>
+                      <Input
+                        placeholder="CEP"
+                        value={newDonor.address.zipCode}
+                        onChange={(e) => {
+                          const maskedCEP = maskCEP(e.target.value);
+                          setNewDonor(prev => ({
+                            ...prev,
+                            address: { ...prev.address, zipCode: maskedCEP }
+                          }));
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
