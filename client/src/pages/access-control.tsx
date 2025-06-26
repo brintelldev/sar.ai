@@ -252,14 +252,14 @@ export default function AccessControlPage() {
 
   // Função para atualizar configurações de restrição
   const updateRestrictionSetting = (setting: string, role: string, value: boolean) => {
-    if (!accessControlSettings) return;
+    if (!accessControlSettings || !accessControlSettings.restrictionSettings) return;
 
     const updatedSettings = {
       ...accessControlSettings,
       restrictionSettings: {
         ...accessControlSettings.restrictionSettings,
         [setting]: {
-          ...accessControlSettings.restrictionSettings[setting as keyof typeof accessControlSettings.restrictionSettings],
+          ...(accessControlSettings.restrictionSettings as any)[setting],
           [role]: value,
         },
       },
@@ -279,7 +279,8 @@ export default function AccessControlPage() {
 
   // Verificar se tem permissão
   const hasPermission = (module: string, role: string, permission: string) => {
-    return accessControlSettings?.modulePermissions[module]?.[role]?.includes(permission) || false;
+    if (!accessControlSettings?.modulePermissions) return false;
+    return accessControlSettings.modulePermissions[module]?.[role]?.includes(permission) || false;
   };
 
   if (loadingSettings) {
@@ -383,7 +384,7 @@ export default function AccessControlPage() {
                         <Label htmlFor={`export-${roleKey}`}>{roleName}</Label>
                         <Switch
                           id={`export-${roleKey}`}
-                          checked={accessControlSettings?.restrictionSettings.allowDataExport[roleKey] || false}
+                          checked={accessControlSettings?.restrictionSettings?.allowDataExport?.[roleKey] || false}
                           onCheckedChange={(checked) =>
                             updateRestrictionSetting('allowDataExport', roleKey, checked)
                           }
@@ -406,7 +407,7 @@ export default function AccessControlPage() {
                         <Label htmlFor={`users-${roleKey}`}>{roleName}</Label>
                         <Switch
                           id={`users-${roleKey}`}
-                          checked={accessControlSettings?.restrictionSettings.allowUserManagement[roleKey] || false}
+                          checked={accessControlSettings?.restrictionSettings?.allowUserManagement?.[roleKey] || false}
                           onCheckedChange={(checked) =>
                             updateRestrictionSetting('allowUserManagement', roleKey, checked)
                           }
@@ -648,7 +649,7 @@ export default function AccessControlPage() {
                 </div>
                 <Switch
                   id="log-actions"
-                  checked={accessControlSettings?.auditSettings.logUserActions || false}
+                  checked={accessControlSettings?.auditSettings?.logUserActions || false}
                   onCheckedChange={(checked) => {
                     if (accessControlSettings) {
                       const updatedSettings = {
@@ -674,7 +675,7 @@ export default function AccessControlPage() {
                 </div>
                 <Switch
                   id="log-access"
-                  checked={accessControlSettings?.auditSettings.logDataAccess || false}
+                  checked={accessControlSettings?.auditSettings?.logDataAccess || false}
                   onCheckedChange={(checked) => {
                     if (accessControlSettings) {
                       const updatedSettings = {
