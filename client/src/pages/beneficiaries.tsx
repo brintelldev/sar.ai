@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,14 @@ export default function Beneficiaries() {
 
   const { data: beneficiaries = [], isLoading } = useBeneficiaries() as { data: Beneficiary[], isLoading: boolean };
   const createBeneficiaryMutation = useCreateBeneficiary();
+
+  // Hook para buscar código gerado automaticamente
+  const { data: generatedCode, isLoading: isGeneratingCode } = useQuery({
+    queryKey: ['/api/beneficiaries/generate-code'],
+    enabled: isDialogOpen, // Só buscar quando o modal estiver aberto
+    staleTime: 0, // Sempre buscar novo código
+    gcTime: 0, // Não fazer cache (TanStack Query v5)
+  });
 
   // Mutation para atualizar beneficiário
   const updateBeneficiaryMutation = useMutation({
@@ -89,6 +97,13 @@ export default function Beneficiaries() {
       status: 'active',
     },
   });
+
+  // Preencher automaticamente o código de atendimento quando gerado
+  React.useEffect(() => {
+    if (generatedCode && typeof generatedCode === 'object' && 'registrationNumber' in generatedCode && isDialogOpen) {
+      form.setValue('registrationNumber', generatedCode.registrationNumber as string);
+    }
+  }, [generatedCode, isDialogOpen, form]);
 
   // Formulário separado para edição
   const editForm = useForm({

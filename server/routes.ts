@@ -505,6 +505,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to generate unique beneficiary registration number
+  async function generateRegistrationNumber(organizationId: string): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2); // últimos 2 dígitos do ano
+    const month = (now.getMonth() + 1).toString().padStart(2, '0'); // mês com 2 dígitos
+    const yearMonth = year + month; // aamm
+    
+    // Buscar todos os beneficiários da organização para encontrar o próximo número sequencial
+    const existingBeneficiaries = await storage.getBeneficiaries(organizationId);
+    
+    // Filtrar apenas os códigos que seguem o padrão B + aamm + nnnn
+    const existingCodes = existingBeneficiaries
+      .map(b => b.registrationNumber)
+      .filter(code => code && code.match(/^B\d{6}$/)) // B + 6 dígitos
+      .filter(code => code.substring(1, 5) === yearMonth) // mesmo aamm
+      .map(code => parseInt(code.substring(5), 10)) // extrair nnnn
+      .filter(num => !isNaN(num)); // apenas números válidos
+    
+    // Encontrar o próximo número sequencial
+    const nextSequential = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 1;
+    const sequentialString = nextSequential.toString().padStart(4, '0'); // nnnn com 4 dígitos
+    
+    return `B${yearMonth}${sequentialString}`;
+  }
+
+  // Endpoint to generate registration number
+  app.get("/api/beneficiaries/generate-code", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const organizationId = req.session.organizationId!;
+      const registrationNumber = await generateRegistrationNumber(organizationId);
+      res.json({ registrationNumber });
+    } catch (error) {
+      console.error("Generate registration number error:", error);
+      res.status(500).json({ message: "Erro ao gerar código de atendimento" });
+    }
+  });
+
   // Beneficiaries routes
   app.get("/api/beneficiaries", requireAuth, requireOrganization, async (req, res) => {
     try {
@@ -520,10 +557,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/beneficiaries", requireAuth, requireOrganization, async (req, res) => {
     try {
-      const validatedData = insertBeneficiarySchema.parse(req.body);
+      const organizationId = req.session.organizationId!;
+      
+      // Se o registrationNumber não foi fornecido ou está vazio, gerar automaticamente
+      let registrationNumber = req.body.registrationNumber;
+      if (!registrationNumber || registrationNumber.trim() === '') {
+        registrationNumber = await generateRegistrationNumber(organizationId);
+      }
+      
+      const validatedData = insertBeneficiarySchema.parse({
+        ...req.body,
+        registrationNumber
+      });
+      
       const beneficiaryData = {
         ...validatedData,
-        organizationId: req.session.organizationId!
+        organizationId
       };
       
       const beneficiary = await storage.createBeneficiary(beneficiaryData);
