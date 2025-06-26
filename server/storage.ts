@@ -3,7 +3,7 @@ import {
   volunteers, donations, accountsReceivable, accountsPayable, funders,
   courses, courseModules, userCourseProgress, courseAssessments, certificates,
   whitelabelSites, whitelabelTemplates, whitelabelPages, whitelabelMenus, 
-  whitelabelForms, whitelabelFormSubmissions,
+  whitelabelForms, whitelabelFormSubmissions, permissionTemplates, accessControlSettings,
   type User, type InsertUser, type Organization, type InsertOrganization,
   type UserRole, type InsertUserRole, type Project, type InsertProject,
   type Donor, type InsertDonor, type Beneficiary, type InsertBeneficiary,
@@ -15,7 +15,9 @@ import {
   type WhitelabelSite, type InsertWhitelabelSite, type WhitelabelTemplate,
   type InsertWhitelabelTemplate, type WhitelabelPage, type InsertWhitelabelPage,
   type WhitelabelMenu, type InsertWhitelabelMenu, type WhitelabelForm,
-  type InsertWhitelabelForm, type WhitelabelFormSubmission
+  type InsertWhitelabelForm, type WhitelabelFormSubmission,
+  type PermissionTemplate, type InsertPermissionTemplate,
+  type AccessControlSettings, type InsertAccessControlSettings
 } from "@shared/schema";
 
 export interface IStorage {
@@ -146,6 +148,17 @@ export interface IStorage {
   // Form Submissions
   getFormSubmissions(formId: string): Promise<WhitelabelFormSubmission[]>;
   createFormSubmission(submission: Omit<WhitelabelFormSubmission, 'id' | 'createdAt'>): Promise<WhitelabelFormSubmission>;
+
+  // Permission Management
+  getAccessControlSettings(organizationId: string): Promise<AccessControlSettings | undefined>;
+  createAccessControlSettings(settings: InsertAccessControlSettings): Promise<AccessControlSettings>;
+  updateAccessControlSettings(organizationId: string, updates: Partial<AccessControlSettings>): Promise<AccessControlSettings | undefined>;
+  
+  getPermissionTemplates(organizationId: string): Promise<PermissionTemplate[]>;
+  getPermissionTemplate(id: string, organizationId: string): Promise<PermissionTemplate | undefined>;
+  createPermissionTemplate(template: InsertPermissionTemplate): Promise<PermissionTemplate>;
+  updatePermissionTemplate(id: string, organizationId: string, updates: Partial<PermissionTemplate>): Promise<PermissionTemplate | undefined>;
+  deletePermissionTemplate(id: string, organizationId: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

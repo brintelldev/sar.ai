@@ -1142,4 +1142,85 @@ export class PostgresStorage implements IStorage {
     const [result] = await db.insert(platformMetrics).values(metrics).returning();
     return result;
   }
+
+  // Permission Management Methods
+  async getAccessControlSettings(organizationId: string): Promise<AccessControlSettings | undefined> {
+    const [result] = await db
+      .select()
+      .from(accessControlSettings)
+      .where(eq(accessControlSettings.organizationId, organizationId));
+    return result;
+  }
+
+  async createAccessControlSettings(settings: InsertAccessControlSettings): Promise<AccessControlSettings> {
+    const [result] = await db
+      .insert(accessControlSettings)
+      .values(settings)
+      .returning();
+    return result;
+  }
+
+  async updateAccessControlSettings(organizationId: string, updates: Partial<AccessControlSettings>): Promise<AccessControlSettings | undefined> {
+    const { createdAt, updatedAt, ...cleanUpdates } = updates;
+    const [result] = await db
+      .update(accessControlSettings)
+      .set({ ...cleanUpdates, updatedAt: new Date() })
+      .where(eq(accessControlSettings.organizationId, organizationId))
+      .returning();
+    return result;
+  }
+
+  async getPermissionTemplates(organizationId: string): Promise<PermissionTemplate[]> {
+    return await db
+      .select()
+      .from(permissionTemplates)
+      .where(and(
+        eq(permissionTemplates.organizationId, organizationId),
+        eq(permissionTemplates.isActive, true)
+      ))
+      .orderBy(permissionTemplates.role, permissionTemplates.name);
+  }
+
+  async getPermissionTemplate(id: string, organizationId: string): Promise<PermissionTemplate | undefined> {
+    const [result] = await db
+      .select()
+      .from(permissionTemplates)
+      .where(and(
+        eq(permissionTemplates.id, id),
+        eq(permissionTemplates.organizationId, organizationId)
+      ));
+    return result;
+  }
+
+  async createPermissionTemplate(template: InsertPermissionTemplate): Promise<PermissionTemplate> {
+    const [result] = await db
+      .insert(permissionTemplates)
+      .values(template)
+      .returning();
+    return result;
+  }
+
+  async updatePermissionTemplate(id: string, organizationId: string, updates: Partial<PermissionTemplate>): Promise<PermissionTemplate | undefined> {
+    const { createdAt, updatedAt, ...cleanUpdates } = updates;
+    const [result] = await db
+      .update(permissionTemplates)
+      .set({ ...cleanUpdates, updatedAt: new Date() })
+      .where(and(
+        eq(permissionTemplates.id, id),
+        eq(permissionTemplates.organizationId, organizationId)
+      ))
+      .returning();
+    return result;
+  }
+
+  async deletePermissionTemplate(id: string, organizationId: string): Promise<boolean> {
+    const result = await db
+      .update(permissionTemplates)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(and(
+        eq(permissionTemplates.id, id),
+        eq(permissionTemplates.organizationId, organizationId)
+      ));
+    return result.rowCount > 0;
+  }
 }

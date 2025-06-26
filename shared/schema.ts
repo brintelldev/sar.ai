@@ -813,3 +813,49 @@ export type InsertPlatformMetrics = z.infer<typeof insertPlatformMetricsSchema>;
 
 export type SystemAnnouncement = typeof systemAnnouncements.$inferSelect;
 export type InsertSystemAnnouncement = z.infer<typeof insertSystemAnnouncementSchema>;
+
+// Permission Templates and Access Control
+export const permissionTemplates = pgTable("permission_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
+  name: text("name").notNull(), // "Admin Completo", "Gestor de Projetos", etc.
+  description: text("description"),
+  role: text("role").notNull(), // 'admin', 'manager', 'volunteer', 'beneficiary'
+  permissions: jsonb("permissions").notNull(), // detailed permissions object
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+export const accessControlSettings = pgTable("access_control_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id).notNull().unique(),
+  modulePermissions: jsonb("module_permissions").notNull(), // permissions per module
+  roleHierarchy: jsonb("role_hierarchy").notNull(), // role inheritance rules
+  restrictionSettings: jsonb("restriction_settings"), // additional restrictions
+  auditSettings: jsonb("audit_settings"), // audit log settings
+  lastModifiedBy: uuid("last_modified_by").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
+// Insert schemas for permission system
+export const insertPermissionTemplateSchema = createInsertSchema(permissionTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertAccessControlSettingsSchema = createInsertSchema(accessControlSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type PermissionTemplate = typeof permissionTemplates.$inferSelect;
+export type InsertPermissionTemplate = z.infer<typeof insertPermissionTemplateSchema>;
+
+export type AccessControlSettings = typeof accessControlSettings.$inferSelect;
+export type InsertAccessControlSettings = z.infer<typeof insertAccessControlSettingsSchema>;
