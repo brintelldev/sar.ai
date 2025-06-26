@@ -201,6 +201,15 @@
     @apply bg-primary/10 text-primary font-medium;
   }
 
+  /* Melhorias específicas para links da sidebar no tema escuro */
+  .sidebar-link {
+    @apply text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white transition-colors;
+  }
+
+  .sidebar-link-active {
+    @apply bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 font-medium;
+  }
+
   /* Utility classes for text truncation */
   .line-clamp-2 {
     display: -webkit-box;

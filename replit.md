@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 26, 2025. Correções no tema escuro e aplicação automática:
+  * Tema aplicado automaticamente ao fazer login (sem precisar ir às configurações)
+  * Cores dos links Beneficiários e Capacitação melhoradas no tema escuro
+  * Classes CSS sidebar-link e sidebar-link-active para melhor visibilidade
+  * Função applyStoredTheme() chamada após autenticação bem-sucedida
+  * Sistema de tema totalmente funcional em ambos os modos claro e escuro
 - June 26, 2025. Melhorias abrangentes na seção "Site Whitelabel":
   * Sistema completo de gerenciamento de páginas com editor visual e API backend
   * Formulários dinâmicos com builder de campos e visualização de submissões

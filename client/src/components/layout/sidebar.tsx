@@ -96,8 +96,8 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
                 location === item.href
-                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? "sidebar-link-active"
+                  : "sidebar-link hover:bg-gray-50 dark:hover:bg-gray-800"
               )}
             >
               <item.icon className="mr-3 h-5 w-5" />

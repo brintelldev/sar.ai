@@ -3,6 +3,18 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { login, register, logout, getCurrentUser, switchOrganization } from '@/lib/auth';
 import type { AuthState } from '@/lib/auth';
 
+// Função para aplicar o tema salvo
+const applyStoredTheme = () => {
+  const stored = localStorage.getItem('theme');
+  const theme = stored || 'light';
+  
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+};
+
 export function useSimpleAuth() {
   const queryClient = useQueryClient();
   const [authState, setAuthState] = useState<AuthState | null>(null);
@@ -18,12 +30,16 @@ export function useSimpleAuth() {
           setAuthState(data);
           setIsLoading(false);
           setHasChecked(true);
+          // Aplicar tema automaticamente após autenticação
+          applyStoredTheme();
         })
         .catch((error) => {
           console.log('Auth error:', error); // Debug log
           setAuthState(null);
           setIsLoading(false);
           setHasChecked(true);
+          // Aplicar tema mesmo se não autenticado
+          applyStoredTheme();
         });
     }
   }, [hasChecked]);
@@ -35,6 +51,8 @@ export function useSimpleAuth() {
       setAuthState(data);
       setIsLoading(false);
       queryClient.setQueryData(['/api/auth/me'], data);
+      // Aplicar tema imediatamente após login bem-sucedido
+      applyStoredTheme();
       // Force a brief delay to ensure state is updated
       setTimeout(() => {
         window.location.href = '/';
