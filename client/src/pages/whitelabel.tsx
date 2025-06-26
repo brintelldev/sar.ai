@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MainLayout } from "@/components/layout/main-layout";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Globe, Palette, Layout, FileText, Menu, Link as LinkIcon, Mail, Settings, Eye, ExternalLink, Plus, Edit, Trash2, ChevronUp, ChevronDown, EyeOff } from "lucide-react";
+import { Globe, Palette, Layout, FileText, Menu, Link as LinkIcon, Mail, Settings, Eye, ExternalLink, Plus, Edit, Trash2, ChevronUp, ChevronDown, EyeOff, Monitor, Tablet, Smartphone } from "lucide-react";
 
 interface WhitelabelSite {
   id: string;
@@ -20,6 +20,8 @@ interface WhitelabelSite {
   subdomain: string;
   customDomain?: string;
   isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;
