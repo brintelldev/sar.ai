@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { formatCurrency, formatDate, formatCPF, formatCNPJ } from '@/lib/utils';
+import { formatCurrency, formatDate, formatCPF, formatCNPJ, maskCPF, maskCNPJ, maskPhone, maskCEP } from '@/lib/utils';
 import { useDonors, useCreateDonor, useUpdateDonor } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 

@@ -483,6 +483,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/donors/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const organizationId = req.session.organizationId!;
+      
+      // Validate input data with partial schema for updates
+      const validatedData = insertDonorSchema.partial().parse(req.body);
+      
+      // Update donor
+      const updatedDonor = await storage.updateDonor(id, organizationId, validatedData);
+      
+      if (!updatedDonor) {
+        return res.status(404).json({ message: "Doador não encontrado" });
+      }
+      
+      res.json(updatedDonor);
+    } catch (error) {
+      console.error("Update donor error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Beneficiaries routes
   app.get("/api/beneficiaries", requireAuth, requireOrganization, async (req, res) => {
     try {
