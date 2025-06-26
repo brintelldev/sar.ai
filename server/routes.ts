@@ -1764,6 +1764,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Access Control and Permission Management Routes
+  app.get('/api/access-control', requireAuth, requireOrganization, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = (req as any).session as SessionData;
+      const settings = await storage.getAccessControlSettings(organizationId!);
+      
+      // Se não existir configuração, criar uma padrão
+      if (!settings) {
+        const defaultSettings = {
+          organizationId: organizationId!,
+          modulePermissions: {
+            dashboard: { admin: ['read', 'write'], manager: ['read'], volunteer: ['read'], beneficiary: [] },
+            projects: { admin: ['read', 'write', 'delete'], manager: ['read', 'write'], volunteer: ['read'], beneficiary: [] },
+            beneficiaries: { admin: ['read', 'write', 'delete'], manager: ['read', 'write'], volunteer: ['read'], beneficiary: ['read'] },
+            volunteers: { admin: ['read', 'write', 'delete'], manager: ['read', 'write'], volunteer: ['read'], beneficiary: [] },
+            donors: { admin: ['read', 'write', 'delete'], manager: ['read', 'write'], volunteer: [], beneficiary: [] },
+            donations: { admin: ['read', 'write', 'delete'], manager: ['read', 'write'], volunteer: [], beneficiary: [] },
+            financials: { admin: ['read', 'write', 'delete'], manager: ['read'], volunteer: [], beneficiary: [] },
+            courses: { admin: ['read', 'write', 'delete'], manager: ['read', 'write'], volunteer: ['read'], beneficiary: ['read'] },
+            reports: { admin: ['read', 'write'], manager: ['read'], volunteer: [], beneficiary: [] },
+            settings: { admin: ['read', 'write'], manager: [], volunteer: [], beneficiary: [] }
+          },
+          roleHierarchy: {
+            admin: ['manager', 'volunteer', 'beneficiary'],
+            manager: ['volunteer', 'beneficiary'],
+            volunteer: ['beneficiary'],
+            beneficiary: []
+          },
+          restrictionSettings: {
+            allowDataExport: { admin: true, manager: false, volunteer: false, beneficiary: false },
+            allowUserManagement: { admin: true, manager: false, volunteer: false, beneficiary: false },
+            requireApproval: { donations: true, projects: false, volunteers: false }
+          },
+          auditSettings: {
+            logUserActions: true,
+            logDataAccess: true,
+            retentionDays: 90
+          },
+          lastModifiedBy: (req as any).session.userId!
+        };
+        
+        const newSettings = await storage.createAccessControlSettings(defaultSettings);
+        return res.json(newSettings);
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error('Get access control error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/access-control', requireAuth, requireOrganization, async (req: Request, res: Response) => {
+    try {
+      const { organizationId, userId } = (req as any).session as SessionData;
+      const updates = {
+        ...req.body,
+        lastModifiedBy: userId!
+      };
+      
+      const settings = await storage.updateAccessControlSettings(organizationId!, updates);
+      res.json(settings);
+    } catch (error) {
+      console.error('Update access control error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/permission-templates', requireAuth, requireOrganization, async (req: Request, res: Response) => {
+    try {
+      const { organizationId } = (req as any).session as SessionData;
+      const templates = await storage.getPermissionTemplates(organizationId!);
+      res.json(templates);
+    } catch (error) {
+      console.error('Get permission templates error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/permission-templates', requireAuth, requireOrganization, async (req: Request, res: Response) => {
+    try {
+      const { organizationId, userId } = (req as any).session as SessionData;
+      const templateData = {
+        ...req.body,
+        organizationId: organizationId!,
+        createdBy: userId!
+      };
+      
+      const template = await storage.createPermissionTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Create permission template error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/permission-templates/:id', requireAuth, requireOrganization, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { organizationId } = (req as any).session as SessionData;
+      const template = await storage.updatePermissionTemplate(id, organizationId!, req.body);
+      
+      if (!template) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error('Update permission template error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.delete('/api/permission-templates/:id', requireAuth, requireOrganization, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { organizationId } = (req as any).session as SessionData;
+      const success = await storage.deletePermissionTemplate(id, organizationId!);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Delete permission template error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

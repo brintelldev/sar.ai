@@ -1,4 +1,4 @@
-import { eq, and, count, desc, sql, asc } from 'drizzle-orm';
+import { eq, and, count, desc, sql, asc, gte, lte } from 'drizzle-orm';
 import { db } from './db';
 import bcrypt from 'bcrypt';
 import { 
@@ -29,6 +29,8 @@ import {
   subscriptions,
   platformMetrics,
   systemAnnouncements,
+  permissionTemplates,
+  accessControlSettings,
   type Organization,
   type User,
   type UserRole,
@@ -76,7 +78,11 @@ import {
   type InsertDonation,
   type InsertCourse,
   type InsertCourseModule,
-  type InsertCourseAssessment
+  type InsertCourseAssessment,
+  type PermissionTemplate,
+  type InsertPermissionTemplate,
+  type AccessControlSettings,
+  type InsertAccessControlSettings
 } from '../shared/schema';
 import { 
   volunteerCourseApplications,
