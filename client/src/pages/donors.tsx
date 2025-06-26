@@ -11,15 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { formatCurrency, formatDate, formatCPF, formatCNPJ } from '@/lib/utils';
-import { useDonors, useCreateDonor } from '@/hooks/use-organization';
+import { useDonors, useCreateDonor, useUpdateDonor } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Donors() {
   const { data: donors, isLoading } = useDonors();
   const createDonor = useCreateDonor();
+  const updateDonor = useUpdateDonor();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDonor, setEditingDonor] = useState<any>(null);
 
   const [newDonor, setNewDonor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -51,25 +54,7 @@ export default function Donors() {
         description: 'O doador foi cadastrado com sucesso.',
       });
       setIsCreateModalOpen(false);
-      setNewDonor({
-        type: 'individual',
-        name: '',
-        email: '',
-        phone: '',
-        document: '',
-        address: {
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-        },
-        communicationConsent: false,
-        donationPreferences: {
-          frequency: '',
-          preferredAmount: '',
-          preferredProjects: [],
-        },
-      });
+      resetNewDonorForm();
     } catch (error) {
       toast({
         title: 'Erro ao cadastrar doador',
@@ -77,6 +62,69 @@ export default function Donors() {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleEditDonor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      await updateDonor.mutateAsync({ 
+        id: editingDonor.id, 
+        data: editingDonor 
+      });
+      toast({
+        title: 'Doador atualizado',
+        description: 'As informações do doador foram atualizadas com sucesso.',
+      });
+      setIsEditModalOpen(false);
+      setEditingDonor(null);
+    } catch (error) {
+      toast({
+        title: 'Erro ao atualizar doador',
+        description: 'Não foi possível atualizar o doador. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const resetNewDonorForm = () => {
+    setNewDonor({
+      type: 'individual',
+      name: '',
+      email: '',
+      phone: '',
+      document: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+      },
+      communicationConsent: false,
+      donationPreferences: {
+        frequency: '',
+        preferredAmount: '',
+        preferredProjects: [],
+      },
+    });
+  };
+
+  const openEditModal = (donor: any) => {
+    setEditingDonor({
+      ...donor,
+      address: donor.address || {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+      },
+      donationPreferences: donor.donationPreferences || {
+        frequency: '',
+        preferredAmount: '',
+        preferredProjects: [],
+      },
+    });
+    setIsEditModalOpen(true);
   };
 
   const getStatusVariant = (status: string) => {
@@ -258,6 +306,166 @@ export default function Donors() {
               </form>
             </DialogContent>
           </Dialog>
+
+          {/* Edit Donor Modal */}
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Editar Doador</DialogTitle>
+              </DialogHeader>
+              {editingDonor && (
+                <form onSubmit={handleEditDonor} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-type">Tipo de doador</Label>
+                    <Select
+                      value={editingDonor.type}
+                      onValueChange={(value: 'individual' | 'corporate') =>
+                        setEditingDonor((prev: any) => ({ ...prev, type: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="individual">Pessoa Física</SelectItem>
+                        <SelectItem value="corporate">Pessoa Jurídica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-name">
+                        {editingDonor.type === 'individual' ? 'Nome completo' : 'Razão social'} *
+                      </Label>
+                      <Input
+                        id="edit-name"
+                        value={editingDonor.name}
+                        onChange={(e) => setEditingDonor((prev: any) => ({ ...prev, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-document">
+                        {editingDonor.type === 'individual' ? 'CPF' : 'CNPJ'}
+                      </Label>
+                      <Input
+                        id="edit-document"
+                        value={editingDonor.document || ''}
+                        onChange={(e) => setEditingDonor((prev: any) => ({ ...prev, document: e.target.value }))}
+                        placeholder={editingDonor.type === 'individual' ? '000.000.000-00' : '00.000.000/0000-00'}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editingDonor.email || ''}
+                        onChange={(e) => setEditingDonor((prev: any) => ({ ...prev, email: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-phone">Telefone</Label>
+                      <Input
+                        id="edit-phone"
+                        value={editingDonor.phone || ''}
+                        onChange={(e) => setEditingDonor((prev: any) => ({ ...prev, phone: e.target.value }))}
+                        placeholder="(11) 99999-9999"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label>Endereço</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <Input
+                          placeholder="Rua, número, complemento"
+                          value={editingDonor.address?.street || ''}
+                          onChange={(e) => setEditingDonor((prev: any) => ({
+                            ...prev,
+                            address: { ...prev.address, street: e.target.value }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="Cidade"
+                          value={editingDonor.address?.city || ''}
+                          onChange={(e) => setEditingDonor((prev: any) => ({
+                            ...prev,
+                            address: { ...prev.address, city: e.target.value }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="Estado"
+                          value={editingDonor.address?.state || ''}
+                          onChange={(e) => setEditingDonor((prev: any) => ({
+                            ...prev,
+                            address: { ...prev.address, state: e.target.value }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select
+                      value={editingDonor.status || 'active'}
+                      onValueChange={(value) =>
+                        setEditingDonor((prev: any) => ({ ...prev, status: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                        <SelectItem value="opted_out">Descadastrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="edit-consent"
+                      checked={editingDonor.communicationConsent || false}
+                      onCheckedChange={(checked) =>
+                        setEditingDonor((prev: any) => ({ ...prev, communicationConsent: checked }))
+                      }
+                    />
+                    <Label htmlFor="edit-consent" className="text-sm">
+                      Aceita receber comunicações da organização (LGPD)
+                    </Label>
+                  </div>
+
+                  <div className="flex justify-end space-x-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsEditModalOpen(false);
+                        setEditingDonor(null);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={updateDonor.isPending}>
+                      {updateDonor.isPending ? 'Salvando...' : 'Salvar alterações'}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Filters */}
@@ -376,7 +584,11 @@ export default function Donors() {
                     <Button variant="outline" size="sm">
                       Ver Histórico
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => openEditModal(donor)}
+                    >
                       Editar
                     </Button>
                   </div>

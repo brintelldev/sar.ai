@@ -83,6 +83,18 @@ export function useCreateDonor() {
   });
 }
 
+export function useUpdateDonor() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => 
+      apiRequest(`/api/donors/${id}`, 'PATCH', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/donors'] });
+    },
+  });
+}
+
 export function useBeneficiaries() {
   return useQuery({
     queryKey: ['/api/beneficiaries'],
