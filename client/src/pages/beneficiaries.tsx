@@ -180,7 +180,7 @@ export default function Beneficiaries() {
       <div className="container mx-auto px-4 py-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Beneficiários</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Beneficiários</h1>
             <p className="text-base text-muted-foreground">
               Gestão compassiva e segura dos beneficiários acolhidos pela organização
             </p>
@@ -434,14 +434,14 @@ export default function Beneficiaries() {
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg border shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou código de atendimento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full"
+              className="pl-10 w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
@@ -463,7 +463,7 @@ export default function Beneficiaries() {
               <Shield className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {beneficiaries.filter(b => b.status === 'active').length}
               </div>
             </CardContent>
@@ -474,7 +474,7 @@ export default function Beneficiaries() {
               <FileText className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {beneficiaries.filter(b => b.status === 'completed').length}
               </div>
             </CardContent>
@@ -485,7 +485,7 @@ export default function Beneficiaries() {
               <Calendar className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {beneficiaries.filter(b => {
                   if (!b.createdAt) return false;
                   const createdAt = new Date(b.createdAt);
@@ -498,11 +498,11 @@ export default function Beneficiaries() {
         </div>
 
         {/* Beneficiaries List */}
-        <Card className="bg-white shadow-sm">
-          <CardHeader className="border-b bg-gray-50/50">
+        <Card className="bg-white dark:bg-gray-800 shadow-sm">
+          <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Beneficiários em Acompanhamento</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Beneficiários em Acompanhamento</CardTitle>
                 <CardDescription className="text-sm text-gray-600 mt-1">
                   Lista confidencial de beneficiários acolhidos em nossos programas
                 </CardDescription>

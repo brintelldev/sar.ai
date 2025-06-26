@@ -247,7 +247,7 @@ export default function Volunteers() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Voluntários</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Voluntários</h1>
             <p className="text-base text-muted-foreground">
               Gerencie os voluntários da sua organização
             </p>
