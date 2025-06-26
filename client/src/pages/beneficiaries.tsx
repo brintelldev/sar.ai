@@ -260,14 +260,11 @@ export default function Beneficiaries() {
                                 <Input 
                                   {...field} 
                                   readOnly
-                                  disabled={isGeneratingCode}
+                                  disabled
                                   placeholder={isGeneratingCode ? "Gerando código..." : "Código gerado automaticamente"}
-                                  className="bg-gray-50 dark:bg-gray-800"
+                                  className="bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
                                 />
                               </FormControl>
-                              <FormDescription>
-                                Código gerado automaticamente no formato B + ano/mês + número sequencial (ex: B2501001)
-                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
