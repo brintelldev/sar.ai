@@ -11,11 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { formatCurrency, formatDate, formatCPF, formatCNPJ, maskCPF, maskCNPJ, maskPhone, maskCEP } from '@/lib/utils';
-import { useDonors, useCreateDonor, useUpdateDonor } from '@/hooks/use-organization';
+import { useDonors, useCreateDonor, useUpdateDonor, useDonations } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Donors() {
   const { data: donors, isLoading } = useDonors();
+  const { data: donations } = useDonations();
   const createDonor = useCreateDonor();
   const updateDonor = useUpdateDonor();
   const { toast } = useToast();
@@ -23,6 +24,8 @@ export default function Donors() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDonor, setEditingDonor] = useState<any>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [selectedDonorForHistory, setSelectedDonorForHistory] = useState<any>(null);
 
   const [newDonor, setNewDonor] = useState({
     type: 'individual' as 'individual' | 'corporate',
@@ -128,6 +131,23 @@ export default function Donors() {
       },
     });
     setIsEditModalOpen(true);
+  };
+
+  const openHistoryModal = (donor: any) => {
+    setSelectedDonorForHistory(donor);
+    setIsHistoryModalOpen(true);
+  };
+
+  // Filtrar doações do doador selecionado
+  const donorDonations = selectedDonorForHistory && donations ? 
+    donations.filter((donation: any) => donation.donorId === selectedDonorForHistory.id) : [];
+
+  // Calcular estatísticas do histórico
+  const historyStats = {
+    totalDonations: donorDonations.length,
+    totalAmount: donorDonations.reduce((sum: number, donation: any) => sum + parseFloat(donation.amount || 0), 0),
+    avgAmount: donorDonations.length > 0 ? 
+      donorDonations.reduce((sum: number, donation: any) => sum + parseFloat(donation.amount || 0), 0) / donorDonations.length : 0,
   };
 
   const getStatusVariant = (status: string) => {
@@ -626,7 +646,11 @@ export default function Donors() {
                   </div>
                   
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => openHistoryModal(donor)}
+                    >
                       Ver Histórico
                     </Button>
                     <Button 
