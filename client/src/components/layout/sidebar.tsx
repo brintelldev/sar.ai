@@ -62,9 +62,9 @@ export function Sidebar() {
   // Se userRole não estiver definido, não renderizar menu até ter o role
   if (!userRole) {
     return (
-      <div className="flex h-full w-64 flex-col border-r bg-white border-gray-200">
+      <div className="flex h-full w-64 flex-col border-r bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
         <div className="flex flex-1 flex-col items-center justify-center">
-          <div className="animate-pulse text-gray-400">Carregando...</div>
+          <div className="animate-pulse text-gray-400 dark:text-gray-500">Carregando...</div>
         </div>
       </div>
     );
@@ -86,7 +86,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-white border-gray-200">
+    <div className="flex h-full w-64 flex-col border-r bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
       <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
         <nav className="flex-1 space-y-1 px-2">
           {navigation.map((item) => (
@@ -94,10 +94,10 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
                 location === item.href
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
               )}
             >
               <item.icon className="mr-3 h-5 w-5" />
