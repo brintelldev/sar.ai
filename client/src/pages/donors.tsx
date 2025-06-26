@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Mail, Phone, Building2, User } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, Building2, User, Clock, Heart } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -667,6 +667,139 @@ export default function Donors() {
           </div>
         )}
       </div>
+
+      {/* Modal de Histórico de Doações */}
+      <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Histórico de Doações - {selectedDonorForHistory?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Visualize todas as doações realizadas por este doador.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDonorForHistory && (
+            <div className="space-y-6">
+              {/* Estatísticas Resumidas */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {historyStats.totalDonations}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Total de Doações
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(historyStats.totalAmount)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Valor Total
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {formatCurrency(historyStats.avgAmount)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Valor Médio
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Tabela de Doações */}
+              <div className="border rounded-lg">
+                <div className="p-4 border-b bg-muted/30">
+                  <h3 className="font-semibold">Histórico Detalhado</h3>
+                </div>
+                
+                {donorDonations.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
+                      <Heart className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Este doador ainda não realizou nenhuma doação.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b bg-muted/20">
+                        <tr>
+                          <th className="text-left p-3 font-medium">Data</th>
+                          <th className="text-left p-3 font-medium">Valor</th>
+                          <th className="text-left p-3 font-medium">Projeto</th>
+                          <th className="text-left p-3 font-medium">Método</th>
+                          <th className="text-left p-3 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {donorDonations
+                          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((donation: any) => (
+                          <tr key={donation.id} className="border-b hover:bg-muted/10">
+                            <td className="p-3">
+                              {formatDate(donation.date)}
+                            </td>
+                            <td className="p-3">
+                              <span className="font-medium text-green-600 dark:text-green-400">
+                                {formatCurrency(parseFloat(donation.amount))}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <span className="text-sm">
+                                {donation.projectName || 'Doação Geral'}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <span className="text-sm capitalize">
+                                {donation.paymentMethod || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                donation.status === 'confirmed' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                  : donation.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                              }`}>
+                                {donation.status === 'confirmed' && 'Confirmada'}
+                                {donation.status === 'pending' && 'Pendente'}
+                                {donation.status === 'cancelled' && 'Cancelada'}
+                                {!donation.status && 'N/A'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
