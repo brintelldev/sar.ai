@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, UserCheck, Clock, Star, Mail, Phone } from 'lucide-react';
+import { Plus, Search, Filter, UserCheck, Clock, Star, Mail, Phone, X, Tag } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,11 @@ export default function Volunteers() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  
+  // Estados para o sistema de tags dinâmicas
+  const [customSkills, setCustomSkills] = useState<string[]>([]);
+  const [newSkillInput, setNewSkillInput] = useState('');
+  const [isAddingSkill, setIsAddingSkill] = useState(false);
 
   const [newVolunteer, setNewVolunteer] = useState({
     userId: '', // In real app, this would be created during user registration
@@ -232,6 +237,37 @@ export default function Volunteers() {
     }));
   };
 
+  // Função para adicionar nova habilidade personalizada
+  const handleAddCustomSkill = () => {
+    const trimmedSkill = newSkillInput.trim();
+    if (trimmedSkill && !getAllSkills().includes(trimmedSkill)) {
+      setCustomSkills(prev => [...prev, trimmedSkill]);
+      setNewVolunteer(prev => ({
+        ...prev,
+        skills: [...prev.skills, trimmedSkill]
+      }));
+      setNewSkillInput('');
+      setIsAddingSkill(false);
+      
+      toast({
+        title: 'Habilidade adicionada',
+        description: `"${trimmedSkill}" foi adicionada à lista de habilidades.`,
+      });
+    }
+  };
+
+  // Função para remover habilidade personalizada
+  const handleRemoveCustomSkill = (skill: string) => {
+    setCustomSkills(prev => prev.filter(s => s !== skill));
+    setNewVolunteer(prev => ({
+      ...prev,
+      skills: prev.skills.filter(s => s !== skill)
+    }));
+  };
+
+  // Combinar habilidades padrão e customizadas
+  const getAllSkills = () => [...skillsOptions, ...customSkills];
+
   const handleAvailabilityToggle = (period: string) => {
     setNewVolunteer(prev => ({
       ...prev,
@@ -325,19 +361,106 @@ export default function Volunteers() {
 
                 {/* Habilidades */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Habilidades e Competências</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {skillsOptions.map((skill) => (
-                      <div key={skill} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={skill}
-                          checked={newVolunteer.skills.includes(skill)}
-                          onCheckedChange={() => handleSkillToggle(skill)}
-                        />
-                        <Label htmlFor={skill} className="text-sm">{skill}</Label>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Habilidades e Competências</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingSkill(true)}
+                      className="gap-2"
+                    >
+                      <Tag className="h-4 w-4" />
+                      Adicionar nova
+                    </Button>
                   </div>
+
+                  {/* Campo para adicionar nova habilidade */}
+                  {isAddingSkill && (
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <Input
+                        placeholder="Digite uma nova habilidade..."
+                        value={newSkillInput}
+                        onChange={(e) => setNewSkillInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomSkill();
+                          }
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddCustomSkill}
+                        disabled={!newSkillInput.trim()}
+                      >
+                        Adicionar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsAddingSkill(false);
+                          setNewSkillInput('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {getAllSkills().map((skill) => {
+                      const isCustom = customSkills.includes(skill);
+                      return (
+                        <div key={skill} className="flex items-center space-x-2 group">
+                          <Checkbox
+                            id={skill}
+                            checked={newVolunteer.skills.includes(skill)}
+                            onCheckedChange={() => handleSkillToggle(skill)}
+                          />
+                          <Label htmlFor={skill} className="text-sm flex-1 cursor-pointer">
+                            {skill}
+                          </Label>
+                          {isCustom && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveCustomSkill(skill)}
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Habilidades selecionadas */}
+                  {newVolunteer.skills.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Habilidades selecionadas:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {newVolunteer.skills.map((skill) => (
+                          <Badge
+                            key={skill}
+                            variant="secondary"
+                            className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => handleSkillToggle(skill)}
+                          >
+                            {skill}
+                            <X className="h-3 w-3" />
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Disponibilidade */}
