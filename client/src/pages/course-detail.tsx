@@ -18,7 +18,8 @@ import {
   Star,
   Download,
   Share2,
-  User
+  User,
+  FileText
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
 
@@ -48,11 +49,22 @@ interface CourseModule {
   courseId: string;
   title: string;
   description: string | null;
-  content: string | null;
+  content: {
+    blocks: Array<{
+      id: string;
+      type: string;
+      title: string;
+      content?: string;
+      url?: string;
+      embedCode?: string;
+      formFields?: any[];
+    }>;
+  } | null;
   videoUrl: string | null;
   orderIndex: number;
   duration: number | null;
   isRequired: boolean;
+  learningObjectives?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -347,35 +359,145 @@ export default function CourseDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {modules?.map((module, index) => (
-                      <div key={module.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="space-y-6">
+                    {modules?.map((module, index) => {
+                      const isCompleted = userProgress?.completedModules?.includes(module.id);
+                      const contentBlocks = module.content?.blocks || [];
+                      const hasVideo = contentBlocks.some(block => block.type === 'video');
+                      const hasQuiz = contentBlocks.some(block => block.type === 'form');
+                      const hasPDF = contentBlocks.some(block => block.type === 'pdf');
+                      const hasText = contentBlocks.some(block => block.type === 'text');
+                      const hasImage = contentBlocks.some(block => block.type === 'image');
+                      
+                      return (
+                        <div key={module.id} className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start space-x-4">
+                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg font-semibold flex-shrink-0">
                               {index + 1}
                             </div>
-                            <div>
-                              <h3 className="font-medium text-gray-900">{module.title}</h3>
-                              {module.description && (
-                                <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+                            <div className="flex-1 space-y-3">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-gray-900">{module.title}</h3>
+                                  {module.description && (
+                                    <p className="text-gray-600 mt-1">{module.description}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                  {module.duration && (
+                                    <span className="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{formatDuration(module.duration)}</span>
+                                    </span>
+                                  )}
+                                  {isCompleted && (
+                                    <span className="flex items-center space-x-1 bg-green-100 text-green-700 px-2 py-1 rounded">
+                                      <CheckCircle className="w-3 h-3" />
+                                      <span>Concluído</span>
+                                    </span>
+                                  )}
+                                  {module.isRequired && (
+                                    <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs">
+                                      Obrigatório
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Module Content Summary */}
+                              {contentBlocks.length > 0 && (
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                  <h4 className="text-sm font-medium text-gray-800 mb-3">Conteúdo do Módulo:</h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                    {hasText && (
+                                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                        <FileText className="w-4 h-4 text-blue-500" />
+                                        <span>Texto</span>
+                                      </div>
+                                    )}
+                                    {hasImage && (
+                                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                        <img className="w-4 h-4 text-green-500" />
+                                        <span>Imagens</span>
+                                      </div>
+                                    )}
+                                    {hasVideo && (
+                                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                        <PlayCircle className="w-4 h-4 text-red-500" />
+                                        <span>Vídeo</span>
+                                      </div>
+                                    )}
+                                    {hasPDF && (
+                                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                        <Download className="w-4 h-4 text-purple-500" />
+                                        <span>PDF</span>
+                                      </div>
+                                    )}
+                                    {hasQuiz && (
+                                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                        <Target className="w-4 h-4 text-orange-500" />
+                                        <span>Exercício</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Learning Objectives for Module */}
+                                  {module.learningObjectives && module.learningObjectives.length > 0 && (
+                                    <div className="mt-4 pt-3 border-t border-gray-200">
+                                      <h5 className="text-sm font-medium text-gray-800 mb-2">Objetivos do Módulo:</h5>
+                                      <ul className="text-sm text-gray-600 space-y-1">
+                                        {module.learningObjectives.slice(0, 3).map((objective, objIndex) => (
+                                          <li key={objIndex} className="flex items-start space-x-2">
+                                            <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
+                                            <span>{objective}</span>
+                                          </li>
+                                        ))}
+                                        {module.learningObjectives.length > 3 && (
+                                          <li className="text-blue-600 text-xs">
+                                            +{module.learningObjectives.length - 3} objetivos adicionais
+                                          </li>
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Content Blocks Count */}
+                                  <div className="mt-3 pt-3 border-t border-gray-200">
+                                    <p className="text-xs text-gray-500">
+                                      {contentBlocks.length} {contentBlocks.length === 1 ? 'item de conteúdo' : 'itens de conteúdo'}
+                                    </p>
+                                  </div>
+                                </div>
                               )}
+
+                              {/* Module Actions */}
+                              <div className="flex items-center justify-between pt-2">
+                                <div className="text-xs text-gray-500">
+                                  Módulo {module.orderIndex} de {modules.length}
+                                </div>
+                                {isStarted && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => navigate(`/courses/${courseId}/progress`)}
+                                  >
+                                    {isCompleted ? 'Revisar' : 'Continuar'}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2 text-sm text-gray-500">
-                            {module.duration && (
-                              <span className="flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>{formatDuration(module.duration)}</span>
-                              </span>
-                            )}
-                            {userProgress?.completedModules?.includes(module.id) && (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            )}
-                          </div>
                         </div>
+                      );
+                    })}
+                    
+                    {(!modules || modules.length === 0) && (
+                      <div className="text-center py-8 text-gray-500">
+                        <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-lg font-medium">Nenhum módulo disponível</p>
+                        <p className="text-sm">Os módulos serão exibidos aqui quando adicionados ao curso.</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
