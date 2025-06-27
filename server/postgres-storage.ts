@@ -781,10 +781,20 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
-  async deleteCourseModule(id: string): Promise<boolean> {
+  async deleteCourseModule(id: string, courseId?: string): Promise<boolean> {
+    let whereCondition = eq(courseModules.id, id);
+    
+    // Se courseId foi fornecido, adicionar verificação de segurança
+    if (courseId) {
+      whereCondition = and(
+        eq(courseModules.id, id),
+        eq(courseModules.courseId, courseId)
+      );
+    }
+    
     const result = await db
       .delete(courseModules)
-      .where(eq(courseModules.id, id));
+      .where(whereCondition);
     return result.rowCount! > 0;
   }
 
