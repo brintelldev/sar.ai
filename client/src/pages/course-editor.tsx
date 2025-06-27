@@ -361,7 +361,7 @@ export function CourseEditor() {
                       <Input
                         id="title"
                         name="title"
-                        defaultValue={course.title}
+                        defaultValue={course?.title || ''}
                         required
                       />
                     </div>
@@ -371,7 +371,7 @@ export function CourseEditor() {
                       <Textarea
                         id="description"
                         name="description"
-                        defaultValue={course.description}
+                        defaultValue={course?.description || ''}
                         rows={4}
                         required
                       />
@@ -380,9 +380,9 @@ export function CourseEditor() {
                     <div className="grid grid-cols-3 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="category">Categoria</Label>
-                        <Select name="category" defaultValue={course.category} required>
+                        <Select name="category" defaultValue={course?.category || ''} required>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Selecione uma categoria" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="tecnologia">Tecnologia</SelectItem>
@@ -396,9 +396,9 @@ export function CourseEditor() {
                       
                       <div className="grid gap-2">
                         <Label htmlFor="level">Nível</Label>
-                        <Select name="level" defaultValue={course.level} required>
+                        <Select name="level" defaultValue={course?.level || ''} required>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Selecione um nível" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="iniciante">Iniciante</SelectItem>
@@ -413,7 +413,7 @@ export function CourseEditor() {
                         <Input
                           id="duration"
                           name="duration"
-                          defaultValue={course.duration}
+                          defaultValue={course?.duration ? `${Math.floor(course.duration / 3600)} horas` : ''}
                           placeholder="Ex: 4 horas"
                           required
                         />
@@ -425,7 +425,7 @@ export function CourseEditor() {
                       <Textarea
                         id="learningObjectives"
                         name="learningObjectives"
-                        defaultValue={course.learningObjectives?.join('\n') || ''}
+                        defaultValue={course?.learningObjectives?.join('\n') || ''}
                         placeholder="Digite um objetivo por linha..."
                         rows={5}
                       />
@@ -438,7 +438,7 @@ export function CourseEditor() {
                       <Switch 
                         id="certificateEnabled" 
                         name="certificateEnabled"
-                        defaultChecked={course.certificateEnabled}
+                        defaultChecked={course?.certificateEnabled || false}
                       />
                       <Label htmlFor="certificateEnabled">Habilitar certificado de conclusão</Label>
                     </div>
