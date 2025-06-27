@@ -237,7 +237,7 @@ export function ModuleEditor() {
           <div>
             <h1 className="text-2xl font-bold">Editor de Módulos</h1>
             <p className="text-muted-foreground">
-              Gerencie o conteúdo dos módulos do curso: {course?.title}
+              Gerencie o conteúdo dos módulos do curso: {course?.title || 'Carregando...'}
             </p>
           </div>
         </div>
