@@ -24,6 +24,15 @@ interface CourseModule {
   isRequired: boolean;
 }
 
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  level: string;
+  status: string;
+}
+
 interface ContentBlock {
   id: string;
   type: 'text' | 'image' | 'video' | 'pdf' | 'form' | 'embed';
@@ -61,7 +70,7 @@ export function ModuleEditor() {
   });
 
   // Get course details
-  const { data: course } = useQuery({
+  const { data: course } = useQuery<Course>({
     queryKey: ['/api/courses', courseId],
     queryFn: () => apiRequest(`/api/courses/${courseId}`),
     enabled: !!courseId
