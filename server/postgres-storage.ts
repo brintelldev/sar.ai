@@ -111,8 +111,54 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
-    const result = await db.update(users).set(updates).where(eq(users.id, id)).returning();
-    return result[0];
+    // Primeiro, atualiza o usuário
+    const result = await db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    const updatedUser = result[0];
+    
+    // Se o usuário foi atualizado e há mudanças de nome, email ou telefone, sincroniza com beneficiários e voluntários
+    if (updatedUser && (updates.name || updates.email || updates.phone)) {
+      
+      // Sincroniza com tabela de beneficiários
+      if (updates.name || updates.email) {
+        const beneficiaryUpdates: Partial<Beneficiary> = {};
+        if (updates.name) beneficiaryUpdates.name = updates.name;
+        if (updates.email) beneficiaryUpdates.email = updates.email;
+        
+        if (Object.keys(beneficiaryUpdates).length > 0) {
+          beneficiaryUpdates.updatedAt = new Date();
+          await db
+            .update(beneficiaries)
+            .set(beneficiaryUpdates)
+            .where(eq(beneficiaries.userId, id));
+        }
+      }
+      
+      // Sincroniza com tabela de voluntários
+      if (updates.name || updates.email || updates.phone) {
+        const volunteerUpdates: Partial<Volunteer> = {};
+        if (updates.name) volunteerUpdates.name = updates.name;
+        if (updates.email) volunteerUpdates.email = updates.email;
+        if (updates.phone) volunteerUpdates.phone = updates.phone;
+        
+        if (Object.keys(volunteerUpdates).length > 0) {
+          volunteerUpdates.updatedAt = new Date();
+          await db
+            .update(volunteers)
+            .set(volunteerUpdates)
+            .where(eq(volunteers.userId, id));
+        }
+      }
+    }
+    
+    return updatedUser;
   }
 
   // Organization operations
@@ -287,12 +333,35 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateBeneficiary(id: string, organizationId: string, updates: Partial<Beneficiary>): Promise<Beneficiary | undefined> {
+    // Primeiro, atualiza o beneficiário
     const result = await db
       .update(beneficiaries)
-      .set(updates)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
       .where(and(eq(beneficiaries.id, id), eq(beneficiaries.organizationId, organizationId)))
       .returning();
-    return result[0];
+    
+    const updatedBeneficiary = result[0];
+    
+    // Se o beneficiário tem um userId associado, sincroniza os dados com a tabela users
+    if (updatedBeneficiary?.userId && (updates.name || updates.email)) {
+      const userUpdates: Partial<User> = {};
+      
+      if (updates.name) userUpdates.name = updates.name;
+      if (updates.email) userUpdates.email = updates.email;
+      
+      if (Object.keys(userUpdates).length > 0) {
+        userUpdates.updatedAt = new Date();
+        await db
+          .update(users)
+          .set(userUpdates)
+          .where(eq(users.id, updatedBeneficiary.userId));
+      }
+    }
+    
+    return updatedBeneficiary;
   }
 
   // Volunteers
@@ -340,12 +409,36 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateVolunteer(id: string, organizationId: string, updates: Partial<Volunteer>): Promise<Volunteer | undefined> {
+    // Primeiro, atualiza o voluntário
     const result = await db
       .update(volunteers)
-      .set(updates)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
       .where(and(eq(volunteers.id, id), eq(volunteers.organizationId, organizationId)))
       .returning();
-    return result[0];
+    
+    const updatedVolunteer = result[0];
+    
+    // Se o voluntário tem um userId associado, sincroniza os dados com a tabela users
+    if (updatedVolunteer?.userId && (updates.name || updates.email || updates.phone)) {
+      const userUpdates: Partial<User> = {};
+      
+      if (updates.name) userUpdates.name = updates.name;
+      if (updates.email) userUpdates.email = updates.email;
+      if (updates.phone) userUpdates.phone = updates.phone;
+      
+      if (Object.keys(userUpdates).length > 0) {
+        userUpdates.updatedAt = new Date();
+        await db
+          .update(users)
+          .set(userUpdates)
+          .where(eq(users.id, updatedVolunteer.userId));
+      }
+    }
+    
+    return updatedVolunteer;
   }
 
   // Donations
