@@ -92,7 +92,7 @@ export default function Beneficiaries() {
   const form = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
       name: insertBeneficiarySchema.shape.name.min(1, 'Nome é obrigatório'),
-      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de atendimento é obrigatório'),
+      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de beneficiário é obrigatório'),
     })),
     defaultValues: {
       name: '',
@@ -120,7 +120,7 @@ export default function Beneficiaries() {
   const editForm = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
       name: insertBeneficiarySchema.shape.name.min(1, 'Nome é obrigatório'),
-      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de atendimento é obrigatório'),
+      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de beneficiário é obrigatório'),
     })),
     defaultValues: {
       name: '',
@@ -324,7 +324,7 @@ export default function Beneficiaries() {
                           name="registrationNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Código de Atendimento</FormLabel>
+                              <FormLabel>Código de Beneficiário</FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
@@ -527,7 +527,7 @@ export default function Beneficiaries() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome ou código de atendimento..."
+                placeholder="Buscar por nome ou código de beneficiário..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
@@ -932,7 +932,7 @@ export default function Beneficiaries() {
                           name="registrationNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Código de Atendimento *</FormLabel>
+                              <FormLabel>Código de Beneficiário *</FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
