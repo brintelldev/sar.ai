@@ -1250,9 +1250,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
     try {
-      const success = await storage.deleteCourseModule(req.params.moduleId);
+      // Verificar se o curso pertence à organização do usuário
+      const course = await storage.getCourse(req.params.courseId, req.session.organizationId!);
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      
+      // Tentar excluir o módulo com validação de segurança
+      const success = await storage.deleteCourseModule(req.params.moduleId, req.params.courseId);
       if (!success) {
-        return res.status(404).json({ message: "Módulo não encontrado" });
+        return res.status(404).json({ message: "Módulo não encontrado ou não pertence a este curso" });
       }
       res.status(204).send();
     } catch (error) {

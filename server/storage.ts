@@ -99,7 +99,7 @@ export interface IStorage {
   getCourseModules(courseId: string): Promise<CourseModule[]>;
   createCourseModule(module: InsertCourseModule): Promise<CourseModule>;
   updateCourseModule(id: string, updates: Partial<CourseModule>): Promise<CourseModule | undefined>;
-  deleteCourseModule(id: string): Promise<boolean>;
+  deleteCourseModule(id: string, courseId?: string): Promise<boolean>;
 
   // User Course Progress
   getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | undefined>;
@@ -309,7 +309,7 @@ export class MemStorage implements IStorage {
   async getCourseModules(courseId: string): Promise<CourseModule[]> { return []; }
   async createCourseModule(module: InsertCourseModule): Promise<CourseModule> { throw new Error("Not implemented in MemStorage"); }
   async updateCourseModule(id: string, updates: Partial<CourseModule>): Promise<CourseModule | undefined> { return undefined; }
-  async deleteCourseModule(id: string): Promise<boolean> { return false; }
+  async deleteCourseModule(id: string, courseId?: string): Promise<boolean> { return false; }
 
   async getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | undefined> { return undefined; }
   async updateUserCourseProgress(userId: string, courseId: string, updates: Partial<UserCourseProgress>): Promise<UserCourseProgress> { throw new Error("Not implemented in MemStorage"); }
