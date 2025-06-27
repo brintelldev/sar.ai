@@ -60,7 +60,7 @@ export function ModuleEditor() {
   const { toast } = useToast();
   
   const [modules, setModules] = useState<CourseModule[]>([]);
-  const [currentModule, setCurrentModule] = useState<CourseModule | null>(null);
+  const [currentModule, setCurrentModule] = useState<Partial<CourseModule> | null>(null);
   const [isEditingModule, setIsEditingModule] = useState(false);
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
 
@@ -150,15 +150,14 @@ export function ModuleEditor() {
     const newModule = {
       title: "Novo Módulo",
       description: "",
-      order: modules.length + 1,
+      orderIndex: modules.length + 1,
       content: { blocks: [] },
       videoUrl: null,
       materials: [],
       duration: 30,
-      isRequired: true,
-      learningObjectives: []
+      isRequired: true
     };
-    setCurrentModule(newModule as CourseModule);
+    setCurrentModule(newModule as Partial<CourseModule>);
     setContentBlocks([]);
     setIsEditingModule(true);
   };
@@ -177,11 +176,11 @@ export function ModuleEditor() {
       title: currentModule.title,
       description: currentModule.description,
       duration: currentModule.duration || 30,
+      orderIndex: (currentModule as any).orderIndex || modules.length + 1,
       content: { blocks: contentBlocks },
       videoUrl: currentModule.videoUrl,
       materials: currentModule.materials,
       isRequired: currentModule.isRequired !== undefined ? currentModule.isRequired : true,
-      learningObjectives: currentModule.learningObjectives || [],
       ...(currentModule.id ? {} : { courseId })
     };
 
