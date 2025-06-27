@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -10,14 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { 
   Save, 
-  Plus, 
   ArrowLeft,
   Upload,
   Youtube,
@@ -25,15 +23,7 @@ import {
   Video,
   File,
   Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Play,
   Settings,
-  Users,
-  CheckCircle,
-  Clock,
   BookOpen
 } from "lucide-react";
 
@@ -68,9 +58,6 @@ export function CourseEditor() {
   const [, params] = useRoute("/course-admin/:id");
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("info");
-  const [isModuleDialogOpen, setIsModuleDialogOpen] = useState(false);
-  const [editingModule, setEditingModule] = useState<CourseModule | null>(null);
-  const [draggedModule, setDraggedModule] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -99,163 +86,25 @@ export function CourseEditor() {
     }
   });
 
-  const createModuleMutation = useMutation({
-    mutationFn: (moduleData: any) => apiRequest(`/api/courses/${courseId}/modules`, 'POST', moduleData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
-      setIsModuleDialogOpen(false);
-      setEditingModule(null);
-      toast({
-        title: "Módulo criado",
-        description: "O módulo foi adicionado ao curso."
-      });
-    }
-  });
-
-  const updateModuleMutation = useMutation({
-    mutationFn: ({ moduleId, data }: { moduleId: string; data: any }) => 
-      apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'PATCH', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
-      setIsModuleDialogOpen(false);
-      setEditingModule(null);
-      toast({
-        title: "Módulo atualizado",
-        description: "As alterações foram salvas."
-      });
-    }
-  });
-
-  const deleteModuleMutation = useMutation({
-    mutationFn: (moduleId: string) => apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'DELETE'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
-      toast({
-        title: "Módulo removido",
-        description: "O módulo foi excluído do curso."
-      });
-    }
-  });
-
-  const reorderModulesMutation = useMutation({
-    mutationFn: (moduleIds: string[]) => 
-      apiRequest(`/api/courses/${courseId}/modules/reorder`, 'PUT', { moduleIds }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
-      toast({
-        title: "Módulos reordenados",
-        description: "A ordem dos módulos foi atualizada."
-      });
-    }
-  });
-
   const handleSaveCourse = (formData: FormData) => {
-    const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      category: formData.get('category'),
-      level: formData.get('level'),
-      duration: formData.get('duration'),
-      certificateEnabled: formData.get('certificateEnabled') === 'on',
-      learningObjectives: formData.get('learningObjectives')?.toString().split('\n').filter(obj => obj.trim())
+    const courseData = {
+      title: formData.get("title") as string,
+      description: formData.get("description") as string,
+      category: formData.get("category") as string,
+      level: formData.get("level") as string,
+      duration: formData.get("duration") as string,
+      certificateEnabled: formData.get("certificateEnabled") === "on",
+      learningObjectives: formData.get("objectives")?.toString().split('\n').filter(obj => obj.trim())
     };
-
-    updateCourseMutation.mutate(data);
-  };
-
-  const handleSaveModule = (formData: FormData) => {
-    const moduleData = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      content: formData.get('content'),
-      contentType: formData.get('contentType'),
-      videoUrl: formData.get('videoUrl'),
-      duration: formData.get('duration'),
-      isRequired: formData.get('isRequired') === 'on',
-      isPublished: formData.get('isPublished') === 'on',
-      orderIndex: modules?.length || 0
-    };
-
-    if (editingModule) {
-      updateModuleMutation.mutate({ moduleId: editingModule.id, data: moduleData });
-    } else {
-      createModuleMutation.mutate(moduleData);
-    }
-  };
-
-  const handlePublishCourse = () => {
-    updateCourseMutation.mutate({ status: 'published' });
-  };
-
-  const handleUnpublishCourse = () => {
-    updateCourseMutation.mutate({ status: 'draft' });
-  };
-
-  const handleDeleteModule = (moduleId: string) => {
-    if (confirm('Tem certeza que deseja excluir este módulo?')) {
-      deleteModuleMutation.mutate(moduleId);
-    }
-  };
-
-  const handleDragStart = (e: React.DragEvent, module: CourseModule) => {
-    setDraggedModule(module);
-    e.dataTransfer.effectAllowed = 'move';
-    dragCounter.current = 0;
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounter.current++;
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    dragCounter.current--;
-  };
-
-  const handleDrop = (e: React.DragEvent, targetModule: CourseModule) => {
-    e.preventDefault();
-    dragCounter.current = 0;
-
-    if (!draggedModule || draggedModule.id === targetModule.id) {
-      setDraggedModule(null);
-      return;
-    }
-
-    const modulesList = Array.isArray(modules) ? [...modules] : [];
-    const draggedIndex = modulesList.findIndex(m => m.id === draggedModule.id);
-    const targetIndex = modulesList.findIndex(m => m.id === targetModule.id);
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedModule(null);
-      return;
-    }
-
-    // Reordenar a lista
-    const [removed] = modulesList.splice(draggedIndex, 1);
-    modulesList.splice(targetIndex, 0, removed);
-
-    // Extrair apenas os IDs na nova ordem
-    const newOrder = modulesList.map(m => m.id);
     
-    reorderModulesMutation.mutate(newOrder);
-    setDraggedModule(null);
+    updateCourseMutation.mutate(courseData);
   };
-
-  const modulesList = Array.isArray(modules) ? modules : [];
 
   if (isLoading) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Carregando curso...</p>
-          </div>
+          <div className="text-lg">Carregando curso...</div>
         </div>
       </MainLayout>
     );
@@ -265,70 +114,34 @@ export function CourseEditor() {
     return (
       <MainLayout>
         <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900">Curso não encontrado</h2>
-          <Button 
-            onClick={() => navigate('/course-admin')}
-            className="mt-4"
-          >
-            Voltar à administração
+          <h2 className="text-xl font-semibold mb-4">Curso não encontrado</h2>
+          <Button onClick={() => navigate('/admin/courses')}>
+            Voltar para Cursos
           </Button>
         </div>
       </MainLayout>
     );
   }
 
+  const modulesList = Array.isArray(modules) ? modules : [];
+
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/course-admin')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
-              <p className="text-gray-600 mt-1 mb-2">Edite as informações do curso e gerencie seus módulos de conteúdo</p>
-              <div className="flex items-center gap-3">
-                <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                  {course.status === 'published' ? 'Publicado' : 'Rascunho'}
-                </Badge>
-                <span className="text-gray-600">Categoria: {course.category}</span>
-                <span className="text-gray-600">Nível: {course.level}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/courses/${course.id}`)}
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
-            </Button>
-            {course.status === 'draft' ? (
-              <Button
-                onClick={handlePublishCourse}
-                disabled={updateCourseMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Publicar Curso
-              </Button>
-            ) : (
-              <Button
-                onClick={handleUnpublishCourse}
-                disabled={updateCourseMutation.isPending}
-                variant="outline"
-              >
-                <EyeOff className="w-4 h-4 mr-2" />
-                Despublicar
-              </Button>
-            )}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/admin/courses')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para Cursos
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Editar Curso</h1>
+            <p className="text-muted-foreground">
+              Configure as informações e módulos do curso
+            </p>
           </div>
         </div>
 
@@ -340,13 +153,13 @@ export function CourseEditor() {
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
-          {/* Course Information Tab */}
+          {/* Basic Information Tab */}
           <TabsContent value="info" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
+                <CardTitle>Informações do Curso</CardTitle>
                 <CardDescription>
-                  Configure as informações principais do curso
+                  Configure as informações básicas do curso
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -354,14 +167,15 @@ export function CourseEditor() {
                   e.preventDefault();
                   const formData = new FormData(e.target as HTMLFormElement);
                   handleSaveCourse(formData);
-                }}>
-                  <div className="grid gap-6">
+                }} className="space-y-6">
+                  <div className="grid gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="title">Título do Curso</Label>
                       <Input
                         id="title"
                         name="title"
-                        defaultValue={course?.title || ''}
+                        defaultValue={course.title}
+                        placeholder="Ex: Introdução à Tecnologia"
                         required
                       />
                     </div>
@@ -371,7 +185,8 @@ export function CourseEditor() {
                       <Textarea
                         id="description"
                         name="description"
-                        defaultValue={course?.description || ''}
+                        defaultValue={course.description}
+                        placeholder="Descreva o conteúdo e objetivos do curso..."
                         rows={4}
                         required
                       />
@@ -380,7 +195,7 @@ export function CourseEditor() {
                     <div className="grid grid-cols-3 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="category">Categoria</Label>
-                        <Select name="category" defaultValue={course?.category || ''} required>
+                        <Select name="category" defaultValue={course.category || ''} required>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione uma categoria" />
                           </SelectTrigger>
@@ -396,7 +211,7 @@ export function CourseEditor() {
                       
                       <div className="grid gap-2">
                         <Label htmlFor="level">Nível</Label>
-                        <Select name="level" defaultValue={course?.level || ''} required>
+                        <Select name="level" defaultValue={course.level || ''} required>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um nível" />
                           </SelectTrigger>
@@ -413,7 +228,7 @@ export function CourseEditor() {
                         <Input
                           id="duration"
                           name="duration"
-                          defaultValue={course?.duration ? `${Math.floor(course.duration / 3600)} horas` : ''}
+                          defaultValue={course.duration ? `${Math.floor(Number(course.duration) / 3600)} horas` : ''}
                           placeholder="Ex: 4 horas"
                           required
                         />
@@ -421,24 +236,24 @@ export function CourseEditor() {
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="learningObjectives">Objetivos de Aprendizagem</Label>
+                      <Label htmlFor="objectives">Objetivos de Aprendizagem</Label>
                       <Textarea
-                        id="learningObjectives"
-                        name="learningObjectives"
-                        defaultValue={course?.learningObjectives?.join('\n') || ''}
-                        placeholder="Digite um objetivo por linha..."
-                        rows={5}
+                        id="objectives"
+                        name="objectives"
+                        defaultValue={course.learningObjectives?.join('\n') || ''}
+                        placeholder="Liste os objetivos de aprendizagem (um por linha)..."
+                        rows={4}
                       />
                       <p className="text-sm text-gray-500">
-                        Digite cada objetivo em uma linha separada
+                        Digite um objetivo por linha
                       </p>
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <Switch 
-                        id="certificateEnabled" 
+                      <Switch
+                        id="certificateEnabled"
                         name="certificateEnabled"
-                        defaultChecked={course?.certificateEnabled || false}
+                        defaultChecked={course.certificateEnabled || false}
                       />
                       <Label htmlFor="certificateEnabled">Habilitar certificado de conclusão</Label>
                     </div>
@@ -465,229 +280,90 @@ export function CourseEditor() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Módulos do Curso</CardTitle>
+                    <CardTitle>Editor Avançado de Módulos</CardTitle>
                     <CardDescription>
-                      Organize o conteúdo em módulos sequenciais
+                      Use o editor completo para criar módulos com múltiplos tipos de conteúdo
                     </CardDescription>
                   </div>
                   
-                  <Dialog open={isModuleDialogOpen} onOpenChange={setIsModuleDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Novo Módulo
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingModule ? 'Editar Módulo' : 'Criar Novo Módulo'}
-                        </DialogTitle>
-                        <DialogDescription>
-                          Configure o conteúdo e materiais do módulo
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.target as HTMLFormElement);
-                        handleSaveModule(formData);
-                      }}>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="module-title">Título do Módulo</Label>
-                            <Input
-                              id="module-title"
-                              name="title"
-                              defaultValue={editingModule?.title || ''}
-                              placeholder="Ex: Introdução aos Smartphones"
-                              required
-                            />
-                          </div>
-                          
-                          <div className="grid gap-2">
-                            <Label htmlFor="module-description">Descrição</Label>
-                            <Textarea
-                              id="module-description"
-                              name="description"
-                              defaultValue={editingModule?.description || ''}
-                              placeholder="Descreva o que será aprendido neste módulo..."
-                              rows={3}
-                              required
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                              <Label htmlFor="contentType">Tipo de Conteúdo</Label>
-                              <Select name="contentType" defaultValue={editingModule?.contentType || 'text'} required>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="text">Texto Explicativo</SelectItem>
-                                  <SelectItem value="youtube">Vídeo YouTube</SelectItem>
-                                  <SelectItem value="vimeo">Vídeo Vimeo</SelectItem>
-                                  <SelectItem value="pdf">Documento PDF</SelectItem>
-                                  <SelectItem value="video">Upload de Vídeo</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="grid gap-2">
-                              <Label htmlFor="module-duration">Duração</Label>
-                              <Input
-                                id="module-duration"
-                                name="duration"
-                                defaultValue={editingModule?.duration || ''}
-                                placeholder="Ex: 30 min"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid gap-2">
-                            <Label htmlFor="videoUrl">URL do Vídeo (YouTube/Vimeo)</Label>
-                            <Input
-                              id="videoUrl"
-                              name="videoUrl"
-                              defaultValue={editingModule?.videoUrl || ''}
-                              placeholder="https://www.youtube.com/watch?v=..."
-                            />
-                          </div>
-                          
-                          <div className="grid gap-2">
-                            <Label htmlFor="module-content">Conteúdo do Módulo</Label>
-                            <Textarea
-                              id="module-content"
-                              name="content"
-                              defaultValue={editingModule?.content || ''}
-                              placeholder="Escreva o conteúdo textual do módulo..."
-                              rows={8}
-                              required
-                            />
-                            <p className="text-sm text-gray-500">
-                              Suporte básico para formatação em texto simples
-                            </p>
-                          </div>
-                          
-                          <Separator />
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <Switch 
-                                id="isRequired" 
-                                name="isRequired"
-                                defaultChecked={editingModule?.isRequired ?? true}
-                              />
-                              <Label htmlFor="isRequired">Módulo obrigatório</Label>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <Switch 
-                                id="isPublished" 
-                                name="isPublished"
-                                defaultChecked={editingModule?.isPublished ?? true}
-                              />
-                              <Label htmlFor="isPublished">Publicar módulo</Label>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <DialogFooter>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setIsModuleDialogOpen(false);
-                              setEditingModule(null);
-                            }}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            disabled={createModuleMutation.isPending || updateModuleMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            {editingModule ? "Atualizar Módulo" : "Criar Módulo"}
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    onClick={() => navigate(`/admin/courses/${courseId}/modules`)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Abrir Editor de Módulos
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                {modulesList.length === 0 ? (
-                  <div className="text-center py-12">
-                    <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum módulo criado</h3>
-                    <p className="text-gray-600 mb-4">Comece adicionando módulos ao seu curso.</p>
-                    <Button 
-                      onClick={() => setIsModuleDialogOpen(true)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Primeiro Módulo
-                    </Button>
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Editor de Módulos Avançado
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    Crie módulos ricos com texto, imagens, vídeos, PDFs, formulários e conteúdo incorporado.
+                    O novo editor permite inserir quantos blocos de conteúdo desejar em cada módulo.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-6">
+                    <div className="text-center">
+                      <FileText className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">Texto Rico</span>
+                    </div>
+                    <div className="text-center">
+                      <Upload className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">Imagens</span>
+                    </div>
+                    <div className="text-center">
+                      <Video className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">Vídeos</span>
+                    </div>
+                    <div className="text-center">
+                      <File className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">PDFs</span>
+                    </div>
+                    <div className="text-center">
+                      <Settings className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">Formulários</span>
+                    </div>
+                    <div className="text-center">
+                      <Youtube className="h-8 w-8 text-pink-500 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">Embeds</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {modulesList
-                      .sort((a, b) => a.orderIndex - b.orderIndex)
-                      .map((module, index) => (
-                        <div 
-                          key={module.id} 
-                          className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
-                              <div className="flex items-center gap-2">
-                                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded">
-                                  {index + 1}
-                                </span>
-                                {module.contentType === 'youtube' && <Youtube className="w-4 h-4 text-red-600" />}
-                                {module.contentType === 'video' && <Video className="w-4 h-4 text-purple-600" />}
-                                {module.contentType === 'pdf' && <File className="w-4 h-4 text-red-600" />}
-                                {module.contentType === 'text' && <FileText className="w-4 h-4 text-blue-600" />}
-                              </div>
-                              <div>
-                                <h4 className="font-semibold text-gray-900">{module.title}</h4>
-                                <p className="text-sm text-gray-600">{module.description}</p>
-                                <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                                  <span>{module.duration}</span>
-                                  {module.isRequired && <Badge variant="outline" className="text-xs">Obrigatório</Badge>}
-                                  {!module.isPublished && <Badge variant="secondary" className="text-xs">Rascunho</Badge>}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingModule(module);
-                                  setIsModuleDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => deleteModuleMutation.mutate(module.id)}
-                                disabled={deleteModuleMutation.isPending}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                  <Button 
+                    onClick={() => navigate(`/admin/courses/${courseId}/modules`)}
+                    size="lg"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    <Edit className="w-5 h-5 mr-2" />
+                    Começar a Editar Módulos
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Quick Stats */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{modulesList.length}</div>
+                    <div className="text-sm text-gray-500">Módulos Criados</div>
                   </div>
-                )}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {modulesList.filter(m => m.isRequired).length}
+                    </div>
+                    <div className="text-sm text-gray-500">Módulos Obrigatórios</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {modulesList.reduce((total, m) => total + (Number(m.duration) || 30), 0)} min
+                    </div>
+                    <div className="text-sm text-gray-500">Duração Total</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -722,7 +398,7 @@ export function CourseEditor() {
                         Gerar certificados automáticos na conclusão
                       </p>
                     </div>
-                    <Switch defaultChecked={course.certificateEnabled} />
+                    <Switch defaultChecked={course?.certificateEnabled} />
                   </div>
                   
                   <Separator />
@@ -735,23 +411,6 @@ export function CourseEditor() {
                       </p>
                     </div>
                     <Switch defaultChecked />
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">Nota Mínima para Aprovação</Label>
-                    <Select defaultValue="70">
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="60">60%</SelectItem>
-                        <SelectItem value="70">70%</SelectItem>
-                        <SelectItem value="80">80%</SelectItem>
-                        <SelectItem value="90">90%</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </CardContent>
