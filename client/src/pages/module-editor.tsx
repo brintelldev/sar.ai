@@ -22,6 +22,7 @@ interface CourseModule {
   materials: any;
   duration: number;
   isRequired: boolean;
+  learningObjectives?: string[];
 }
 
 interface Course {
@@ -154,7 +155,8 @@ export function ModuleEditor() {
       videoUrl: null,
       materials: [],
       duration: 30,
-      isRequired: true
+      isRequired: true,
+      learningObjectives: []
     };
     setCurrentModule(newModule as CourseModule);
     setContentBlocks([]);
@@ -179,6 +181,7 @@ export function ModuleEditor() {
       videoUrl: currentModule.videoUrl,
       materials: currentModule.materials,
       isRequired: currentModule.isRequired !== undefined ? currentModule.isRequired : true,
+      learningObjectives: currentModule.learningObjectives || [],
       ...(currentModule.id ? {} : { courseId })
     };
 
@@ -373,38 +376,20 @@ export function ModuleEditor() {
                     Esta apresentação será exibida aos alunos antes do conteúdo do módulo
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Duração (minutos)</label>
-                    <Input
-                      type="number"
-                      value={currentModule?.duration || 30}
-                      onChange={(e) => setCurrentModule(prev => prev ? { ...prev, duration: parseInt(e.target.value) || 30 } : null)}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Ordem</label>
-                    <Input
-                      type="number"
-                      value={currentModule?.order || 1}
-                      onChange={(e) => setCurrentModule(prev => prev ? { ...prev, order: parseInt(e.target.value) || 1 } : null)}
-                    />
-                  </div>
-                </div>
                 <div>
-                  <label className="text-sm font-medium">URL do Vídeo (YouTube/Vimeo)</label>
-                  <Input
-                    value={currentModule?.videoUrl || ''}
-                    onChange={(e) => setCurrentModule(prev => prev ? { ...prev, videoUrl: e.target.value } : null)}
-                    placeholder="https://youtube.com/watch?v=... ou https://vimeo.com/..."
+                  <label className="text-sm font-medium">Objetivos do Módulo</label>
+                  <Textarea
+                    value={currentModule?.learningObjectives?.join('\n') || ''}
+                    onChange={(e) => setCurrentModule(prev => prev ? { 
+                      ...prev, 
+                      learningObjectives: e.target.value.split('\n').filter(obj => obj.trim())
+                    } : null)}
+                    placeholder="Liste os objetivos de aprendizagem deste módulo (um por linha)..."
+                    className="min-h-[120px]"
                   />
-                  {currentModule?.videoUrl && extractVideoId(currentModule.videoUrl) && (
-                    <div className="mt-2 p-3 bg-accent rounded-lg">
-                      <p className="text-sm text-muted-foreground">
-                        ✅ Vídeo detectado: {extractVideoId(currentModule.videoUrl)?.platform}
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Digite um objetivo por linha. Estes objetivos serão exibidos aos alunos.
+                  </p>
                 </div>
               </CardContent>
             </Card>
