@@ -16,13 +16,12 @@ interface CourseModule {
   id: string;
   title: string;
   description: string;
-  order: number;
+  orderIndex: number;
   content: any;
   videoUrl: string | null;
   materials: any;
   duration: number;
   isRequired: boolean;
-  learningObjectives?: string[];
 }
 
 interface Course {
@@ -176,7 +175,7 @@ export function ModuleEditor() {
       title: currentModule.title,
       description: currentModule.description,
       duration: currentModule.duration || 30,
-      orderIndex: (currentModule as any).orderIndex || modules.length + 1,
+      orderIndex: currentModule.orderIndex || modules.length + 1,
       content: { blocks: contentBlocks },
       videoUrl: currentModule.videoUrl,
       materials: currentModule.materials,
@@ -282,14 +281,14 @@ export function ModuleEditor() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {modules.sort((a, b) => a.order - b.order).map((module) => (
+                {modules.sort((a, b) => a.orderIndex - b.orderIndex).map((module) => (
                   <Card key={module.id} className="cursor-pointer hover:bg-accent/50">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <CardTitle className="text-lg">{module.title}</CardTitle>
-                            <Badge variant="outline">Módulo {module.order}</Badge>
+                            <Badge variant="outline">Módulo {module.orderIndex}</Badge>
                             {module.isRequired && <Badge variant="default">Obrigatório</Badge>}
                           </div>
                           {module.description && (
@@ -375,21 +374,7 @@ export function ModuleEditor() {
                     Esta apresentação será exibida aos alunos antes do conteúdo do módulo
                   </p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Objetivos do Módulo</label>
-                  <Textarea
-                    value={currentModule?.learningObjectives?.join('\n') || ''}
-                    onChange={(e) => setCurrentModule(prev => prev ? { 
-                      ...prev, 
-                      learningObjectives: e.target.value.split('\n').filter(obj => obj.trim())
-                    } : null)}
-                    placeholder="Liste os objetivos de aprendizagem deste módulo (um por linha)..."
-                    className="min-h-[120px]"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Digite um objetivo por linha. Estes objetivos serão exibidos aos alunos.
-                  </p>
-                </div>
+
               </CardContent>
             </Card>
 
