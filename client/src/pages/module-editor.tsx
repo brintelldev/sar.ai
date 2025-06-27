@@ -141,7 +141,9 @@ export function ModuleEditor() {
 
   useEffect(() => {
     if (moduleData) {
-      setModules(Array.isArray(moduleData) ? moduleData : []);
+      const modulesList = Array.isArray(moduleData) ? moduleData : [];
+      console.log('Modules loaded:', modulesList);
+      setModules(modulesList);
     }
   }, [moduleData]);
 
@@ -162,9 +164,24 @@ export function ModuleEditor() {
   };
 
   const handleEditModule = (module: CourseModule) => {
-    setCurrentModule(module);
+    // Carregar dados específicos do módulo
+    const moduleToEdit = {
+      id: module.id,
+      title: module.title,
+      description: module.description,
+      orderIndex: module.orderIndex,
+      content: module.content,
+      videoUrl: module.videoUrl,
+      materials: module.materials,
+      duration: module.duration,
+      isRequired: module.isRequired
+    };
+    
+    setCurrentModule(moduleToEdit);
     setContentBlocks(module.content?.blocks || []);
     setIsEditingModule(true);
+    
+    console.log('Editing module:', moduleToEdit);
   };
 
   const handleSaveModule = () => {
@@ -358,9 +375,17 @@ export function ModuleEditor() {
                   <label className="text-sm font-medium">Nome do Módulo</label>
                   <Input
                     value={currentModule?.title || ''}
-                    onChange={(e) => setCurrentModule(prev => prev ? { ...prev, title: e.target.value } : null)}
+                    onChange={(e) => {
+                      console.log('Title change:', e.target.value);
+                      console.log('Current module before:', currentModule);
+                      setCurrentModule(prev => prev ? { ...prev, title: e.target.value } : null);
+                    }}
                     placeholder="Ex: Introdução ao Empreendedorismo Digital"
                   />
+                  {/* Debug info */}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Debug: {currentModule?.id ? 'Editando módulo existente' : 'Criando novo módulo'}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Apresentação do Módulo</label>
