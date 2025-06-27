@@ -224,6 +224,13 @@ function Router() {
           </AdminGuard>
         </ProtectedRoute>
       </Route>
+      <Route path="/admin/courses">
+        <ProtectedRoute>
+          <AdminGuard>
+            <CourseAdmin />
+          </AdminGuard>
+        </ProtectedRoute>
+      </Route>
       <Route path="/course-admin/:id">
         <ProtectedRoute>
           <CourseEditor />

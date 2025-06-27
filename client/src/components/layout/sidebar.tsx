@@ -45,7 +45,7 @@ const standardNavigation = [
   { name: "Voluntários", href: "/volunteers", icon: HandHeart },
   { name: "Doadores", href: "/donors", icon: Heart },
   { name: "Doações", href: "/donations", icon: DollarSign },
-  { name: "Capacitação", href: "/course-admin", icon: BookOpen },
+  { name: "Capacitação", href: "/admin/courses", icon: BookOpen },
   { name: "Site Whitelabel", href: "/whitelabel", icon: Globe },
   { name: "Contas a Receber", href: "/accounts-receivable", icon: Receipt },
   { name: "Contas a Pagar", href: "/accounts-payable", icon: CreditCard },

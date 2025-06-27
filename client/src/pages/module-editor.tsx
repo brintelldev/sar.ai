@@ -25,11 +25,23 @@ interface CourseModule {
 }
 
 interface ContentBlock {
-  type: 'text' | 'video' | 'file' | 'link';
-  content: string;
+  id: string;
+  type: 'text' | 'image' | 'video' | 'pdf' | 'form' | 'embed';
   title?: string;
+  content?: string;
   url?: string;
+  embedCode?: string;
+  formFields?: FormField[];
   metadata?: any;
+}
+
+interface FormField {
+  id: string;
+  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox';
+  label: string;
+  placeholder?: string;
+  options?: string[];
+  required: boolean;
 }
 
 export function ModuleEditor() {
@@ -165,10 +177,18 @@ export function ModuleEditor() {
 
   const addContentBlock = (type: ContentBlock['type']) => {
     const newBlock: ContentBlock = {
+      id: Date.now().toString(),
       type,
+      title: type === 'text' ? 'Texto' : 
+            type === 'image' ? 'Imagem' :
+            type === 'video' ? 'Vídeo' :
+            type === 'pdf' ? 'Arquivo PDF' :
+            type === 'form' ? 'Formulário de Exercício' :
+            type === 'embed' ? 'Conteúdo Incorporado' : 'Conteúdo',
       content: type === 'text' ? 'Digite seu conteúdo aqui...' : '',
-      title: type === 'file' ? 'Arquivo' : type === 'link' ? 'Link' : undefined,
-      url: type === 'video' || type === 'link' ? '' : undefined
+      url: type === 'image' || type === 'video' || type === 'pdf' ? '' : undefined,
+      embedCode: type === 'embed' ? '' : undefined,
+      formFields: type === 'form' ? [] : undefined
     };
     setContentBlocks([...contentBlocks, newBlock]);
   };
@@ -310,24 +330,31 @@ export function ModuleEditor() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Informações Básicas</CardTitle>
+                <CardTitle>Informações Básicas do Módulo</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure o nome, apresentação e informações gerais do módulo
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Título do Módulo</label>
+                  <label className="text-sm font-medium">Nome do Módulo</label>
                   <Input
                     value={currentModule?.title || ''}
                     onChange={(e) => setCurrentModule(prev => prev ? { ...prev, title: e.target.value } : null)}
-                    placeholder="Digite o título do módulo..."
+                    placeholder="Ex: Introdução ao Empreendedorismo Digital"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Descrição</label>
+                  <label className="text-sm font-medium">Apresentação do Módulo</label>
                   <Textarea
                     value={currentModule?.description || ''}
                     onChange={(e) => setCurrentModule(prev => prev ? { ...prev, description: e.target.value } : null)}
-                    placeholder="Descrição do módulo..."
+                    placeholder="Apresente o módulo aos alunos: objetivos, o que aprenderão, importância do conteúdo..."
+                    className="min-h-[120px]"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Esta apresentação será exibida aos alunos antes do conteúdo do módulo
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -386,6 +413,15 @@ export function ModuleEditor() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => addContentBlock('image')}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Adicionar Imagem
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => addContentBlock('video')}
                     className="flex items-center gap-2"
                   >
@@ -395,20 +431,29 @@ export function ModuleEditor() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => addContentBlock('file')}
+                    onClick={() => addContentBlock('pdf')}
                     className="flex items-center gap-2"
                   >
                     <Upload className="h-4 w-4" />
-                    Adicionar Arquivo
+                    Adicionar PDF
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => addContentBlock('link')}
+                    onClick={() => addContentBlock('embed')}
                     className="flex items-center gap-2"
                   >
                     <Link className="h-4 w-4" />
-                    Adicionar Link
+                    Incorporar Conteúdo
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addContentBlock('form')}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Criar Formulário
                   </Button>
                 </div>
 
@@ -421,80 +466,296 @@ export function ModuleEditor() {
                 ) : (
                   <div className="space-y-4">
                     {contentBlocks.map((block, index) => (
-                      <Card key={index} className="border-l-4 border-l-primary">
+                      <Card key={block.id} className="border-l-4 border-l-primary">
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
-                            <Badge variant="outline">{block.type}</Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{block.title}</Badge>
+                              <span className="text-sm text-muted-foreground">Bloco {index + 1}</span>
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => removeContentBlock(index)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                          {block.type === 'text' && (
-                            <Textarea
-                              value={block.content}
-                              onChange={(e) => updateContentBlock(index, { content: e.target.value })}
-                              placeholder="Digite o conteúdo de texto..."
-                              className="min-h-[100px]"
+                        <CardContent className="space-y-4">
+                          
+                          {/* Título do bloco */}
+                          <div>
+                            <label className="text-sm font-medium">Título do Bloco</label>
+                            <Input
+                              value={block.title || ''}
+                              onChange={(e) => updateContentBlock(index, { title: e.target.value })}
+                              placeholder="Digite o título deste bloco..."
                             />
+                          </div>
+
+                          {/* Bloco de Texto */}
+                          {block.type === 'text' && (
+                            <div>
+                              <label className="text-sm font-medium">Conteúdo de Texto</label>
+                              <Textarea
+                                value={block.content || ''}
+                                onChange={(e) => updateContentBlock(index, { content: e.target.value })}
+                                placeholder="Digite o conteúdo de texto aqui. Você pode usar formatação básica em Markdown..."
+                                className="min-h-[150px]"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Suporte para Markdown: **negrito**, *itálico*, # títulos, etc.
+                              </p>
+                            </div>
                           )}
+
+                          {/* Bloco de Imagem */}
+                          {block.type === 'image' && (
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-sm font-medium">URL da Imagem</label>
+                                <Input
+                                  value={block.url || ''}
+                                  onChange={(e) => updateContentBlock(index, { url: e.target.value })}
+                                  placeholder="https://exemplo.com/imagem.jpg"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium">Descrição da Imagem</label>
+                                <Textarea
+                                  value={block.content || ''}
+                                  onChange={(e) => updateContentBlock(index, { content: e.target.value })}
+                                  placeholder="Descreva a imagem para acessibilidade e contexto..."
+                                  rows={3}
+                                />
+                              </div>
+                              {block.url && (
+                                <div className="p-3 bg-muted rounded-lg">
+                                  <p className="text-sm text-muted-foreground mb-2">Preview:</p>
+                                  <img
+                                    src={block.url}
+                                    alt={block.content || 'Preview'}
+                                    className="max-w-full h-auto max-h-48 rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Bloco de Vídeo */}
                           {block.type === 'video' && (
-                            <div className="space-y-2">
-                              <Input
-                                value={block.url || ''}
-                                onChange={(e) => updateContentBlock(index, { url: e.target.value })}
-                                placeholder="URL do vídeo (YouTube, Vimeo)..."
-                              />
-                              <Textarea
-                                value={block.content}
-                                onChange={(e) => updateContentBlock(index, { content: e.target.value })}
-                                placeholder="Descrição ou transcrição do vídeo..."
-                              />
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-sm font-medium">URL do Vídeo</label>
+                                <Input
+                                  value={block.url || ''}
+                                  onChange={(e) => updateContentBlock(index, { url: e.target.value })}
+                                  placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Suporta YouTube, Vimeo e links de vídeo diretos
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium">Descrição do Vídeo</label>
+                                <Textarea
+                                  value={block.content || ''}
+                                  onChange={(e) => updateContentBlock(index, { content: e.target.value })}
+                                  placeholder="Descreva o conteúdo do vídeo, pontos principais a observar..."
+                                  rows={3}
+                                />
+                              </div>
+                              {block.url && extractVideoId(block.url) && (
+                                <div className="p-3 bg-accent rounded-lg">
+                                  <p className="text-sm text-muted-foreground">
+                                    ✅ Vídeo detectado: {extractVideoId(block.url)?.platform}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
-                          {block.type === 'file' && (
-                            <div className="space-y-2">
-                              <Input
-                                value={block.title || ''}
-                                onChange={(e) => updateContentBlock(index, { title: e.target.value })}
-                                placeholder="Nome do arquivo..."
-                              />
-                              <Input
-                                value={block.url || ''}
-                                onChange={(e) => updateContentBlock(index, { url: e.target.value })}
-                                placeholder="URL do arquivo (PDF, DOC, etc.)..."
-                              />
-                              <Textarea
-                                value={block.content}
-                                onChange={(e) => updateContentBlock(index, { content: e.target.value })}
-                                placeholder="Descrição do arquivo..."
-                              />
+
+                          {/* Bloco de PDF */}
+                          {block.type === 'pdf' && (
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-sm font-medium">URL do Arquivo PDF</label>
+                                <Input
+                                  value={block.url || ''}
+                                  onChange={(e) => updateContentBlock(index, { url: e.target.value })}
+                                  placeholder="https://exemplo.com/documento.pdf"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium">Descrição do Documento</label>
+                                <Textarea
+                                  value={block.content || ''}
+                                  onChange={(e) => updateContentBlock(index, { content: e.target.value })}
+                                  placeholder="Descreva o conteúdo do PDF, o que o aluno deve focar..."
+                                  rows={3}
+                                />
+                              </div>
+                              {block.url && (
+                                <div className="p-3 bg-muted rounded-lg">
+                                  <p className="text-sm text-muted-foreground">
+                                    📄 Documento PDF será incorporado no módulo
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
-                          {block.type === 'link' && (
-                            <div className="space-y-2">
-                              <Input
-                                value={block.title || ''}
-                                onChange={(e) => updateContentBlock(index, { title: e.target.value })}
-                                placeholder="Título do link..."
-                              />
-                              <Input
-                                value={block.url || ''}
-                                onChange={(e) => updateContentBlock(index, { url: e.target.value })}
-                                placeholder="URL do link..."
-                              />
-                              <Textarea
-                                value={block.content}
-                                onChange={(e) => updateContentBlock(index, { content: e.target.value })}
-                                placeholder="Descrição do link..."
-                              />
+
+                          {/* Bloco de Conteúdo Incorporado */}
+                          {block.type === 'embed' && (
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-sm font-medium">Código de Incorporação</label>
+                                <Textarea
+                                  value={block.embedCode || ''}
+                                  onChange={(e) => updateContentBlock(index, { embedCode: e.target.value })}
+                                  placeholder="Cole aqui o código HTML de incorporação (iframe, embed, etc.)"
+                                  rows={4}
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Por exemplo: código de incorporação do YouTube, Google Forms, apresentações, etc.
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium">Descrição do Conteúdo</label>
+                                <Textarea
+                                  value={block.content || ''}
+                                  onChange={(e) => updateContentBlock(index, { content: e.target.value })}
+                                  placeholder="Explique o que o aluno encontrará neste conteúdo incorporado..."
+                                  rows={2}
+                                />
+                              </div>
                             </div>
                           )}
+
+                          {/* Bloco de Formulário */}
+                          {block.type === 'form' && (
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-sm font-medium">Instruções do Exercício</label>
+                                <Textarea
+                                  value={block.content || ''}
+                                  onChange={(e) => updateContentBlock(index, { content: e.target.value })}
+                                  placeholder="Explique o exercício, o que o aluno deve fazer, critérios de avaliação..."
+                                  rows={3}
+                                />
+                              </div>
+                              
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <label className="text-sm font-medium">Campos do Formulário</label>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newField: FormField = {
+                                        id: Date.now().toString(),
+                                        type: 'text',
+                                        label: 'Nova pergunta',
+                                        required: false
+                                      };
+                                      const updatedFields = [...(block.formFields || []), newField];
+                                      updateContentBlock(index, { formFields: updatedFields });
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Adicionar Campo
+                                  </Button>
+                                </div>
+                                
+                                {block.formFields?.map((field, fieldIndex) => (
+                                  <Card key={field.id} className="p-3">
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-sm font-medium">Campo {fieldIndex + 1}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            const updatedFields = block.formFields?.filter((_, i) => i !== fieldIndex) || [];
+                                            updateContentBlock(index, { formFields: updatedFields });
+                                          }}
+                                        >
+                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className="text-xs">Tipo</label>
+                                          <select
+                                            value={field.type}
+                                            onChange={(e) => {
+                                              const updatedFields = [...(block.formFields || [])];
+                                              updatedFields[fieldIndex] = { ...field, type: e.target.value as FormField['type'] };
+                                              updateContentBlock(index, { formFields: updatedFields });
+                                            }}
+                                            className="w-full p-1 border rounded text-sm"
+                                          >
+                                            <option value="text">Texto</option>
+                                            <option value="textarea">Texto Longo</option>
+                                            <option value="select">Seleção</option>
+                                            <option value="radio">Múltipla Escolha</option>
+                                            <option value="checkbox">Checkbox</option>
+                                          </select>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <input
+                                            type="checkbox"
+                                            checked={field.required}
+                                            onChange={(e) => {
+                                              const updatedFields = [...(block.formFields || [])];
+                                              updatedFields[fieldIndex] = { ...field, required: e.target.checked };
+                                              updateContentBlock(index, { formFields: updatedFields });
+                                            }}
+                                            className="mr-2"
+                                          />
+                                          <label className="text-xs">Obrigatório</label>
+                                        </div>
+                                      </div>
+                                      <Input
+                                        value={field.label}
+                                        onChange={(e) => {
+                                          const updatedFields = [...(block.formFields || [])];
+                                          updatedFields[fieldIndex] = { ...field, label: e.target.value };
+                                          updateContentBlock(index, { formFields: updatedFields });
+                                        }}
+                                        placeholder="Pergunta ou etiqueta do campo"
+                                        className="text-sm"
+                                      />
+                                      {(field.type === 'select' || field.type === 'radio') && (
+                                        <Textarea
+                                          value={field.options?.join('\n') || ''}
+                                          onChange={(e) => {
+                                            const updatedFields = [...(block.formFields || [])];
+                                            updatedFields[fieldIndex] = { ...field, options: e.target.value.split('\n').filter(o => o.trim()) };
+                                            updateContentBlock(index, { formFields: updatedFields });
+                                          }}
+                                          placeholder="Uma opção por linha"
+                                          rows={3}
+                                          className="text-sm"
+                                        />
+                                      )}
+                                    </div>
+                                  </Card>
+                                ))}
+                                
+                                {(!block.formFields || block.formFields.length === 0) && (
+                                  <p className="text-sm text-muted-foreground text-center py-4">
+                                    Nenhum campo adicionado. Clique em "Adicionar Campo" para começar.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                         </CardContent>
                       </Card>
                     ))}
