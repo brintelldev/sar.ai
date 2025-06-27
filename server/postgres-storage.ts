@@ -764,9 +764,18 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateCourseModule(id: string, updates: Partial<CourseModule>): Promise<CourseModule | undefined> {
+    // Remove campos que não devem ser atualizados
+    const { id: _id, createdAt, updatedAt, ...updateData } = updates;
+    
+    // Adiciona updatedAt atual
+    const dataToUpdate = {
+      ...updateData,
+      updatedAt: new Date()
+    };
+
     const [result] = await db
       .update(courseModules)
-      .set(updates)
+      .set(dataToUpdate)
       .where(eq(courseModules.id, id))
       .returning();
     return result;

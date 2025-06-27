@@ -63,6 +63,7 @@ export function ModuleEditor() {
   // Get course details
   const { data: course } = useQuery({
     queryKey: ['/api/courses', courseId],
+    queryFn: () => apiRequest(`/api/courses/${courseId}`),
     enabled: !!courseId
   });
 
@@ -160,9 +161,16 @@ export function ModuleEditor() {
   const handleSaveModule = () => {
     if (!currentModule) return;
 
+    // Preparar dados limpos sem campos de timestamp que causam problemas
     const moduleData = {
-      ...currentModule,
-      content: { blocks: contentBlocks }
+      title: currentModule.title,
+      description: currentModule.description,
+      duration: currentModule.duration || 30,
+      content: { blocks: contentBlocks },
+      videoUrl: currentModule.videoUrl,
+      materials: currentModule.materials,
+      isRequired: currentModule.isRequired !== undefined ? currentModule.isRequired : true,
+      ...(currentModule.id ? {} : { courseId })
     };
 
     if (currentModule.id) {
@@ -652,23 +660,65 @@ export function ModuleEditor() {
                               <div>
                                 <div className="flex items-center justify-between mb-3">
                                   <label className="text-sm font-medium">Campos do Formulário</label>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const newField: FormField = {
-                                        id: Date.now().toString(),
-                                        type: 'text',
-                                        label: 'Nova pergunta',
-                                        required: false
-                                      };
-                                      const updatedFields = [...(block.formFields || []), newField];
-                                      updateContentBlock(index, { formFields: updatedFields });
-                                    }}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Adicionar Campo
-                                  </Button>
+                                  <div className="flex gap-2">
+                                    <select
+                                      className="text-xs border rounded px-2 py-1"
+                                      onChange={(e) => {
+                                        if (e.target.value) {
+                                          const templates: Record<string, FormField> = {
+                                            'texto': {
+                                              id: Date.now().toString(),
+                                              type: 'text',
+                                              label: 'Qual é a sua resposta?',
+                                              placeholder: 'Digite sua resposta aqui...',
+                                              required: true
+                                            },
+                                            'paragrafo': {
+                                              id: Date.now().toString(),
+                                              type: 'textarea',
+                                              label: 'Desenvolva sua resposta:',
+                                              placeholder: 'Escreva uma resposta detalhada...',
+                                              required: true
+                                            },
+                                            'multipla': {
+                                              id: Date.now().toString(),
+                                              type: 'radio',
+                                              label: 'Selecione a opção correta:',
+                                              options: ['Opção A', 'Opção B', 'Opção C', 'Opção D'],
+                                              required: true
+                                            },
+                                            'selecao': {
+                                              id: Date.now().toString(),
+                                              type: 'select',
+                                              label: 'Escolha uma opção:',
+                                              options: ['Escolha uma opção', 'Primeira opção', 'Segunda opção', 'Terceira opção'],
+                                              required: true
+                                            },
+                                            'checkbox': {
+                                              id: Date.now().toString(),
+                                              type: 'checkbox',
+                                              label: 'Marque esta opção se concordar',
+                                              required: false
+                                            }
+                                          };
+                                          
+                                          const newField = templates[e.target.value];
+                                          if (newField) {
+                                            const updatedFields = [...(block.formFields || []), newField];
+                                            updateContentBlock(index, { formFields: updatedFields });
+                                          }
+                                          e.target.value = '';
+                                        }
+                                      }}
+                                    >
+                                      <option value="">+ Adicionar Campo</option>
+                                      <option value="texto">📝 Pergunta de Texto</option>
+                                      <option value="paragrafo">📄 Resposta Longa</option>
+                                      <option value="multipla">◉ Múltipla Escolha</option>
+                                      <option value="selecao">📋 Lista de Opções</option>
+                                      <option value="checkbox">☑️ Concordo/Confirmo</option>
+                                    </select>
+                                  </div>
                                 </div>
                                 
                                 {block.formFields?.map((field, fieldIndex) => (
