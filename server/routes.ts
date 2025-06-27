@@ -1227,7 +1227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         courseId: req.params.id
       };
       
+      console.log("Creating module with data:", JSON.stringify(moduleData, null, 2));
       const module = await storage.createCourseModule(moduleData);
+      console.log("Created module result:", JSON.stringify(module, null, 2));
       res.status(201).json(module);
     } catch (error) {
       console.error("Create course module error:", error);
@@ -1237,10 +1239,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
     try {
+      console.log("Updating module with ID:", req.params.moduleId);
+      console.log("Update data:", JSON.stringify(req.body, null, 2));
+      
       const module = await storage.updateCourseModule(req.params.moduleId, req.body);
       if (!module) {
         return res.status(404).json({ message: "Módulo não encontrado" });
       }
+      
+      console.log("Updated module result:", JSON.stringify(module, null, 2));
       res.json(module);
     } catch (error) {
       console.error("Update course module error:", error);
