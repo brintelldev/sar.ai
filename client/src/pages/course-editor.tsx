@@ -278,22 +278,10 @@ export function CourseEditor() {
           <TabsContent value="modules" className="space-y-6">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Editor Avançado de Módulos</CardTitle>
-                    <CardDescription>
-                      Use o editor completo para criar módulos com múltiplos tipos de conteúdo
-                    </CardDescription>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => navigate(`/admin/courses/${courseId}/modules`)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Abrir Editor de Módulos
-                  </Button>
-                </div>
+                <CardTitle>Editor Avançado de Módulos</CardTitle>
+                <CardDescription>
+                  Use o editor completo para criar módulos com múltiplos tipos de conteúdo
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
