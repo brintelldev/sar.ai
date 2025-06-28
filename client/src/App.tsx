@@ -29,6 +29,7 @@ import Certificate from "@/pages/certificate";
 import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
 import { ModuleEditor } from "@/pages/module-editor";
+import CourseStart from "@/pages/course-start";
 import Whitelabel from "@/pages/whitelabel";
 import { Suspense } from 'react';
 import PublicSite from "@/pages/public-site";
@@ -190,6 +191,11 @@ function Router() {
       <Route path="/courses/:id">
         <ProtectedRoute>
           <CourseDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/courses/:courseId/start">
+        <ProtectedRoute>
+          <CourseStart />
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:courseId/progress">

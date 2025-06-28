@@ -129,7 +129,7 @@ export default function CourseDetailPage() {
       });
       
       if (response.ok) {
-        setLocation(`/courses/${courseId}/progress`);
+        setLocation(`/courses/${courseId}/start`);
       }
     } catch (error) {
       console.error('Error starting course:', error);
@@ -254,7 +254,7 @@ export default function CourseDetailPage() {
                           </Button>
                         ) : (
                           <Button 
-                            onClick={() => navigate(`/courses/${courseId}/progress`)}
+                            onClick={() => navigate(`/courses/${courseId}/start`)}
                             className="w-full bg-orange-600 hover:bg-orange-700"
                             size="lg"
                           >
