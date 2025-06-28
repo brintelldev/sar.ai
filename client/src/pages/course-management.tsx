@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  PlayCircle
+  PlayCircle,
+  ArrowLeft
 } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDate } from '@/lib/utils';
@@ -232,6 +233,7 @@ interface Instructor {
 
 export default function CourseManagement() {
   const { courseId } = useParams();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const { data: beneficiaries } = useBeneficiaries();
   const { data: volunteers } = useVolunteers();
@@ -352,6 +354,18 @@ export default function CourseManagement() {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Back Button */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/courses/${courseId}`)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Curso
+          </Button>
+        </div>
+
         {/* Course Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6">
           <div className="flex items-start justify-between">
