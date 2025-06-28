@@ -500,6 +500,19 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
 });
 
+// Enhanced user course enrollments with role-based access
+export const userCourseRoles = pgTable("user_course_roles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  role: text("role").notNull(), // 'student', 'instructor', 'assistant', 'observer'
+  permissions: jsonb("permissions"), // permissões específicas
+  assignedBy: uuid("assigned_by").references(() => users.id),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow(),
+  isActive: boolean("is_active").default(true),
+  notes: text("notes") // observações sobre a atribuição
+});
+
 // Insert schemas for training module
 export const insertCourseSchema = createInsertSchema(courses).omit({
   id: true,
@@ -577,6 +590,14 @@ export type InsertCourseAttendance = z.infer<typeof insertCourseAttendanceSchema
 
 export type UserModuleProgress = typeof userModuleProgress.$inferSelect;
 export type InsertUserModuleProgress = z.infer<typeof insertUserModuleProgressSchema>;
+
+export const insertUserCourseRoleSchema = createInsertSchema(userCourseRoles).omit({
+  id: true,
+  assignedAt: true
+});
+
+export type UserCourseRole = typeof userCourseRoles.$inferSelect;
+export type InsertUserCourseRole = z.infer<typeof insertUserCourseRoleSchema>;
 
 // Site Whitelabel tables
 export const whitelabelSites = pgTable("whitelabel_sites", {
