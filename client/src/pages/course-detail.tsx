@@ -112,7 +112,7 @@ export default function CourseDetailPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Curso não encontrado</h1>
-            <Button onClick={() => setLocation('/courses')}>
+            <Button onClick={() => navigate('/courses')}>
               Voltar aos Cursos
             </Button>
           </div>
@@ -129,7 +129,7 @@ export default function CourseDetailPage() {
       });
       
       if (response.ok) {
-        setLocation(`/courses/${courseId}/start`);
+        navigate(`/courses/${courseId}/start`);
       }
     } catch (error) {
       console.error('Error starting course:', error);
