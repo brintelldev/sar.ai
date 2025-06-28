@@ -16,6 +16,7 @@ import {
   courses,
   courseModules,
   userCourseProgress,
+  userModuleFormSubmissions,
   courseAssessments,
   certificates,
   whitelabelSites,
@@ -45,6 +46,8 @@ import {
   type Course,
   type CourseModule,
   type UserCourseProgress,
+  type UserModuleFormSubmission,
+  type InsertUserModuleFormSubmission,
   type CourseAssessment,
   type Certificate,
   type UserCourseRole,
@@ -923,6 +926,33 @@ export class PostgresStorage implements IStorage {
       .values(assessment)
       .returning();
     return result;
+  }
+
+  // Module Form Submissions
+  async getUserModuleFormSubmission(userId: string, moduleId: string): Promise<UserModuleFormSubmission | undefined> {
+    const [result] = await db
+      .select()
+      .from(userModuleFormSubmissions)
+      .where(and(
+        eq(userModuleFormSubmissions.userId, userId),
+        eq(userModuleFormSubmissions.moduleId, moduleId)
+      ));
+    return result;
+  }
+
+  async createUserModuleFormSubmission(submission: any): Promise<UserModuleFormSubmission> {
+    const [result] = await db
+      .insert(userModuleFormSubmissions)
+      .values(submission)
+      .returning();
+    return result;
+  }
+
+  async getModuleFormSubmissions(moduleId: string): Promise<UserModuleFormSubmission[]> {
+    return await db
+      .select()
+      .from(userModuleFormSubmissions)
+      .where(eq(userModuleFormSubmissions.moduleId, moduleId));
   }
 
   // User Certificates

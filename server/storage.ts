@@ -114,6 +114,11 @@ export interface IStorage {
   getCourseAssessments(courseId: string): Promise<CourseAssessment[]>;
   createCourseAssessment(assessment: InsertCourseAssessment): Promise<CourseAssessment>;
 
+  // Module Form Submissions
+  getUserModuleFormSubmission(userId: string, moduleId: string): Promise<UserModuleFormSubmission | undefined>;
+  createUserModuleFormSubmission(submission: InsertUserModuleFormSubmission): Promise<UserModuleFormSubmission>;
+  getModuleFormSubmissions(moduleId: string): Promise<UserModuleFormSubmission[]>;
+
   // User Certificates
   getUserCertificates(userId: string): Promise<Certificate[]>;
   createCertificate(certificate: any): Promise<Certificate>;
@@ -323,6 +328,10 @@ export class MemStorage implements IStorage {
 
   async getCourseAssessments(courseId: string): Promise<CourseAssessment[]> { return []; }
   async createCourseAssessment(assessment: InsertCourseAssessment): Promise<CourseAssessment> { throw new Error("Not implemented in MemStorage"); }
+
+  async getUserModuleFormSubmission(userId: string, moduleId: string): Promise<UserModuleFormSubmission | undefined> { return undefined; }
+  async createUserModuleFormSubmission(submission: InsertUserModuleFormSubmission): Promise<UserModuleFormSubmission> { throw new Error("Not implemented in MemStorage"); }
+  async getModuleFormSubmissions(moduleId: string): Promise<UserModuleFormSubmission[]> { return []; }
 
   async getUserCertificates(userId: string): Promise<Certificate[]> { return []; }
   async createCertificate(certificate: any): Promise<Certificate> { throw new Error("Not implemented in MemStorage"); }
