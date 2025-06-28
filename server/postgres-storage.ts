@@ -731,11 +731,20 @@ export class PostgresStorage implements IStorage {
 
   // Course Modules
   async getCourseModules(courseId: string): Promise<CourseModule[]> {
-    return await db
+    console.log("📚 PostgresStorage: Buscando módulos para curso:", courseId);
+    
+    const result = await db
       .select()
       .from(courseModules)
       .where(eq(courseModules.courseId, courseId))
       .orderBy(asc(courseModules.orderIndex));
+    
+    console.log("📚 PostgresStorage: Resultado da query módulos:", result.length);
+    if (result.length > 0) {
+      console.log("📚 PostgresStorage: Primeiro módulo encontrado:", JSON.stringify(result[0], null, 2));
+    }
+    
+    return result;
   }
 
   async createCourseModule(module: InsertCourseModule): Promise<CourseModule> {
