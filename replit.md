@@ -124,6 +124,14 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 28, 2025. Sistema completo de gerenciamento de inscrições e roles de curso implementado:
+  * Nova página /courses/:courseId/manage para gestão de participantes
+  * Tabela user_course_roles no banco para controle granular de permissões
+  * API endpoints para atribuir/remover usuários, listar alunos/instrutores
+  * Interface com tabs separadas por função (alunos, instrutores, assistentes)
+  * Controle de acesso baseado em roles (student, instructor, assistant, observer)
+  * Integração com sistema existente de cursos e usuários
+  * Funcionalidade acessível através do botão "Gerenciar" nas páginas de curso
 - June 26, 2025. Correções no tema escuro e aplicação automática:
   * Tema aplicado automaticamente ao fazer login (sem precisar ir às configurações)
   * Cores dos links Beneficiários e Capacitação melhoradas no tema escuro
