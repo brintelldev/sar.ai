@@ -1145,16 +1145,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   
 
-  app.get("/api/courses/:id/modules", requireAuth, async (req, res) => {
-    try {
-      const modules = await storage.getCourseModules(req.params.id);
-      res.json(modules);
-    } catch (error) {
-      console.error("Get course modules error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
-
   app.patch("/api/courses/:id", requireAuth, async (req, res) => {
     try {
       const course = await storage.updateCourse(req.params.id, req.session.organizationId!, req.body);
@@ -1212,7 +1202,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/courses/:id/modules", requireAuth, async (req, res) => {
     try {
+      console.log("Getting modules for course:", req.params.id);
       const modules = await storage.getCourseModules(req.params.id);
+      console.log("Found modules:", modules.length);
+      if (modules.length > 0) {
+        console.log("Module data sample:", JSON.stringify(modules[0], null, 2));
+      }
       res.json(modules);
     } catch (error) {
       console.error("Get course modules error:", error);
