@@ -30,6 +30,7 @@ import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
 import { CourseManage } from "@/pages/course-manage";
 import { ModuleEditor } from "@/pages/module-editor";
+import { ModuleForm } from "@/pages/module-form";
 import CourseStart from "@/pages/course-start";
 import Whitelabel from "@/pages/whitelabel";
 import { Suspense } from 'react';
@@ -253,6 +254,11 @@ function Router() {
       <Route path="/admin/courses/:courseId/modules">
         <ProtectedRoute>
           <ModuleEditor />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/courses/:courseId/modules/:moduleId/form">
+        <ProtectedRoute>
+          <ModuleForm />
         </ProtectedRoute>
       </Route>
       <Route path="/support">

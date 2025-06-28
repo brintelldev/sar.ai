@@ -98,10 +98,7 @@ export function ModuleForm() {
   // Submit form mutation
   const submitFormMutation = useMutation({
     mutationFn: async (responses: Record<string, any>) => {
-      return apiRequest(`/api/modules/${moduleId}/form-submission`, {
-        method: 'POST',
-        body: JSON.stringify({ responses })
-      });
+      return apiRequest(`/api/modules/${moduleId}/form-submission`, 'POST', { responses });
     },
     onSuccess: (data) => {
       setSubmissionResult(data);
