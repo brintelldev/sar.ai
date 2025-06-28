@@ -55,12 +55,14 @@ export interface IStorage {
   getBeneficiary(id: string, organizationId: string): Promise<Beneficiary | undefined>;
   createBeneficiary(beneficiary: InsertBeneficiary): Promise<Beneficiary>;
   updateBeneficiary(id: string, organizationId: string, updates: Partial<Beneficiary>): Promise<Beneficiary | undefined>;
+  getBeneficiariesAsUsers(organizationId: string): Promise<User[]>;
 
   // Volunteers
   getVolunteers(organizationId: string): Promise<Volunteer[]>;
   getVolunteer(id: string, organizationId: string): Promise<Volunteer | undefined>;
   createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer>;
   updateVolunteer(id: string, organizationId: string, updates: Partial<Volunteer>): Promise<Volunteer | undefined>;
+  getVolunteersAsUsers(organizationId: string): Promise<User[]>;
 
   // Donations
   getDonations(organizationId: string): Promise<Donation[]>;
@@ -276,11 +278,13 @@ export class MemStorage implements IStorage {
   async getBeneficiary(id: string, organizationId: string): Promise<Beneficiary | undefined> { return undefined; }
   async createBeneficiary(beneficiary: InsertBeneficiary): Promise<Beneficiary> { throw new Error("Not implemented in MemStorage"); }
   async updateBeneficiary(id: string, organizationId: string, updates: Partial<Beneficiary>): Promise<Beneficiary | undefined> { return undefined; }
+  async getBeneficiariesAsUsers(organizationId: string): Promise<User[]> { return []; }
 
   async getVolunteers(organizationId: string): Promise<Volunteer[]> { return []; }
   async getVolunteer(id: string, organizationId: string): Promise<Volunteer | undefined> { return undefined; }
   async createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer> { throw new Error("Not implemented in MemStorage"); }
   async updateVolunteer(id: string, organizationId: string, updates: Partial<Volunteer>): Promise<Volunteer | undefined> { return undefined; }
+  async getVolunteersAsUsers(organizationId: string): Promise<User[]> { return []; }
 
   async getDonations(organizationId: string): Promise<Donation[]> { return []; }
   async getDonation(id: string, organizationId: string): Promise<Donation | undefined> { return undefined; }
