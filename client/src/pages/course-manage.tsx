@@ -85,9 +85,9 @@ export function CourseManage() {
     queryKey: ['/api/users', assignmentData.role],
     queryFn: () => {
       if (assignmentData.role === 'instructor' || assignmentData.role === 'assistant') {
-        return apiRequest('/api/volunteers');
+        return apiRequest('/api/volunteers/users');
       } else if (assignmentData.role === 'student') {
-        return apiRequest('/api/beneficiaries');
+        return apiRequest('/api/beneficiaries/users');
       } else {
         return apiRequest('/api/users');
       }

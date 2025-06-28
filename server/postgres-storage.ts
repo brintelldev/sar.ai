@@ -1,4 +1,4 @@
-import { eq, and, count, desc, sql, asc, gte, lte } from 'drizzle-orm';
+import { eq, and, count, desc, sql, asc, gte, lte, isNotNull } from 'drizzle-orm';
 import { db } from './db';
 import bcrypt from 'bcrypt';
 import { 
@@ -291,7 +291,7 @@ export class PostgresStorage implements IStorage {
         id: beneficiaries.userId,
         name: beneficiaries.name,
         email: beneficiaries.email,
-        phone: beneficiaries.phone,
+        phone: sql<string>`''`,
         position: sql<string>`'Beneficiário'`,
         createdAt: beneficiaries.createdAt
       })
@@ -426,6 +426,28 @@ export class PostgresStorage implements IStorage {
       .where(and(eq(volunteers.id, id), eq(volunteers.organizationId, organizationId)))
       .limit(1);
     return result[0];
+  }
+
+  // Method to get volunteers as User format for course assignments
+  async getVolunteersAsUsers(organizationId: string): Promise<User[]> {
+    console.log('🗃️ PostgresStorage: Buscando voluntários como usuários para org:', organizationId);
+    const result = await db
+      .select({
+        id: volunteers.userId,
+        name: volunteers.name,
+        email: volunteers.email,
+        phone: volunteers.phone,
+        position: sql<string>`'Voluntário'`,
+        createdAt: volunteers.createdAt
+      })
+      .from(volunteers)
+      .where(and(
+        eq(volunteers.organizationId, organizationId),
+        isNotNull(volunteers.userId)
+      ));
+    
+    console.log('🗃️ PostgresStorage: Voluntários como usuários:', result.length);
+    return result as User[];
   }
 
   async createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer> {

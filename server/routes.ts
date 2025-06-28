@@ -653,6 +653,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get volunteers as users format for course assignments
+  app.get("/api/volunteers/users", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const volunteers = await storage.getVolunteersAsUsers(req.session.organizationId!);
+      res.json(volunteers);
+    } catch (error) {
+      console.error("Get volunteers as users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get beneficiaries as users format for course assignments  
+  app.get("/api/beneficiaries/users", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const beneficiaries = await storage.getBeneficiariesAsUsers(req.session.organizationId!);
+      res.json(beneficiaries);
+    } catch (error) {
+      console.error("Get beneficiaries as users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Donations routes
   app.get("/api/donations", requireAuth, requireOrganization, async (req, res) => {
     try {
