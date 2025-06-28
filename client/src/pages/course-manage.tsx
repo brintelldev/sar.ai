@@ -98,8 +98,12 @@ export function CourseManage() {
         description: "Usuário atribuído ao curso com sucesso!",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'enrollments'] });
+      // Invalidate user courses to sync with user's course list
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/courses/enrollments'] });
       setIsAssignDialogOpen(false);
       setAssignmentData({ userId: "", role: "", notes: "" });
+      setSearchTerm("");
     },
     onError: () => {
       toast({
@@ -119,6 +123,9 @@ export function CourseManage() {
         description: "Usuário removido do curso com sucesso!",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'enrollments'] });
+      // Invalidate user courses to sync with user's course list
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/courses/enrollments'] });
     },
     onError: () => {
       toast({
@@ -274,7 +281,13 @@ export function CourseManage() {
 
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Participantes do Curso</h2>
-          <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+          <Dialog open={isAssignDialogOpen} onOpenChange={(open) => {
+            setIsAssignDialogOpen(open);
+            if (!open) {
+              setAssignmentData({ userId: "", role: "", notes: "" });
+              setSearchTerm("");
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -287,43 +300,69 @@ export function CourseManage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="user">Usuário</Label>
-                  <Select value={assignmentData.userId} onValueChange={(value) => 
-                    setAssignmentData(prev => ({ ...prev, userId: value }))
+                  <Label htmlFor="role">Função</Label>
+                  <Select value={assignmentData.role} onValueChange={(value) => 
+                    setAssignmentData(prev => ({ ...prev, role: value, userId: "" }))
                   }>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um usuário" />
+                      <SelectValue placeholder="Selecione uma função primeiro" />
                     </SelectTrigger>
                     <SelectContent>
-                      {usersLoading ? (
-                        <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                      ) : (
-                        availableUsers?.map(user => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name} ({user.email})
-                          </SelectItem>
-                        ))
-                      )}
+                      <SelectItem value="student">Aluno (Beneficiários)</SelectItem>
+                      <SelectItem value="instructor">Instrutor (Voluntários)</SelectItem>
+                      <SelectItem value="assistant">Assistente (Voluntários)</SelectItem>
+                      <SelectItem value="observer">Observador (Todos)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="role">Função</Label>
-                  <Select value={assignmentData.role} onValueChange={(value) => 
-                    setAssignmentData(prev => ({ ...prev, role: value }))
-                  }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Aluno</SelectItem>
-                      <SelectItem value="instructor">Instrutor</SelectItem>
-                      <SelectItem value="assistant">Assistente</SelectItem>
-                      <SelectItem value="observer">Observador</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {assignmentData.role && (
+                  <div className="space-y-2">
+                    <Label htmlFor="search">Buscar Usuário</Label>
+                    <input
+                      type="text"
+                      id="search"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Digite o nome do usuário..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {assignmentData.role && (
+                  <div className="space-y-2">
+                    <Label htmlFor="user">Usuário</Label>
+                    <Select value={assignmentData.userId} onValueChange={(value) => 
+                      setAssignmentData(prev => ({ ...prev, userId: value }))
+                    }>
+                      <SelectTrigger>
+                        <SelectValue placeholder={
+                          usersLoading ? "Carregando usuários..." :
+                          assignmentData.role === 'student' ? "Selecione um beneficiário" :
+                          assignmentData.role === 'instructor' || assignmentData.role === 'assistant' ? "Selecione um voluntário" :
+                          "Selecione um usuário"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usersLoading ? (
+                          <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                        ) : (
+                          availableUsers
+                            ?.filter(user => 
+                              user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              user.email.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
+                            ?.map(user => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.name} ({user.email})
+                              </SelectItem>
+                            ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">Observações (opcional)</Label>
