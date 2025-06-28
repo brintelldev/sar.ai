@@ -66,6 +66,7 @@ export function ModuleEditor() {
   // Get course modules
   const { data: moduleData, isLoading } = useQuery({
     queryKey: ['/api/courses', courseId, 'modules'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/modules`),
     enabled: !!courseId
   });
 
@@ -79,14 +80,22 @@ export function ModuleEditor() {
   // Create module mutation
   const createModuleMutation = useMutation({
     mutationFn: (moduleData: any) => apiRequest(`/api/courses/${courseId}/modules`, 'POST', moduleData),
-    onSuccess: () => {
+    onSuccess: (newModule) => {
       toast({
         title: "Sucesso",
         description: "Módulo criado com sucesso!",
       });
+      
+      // Atualizar o módulo atual com os dados do módulo criado
+      if (newModule) {
+        setCurrentModule(newModule);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
-      setIsEditingModule(false);
-      setCurrentModule(null);
+      
+      // Continuar no modo de edição com o módulo recém-criado
+      // setIsEditingModule(false);
+      // setCurrentModule(null);
     },
     onError: () => {
       toast({
@@ -101,14 +110,23 @@ export function ModuleEditor() {
   const updateModuleMutation = useMutation({
     mutationFn: ({ moduleId, updates }: { moduleId: string; updates: any }) => 
       apiRequest(`/api/courses/${courseId}/modules/${moduleId}`, 'PATCH', updates),
-    onSuccess: () => {
+    onSuccess: (updatedModule) => {
       toast({
         title: "Sucesso",
         description: "Módulo atualizado com sucesso!",
       });
+      
+      // Atualizar o módulo atual com os dados salvos para manter o estado
+      if (currentModule && updatedModule) {
+        setCurrentModule(updatedModule);
+      }
+      
+      // Invalidar apenas se necessário e não sair do modo de edição
       queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'modules'] });
-      setIsEditingModule(false);
-      setCurrentModule(null);
+      
+      // Não sair do modo de edição para permitir continuar editando
+      // setIsEditingModule(false);
+      // setCurrentModule(null);
     },
     onError: () => {
       toast({
@@ -354,11 +372,11 @@ export function ModuleEditor() {
                     setCurrentModule(null);
                   }}
                 >
-                  Cancelar
+                  Voltar à Lista
                 </Button>
                 <Button onClick={handleSaveModule} disabled={!currentModule?.title}>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Módulo
+                  Salvar e Continuar
                 </Button>
               </div>
             </div>
