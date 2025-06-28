@@ -132,6 +132,9 @@ Changelog:
   * Controle de acesso baseado em roles (student, instructor, assistant, observer)
   * Integração com sistema existente de cursos e usuários
   * Funcionalidade acessível através do botão "Gerenciar" nas páginas de curso
+  * Interface melhorada: função selecionada primeiro, filtros automáticos (voluntários para instrutores, beneficiários para alunos)
+  * Campo único de busca e seleção com Combobox para melhor experiência do usuário
+  * Sincronização bidirecional entre área administrativa e perfis de usuário
 - June 26, 2025. Correções no tema escuro e aplicação automática:
   * Tema aplicado automaticamente ao fazer login (sem precisar ir às configurações)
   * Cores dos links Beneficiários e Capacitação melhoradas no tema escuro

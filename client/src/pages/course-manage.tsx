@@ -7,6 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Users, UserPlus, UserMinus, GraduationCap, BookOpen } from "lucide-react";
@@ -54,6 +59,7 @@ export function CourseManage() {
   const [selectedTab, setSelectedTab] = useState("students");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [userComboboxOpen, setUserComboboxOpen] = useState(false);
   const [assignmentData, setAssignmentData] = useState({
     userId: "",
     role: "",
@@ -104,6 +110,7 @@ export function CourseManage() {
       setIsAssignDialogOpen(false);
       setAssignmentData({ userId: "", role: "", notes: "" });
       setSearchTerm("");
+      setUserComboboxOpen(false);
     },
     onError: () => {
       toast({
@@ -286,6 +293,7 @@ export function CourseManage() {
             if (!open) {
               setAssignmentData({ userId: "", role: "", notes: "" });
               setSearchTerm("");
+              setUserComboboxOpen(false);
             }
           }}>
             <DialogTrigger asChild>
@@ -318,49 +326,71 @@ export function CourseManage() {
 
                 {assignmentData.role && (
                   <div className="space-y-2">
-                    <Label htmlFor="search">Buscar Usuário</Label>
-                    <input
-                      type="text"
-                      id="search"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Digite o nome do usuário..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {assignmentData.role && (
-                  <div className="space-y-2">
-                    <Label htmlFor="user">Usuário</Label>
-                    <Select value={assignmentData.userId} onValueChange={(value) => 
-                      setAssignmentData(prev => ({ ...prev, userId: value }))
-                    }>
-                      <SelectTrigger>
-                        <SelectValue placeholder={
-                          usersLoading ? "Carregando usuários..." :
-                          assignmentData.role === 'student' ? "Selecione um beneficiário" :
-                          assignmentData.role === 'instructor' || assignmentData.role === 'assistant' ? "Selecione um voluntário" :
-                          "Selecione um usuário"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {usersLoading ? (
-                          <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                        ) : (
-                          availableUsers
-                            ?.filter(user => 
-                              user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              user.email.toLowerCase().includes(searchTerm.toLowerCase())
-                            )
-                            ?.map(user => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.name} ({user.email})
-                              </SelectItem>
-                            ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="user">
+                      {assignmentData.role === 'student' ? "Selecionar Beneficiário" :
+                       assignmentData.role === 'instructor' || assignmentData.role === 'assistant' ? "Selecionar Voluntário" :
+                       "Selecionar Usuário"}
+                    </Label>
+                    <Popover open={userComboboxOpen} onOpenChange={setUserComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={userComboboxOpen}
+                          className="w-full justify-between"
+                          disabled={usersLoading}
+                        >
+                          {assignmentData.userId 
+                            ? availableUsers?.find(user => user.id === assignmentData.userId)?.name
+                            : usersLoading 
+                              ? "Carregando usuários..." 
+                              : assignmentData.role === 'student' 
+                                ? "Buscar e selecionar beneficiário..." 
+                                : assignmentData.role === 'instructor' || assignmentData.role === 'assistant'
+                                  ? "Buscar e selecionar voluntário..."
+                                  : "Buscar e selecionar usuário..."
+                          }
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder={
+                              assignmentData.role === 'student' ? "Buscar beneficiário..." :
+                              assignmentData.role === 'instructor' || assignmentData.role === 'assistant' ? "Buscar voluntário..." :
+                              "Buscar usuário..."
+                            }
+                          />
+                          <CommandEmpty>
+                            {usersLoading ? "Carregando..." : "Nenhum usuário encontrado."}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {availableUsers?.map((user) => (
+                              <CommandItem
+                                key={user.id}
+                                value={user.name + " " + user.email}
+                                onSelect={() => {
+                                  setAssignmentData(prev => ({ ...prev, userId: user.id }));
+                                  setUserComboboxOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    assignmentData.userId === user.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{user.name}</span>
+                                  <span className="text-xs text-muted-foreground">{user.email}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
 
