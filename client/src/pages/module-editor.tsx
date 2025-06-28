@@ -51,6 +51,9 @@ interface FormField {
   placeholder?: string;
   options?: string[];
   required: boolean;
+  correctAnswer?: string | string[]; // resposta correta para avaliação
+  points?: number; // pontos para esta questão
+  explanation?: string; // explicação da resposta correta
 }
 
 export function ModuleEditor() {

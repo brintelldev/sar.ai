@@ -367,6 +367,20 @@ export const courseAssessments = pgTable("course_assessments", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
 });
 
+// User Module Form Submissions (respostas de formulários dos módulos)
+export const userModuleFormSubmissions = pgTable("user_module_form_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  moduleId: uuid("module_id").references(() => courseModules.id).notNull(),
+  formId: text("form_id").notNull(), // ID do formulário dentro do módulo
+  answers: jsonb("answers").notNull(), // respostas do usuário
+  score: integer("score"), // pontuação obtida (0-100)
+  maxScore: integer("max_score"), // pontuação máxima possível
+  passed: boolean("passed"), // se passou na nota mínima
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
 // User Assessment Attempts
 export const userAssessmentAttempts = pgTable("user_assessment_attempts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -541,6 +555,11 @@ export const insertUserCourseProgressSchema = createInsertSchema(userCourseProgr
   updatedAt: true
 });
 
+export const insertUserModuleFormSubmissionSchema = createInsertSchema(userModuleFormSubmissions).omit({
+  id: true,
+  createdAt: true
+});
+
 export const insertCourseEnrollmentSchema = createInsertSchema(courseEnrollments).omit({
   id: true,
   enrolledAt: true
@@ -571,6 +590,9 @@ export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
 
 export type UserCourseProgress = typeof userCourseProgress.$inferSelect;
 export type InsertUserCourseProgress = z.infer<typeof insertUserCourseProgressSchema>;
+
+export type UserModuleFormSubmission = typeof userModuleFormSubmissions.$inferSelect;
+export type InsertUserModuleFormSubmission = z.infer<typeof insertUserModuleFormSubmissionSchema>;
 
 export type CourseAssessment = typeof courseAssessments.$inferSelect;
 export type InsertCourseAssessment = z.infer<typeof insertCourseAssessmentSchema>;
