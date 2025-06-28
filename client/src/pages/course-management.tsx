@@ -486,7 +486,19 @@ export default function CourseManagement() {
                       });
                     }} className="space-y-4">
                       <div>
-                        <Label htmlFor="beneficiaryId">Beneficiário</Label>
+                        <Label htmlFor="status">Função</Label>
+                        <Select name="status" defaultValue="enrolled">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="enrolled">Inscrito</SelectItem>
+                            <SelectItem value="active">Ativo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="beneficiaryId">Usuário</Label>
                         <Select name="beneficiaryId" required>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um beneficiário" />
@@ -497,18 +509,6 @@ export default function CourseManagement() {
                                 {beneficiary.name || beneficiary.email}
                               </SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="status">Status Inicial</Label>
-                        <Select name="status" defaultValue="enrolled">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="enrolled">Inscrito</SelectItem>
-                            <SelectItem value="active">Ativo</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -632,7 +632,18 @@ export default function CourseManagement() {
                       });
                     }} className="space-y-4">
                       <div>
-                        <Label htmlFor="volunteerId">Voluntário</Label>
+                        <Label htmlFor="role">Função</Label>
+                        <Select name="role" defaultValue="instructor">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="instructor">Instrutor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="volunteerId">Usuário</Label>
                         <Select name="volunteerId" required>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um voluntário" />
@@ -643,19 +654,6 @@ export default function CourseManagement() {
                                 {volunteer.name || volunteer.email}
                               </SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="role">Função</Label>
-                        <Select name="role" defaultValue="instructor">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="instructor">Instrutor</SelectItem>
-                            <SelectItem value="assistant">Assistente</SelectItem>
-                            <SelectItem value="coordinator">Coordenador</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
