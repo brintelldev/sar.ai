@@ -695,34 +695,49 @@ export function ModuleEditor() {
                                               type: 'text',
                                               label: 'Qual é a sua resposta?',
                                               placeholder: 'Digite sua resposta aqui...',
-                                              required: true
+                                              required: true,
+                                              points: 5,
+                                              correctAnswer: '',
+                                              explanation: ''
                                             },
                                             'paragrafo': {
                                               id: Date.now().toString(),
                                               type: 'textarea',
                                               label: 'Desenvolva sua resposta:',
                                               placeholder: 'Escreva uma resposta detalhada...',
-                                              required: true
+                                              required: true,
+                                              points: 10,
+                                              correctAnswer: '',
+                                              explanation: ''
                                             },
                                             'multipla': {
                                               id: Date.now().toString(),
                                               type: 'radio',
                                               label: 'Selecione a opção correta:',
                                               options: ['Opção A', 'Opção B', 'Opção C', 'Opção D'],
-                                              required: true
+                                              required: true,
+                                              points: 5,
+                                              correctAnswer: 'Opção A',
+                                              explanation: ''
                                             },
                                             'selecao': {
                                               id: Date.now().toString(),
                                               type: 'select',
                                               label: 'Escolha uma opção:',
                                               options: ['Escolha uma opção', 'Primeira opção', 'Segunda opção', 'Terceira opção'],
-                                              required: true
+                                              required: true,
+                                              points: 5,
+                                              correctAnswer: 'Primeira opção',
+                                              explanation: ''
                                             },
                                             'checkbox': {
                                               id: Date.now().toString(),
                                               type: 'checkbox',
                                               label: 'Marque esta opção se concordar',
-                                              required: false
+                                              required: false,
+                                              points: 2,
+                                              correctAnswer: 'true',
+                                              explanation: ''
                                             }
                                           };
                                           
@@ -816,6 +831,50 @@ export function ModuleEditor() {
                                           rows={3}
                                           className="text-sm"
                                         />
+                                      )}
+                                      
+                                      {/* Campos para avaliação automática */}
+                                      {(field.type === 'select' || field.type === 'radio' || field.type === 'text') && (
+                                        <div className="space-y-2 border-t pt-2">
+                                          <p className="text-xs font-medium text-muted-foreground">Configurações de Avaliação</p>
+                                          
+                                          <Input
+                                            value={field.correctAnswer as string || ''}
+                                            onChange={(e) => {
+                                              const updatedFields = [...(block.formFields || [])];
+                                              updatedFields[fieldIndex] = { ...field, correctAnswer: e.target.value };
+                                              updateContentBlock(index, { formFields: updatedFields });
+                                            }}
+                                            placeholder={field.type === 'text' ? 'Resposta correta esperada' : 'Digite a opção correta'}
+                                            className="text-sm"
+                                          />
+                                          
+                                          <div className="flex gap-2">
+                                            <Input
+                                              type="number"
+                                              value={field.points || 1}
+                                              onChange={(e) => {
+                                                const updatedFields = [...(block.formFields || [])];
+                                                updatedFields[fieldIndex] = { ...field, points: parseInt(e.target.value) || 1 };
+                                                updateContentBlock(index, { formFields: updatedFields });
+                                              }}
+                                              placeholder="Pontos"
+                                              min="1"
+                                              max="100"
+                                              className="text-sm w-20"
+                                            />
+                                            <Input
+                                              value={field.explanation || ''}
+                                              onChange={(e) => {
+                                                const updatedFields = [...(block.formFields || [])];
+                                                updatedFields[fieldIndex] = { ...field, explanation: e.target.value };
+                                                updateContentBlock(index, { formFields: updatedFields });
+                                              }}
+                                              placeholder="Explicação da resposta (opcional)"
+                                              className="text-sm flex-1"
+                                            />
+                                          </div>
+                                        </div>
                                       )}
                                     </div>
                                   </Card>
