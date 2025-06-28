@@ -28,6 +28,7 @@ import CourseProgress from "@/pages/course-progress";
 import Certificate from "@/pages/certificate";
 import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
+import { CourseManage } from "@/pages/course-manage";
 import { ModuleEditor } from "@/pages/module-editor";
 import CourseStart from "@/pages/course-start";
 import Whitelabel from "@/pages/whitelabel";
@@ -206,6 +207,13 @@ function Router() {
       <Route path="/courses/:id/certificate">
         <ProtectedRoute>
           <Certificate />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/courses/:courseId/manage">
+        <ProtectedRoute>
+          <AdminGuard>
+            <CourseManage />
+          </AdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/course-enrollment">

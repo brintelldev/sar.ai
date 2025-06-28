@@ -1432,6 +1432,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course Enrollment Management Routes
+  app.get('/api/courses/:courseId/enrollments', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const enrollments = await storage.getCourseEnrollments(courseId);
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Get course enrollments error:", error);
+      res.status(500).json({ message: "Erro ao buscar inscrições do curso" });
+    }
+  });
+
+  app.post('/api/courses/:courseId/assign', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { userId, role, notes, assignedBy } = req.body;
+      
+      const roleData = {
+        userId,
+        courseId,
+        role,
+        notes: notes || null,
+        assignedBy,
+        permissions: role === 'instructor' ? { canEditModules: true, canGradeAssignments: true } : null
+      };
+      
+      const userRole = await storage.assignUserCourseRole(roleData);
+      res.status(201).json(userRole);
+    } catch (error) {
+      console.error("Assign user to course error:", error);
+      res.status(500).json({ message: "Erro ao atribuir usuário ao curso" });
+    }
+  });
+
+  app.delete('/api/courses/:courseId/users/:userId', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId, userId } = req.params;
+      const success = await storage.removeUserFromCourse(userId, courseId);
+      
+      if (success) {
+        res.json({ message: "Usuário removido do curso com sucesso" });
+      } else {
+        res.status(404).json({ message: "Usuário não encontrado no curso" });
+      }
+    } catch (error) {
+      console.error("Remove user from course error:", error);
+      res.status(500).json({ message: "Erro ao remover usuário do curso" });
+    }
+  });
+
+  app.get('/api/courses/:courseId/students', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const students = await storage.getCourseStudents(courseId);
+      res.json(students);
+    } catch (error) {
+      console.error("Get course students error:", error);
+      res.status(500).json({ message: "Erro ao buscar alunos do curso" });
+    }
+  });
+
+  app.get('/api/courses/:courseId/instructors', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const instructors = await storage.getCourseInstructors(courseId);
+      res.json(instructors);
+    } catch (error) {
+      console.error("Get course instructors error:", error);
+      res.status(500).json({ message: "Erro ao buscar instrutores do curso" });
+    }
+  });
+
+  app.get('/api/users/:userId/courses', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const userCourses = await storage.getUserCourses(userId);
+      res.json(userCourses);
+    } catch (error) {
+      console.error("Get user courses error:", error);
+      res.status(500).json({ message: "Erro ao buscar cursos do usuário" });
+    }
+  });
+
   // Whitelabel Site Routes
   app.get('/api/whitelabel/site', requireAuth, async (req: Request, res: Response) => {
     try {

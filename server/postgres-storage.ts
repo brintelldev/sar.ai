@@ -1355,4 +1355,218 @@ export class PostgresStorage implements IStorage {
       ));
     return result.rowCount > 0;
   }
+
+  // Course Enrollment and Role Management Methods
+
+  async getUserCourseRole(userId: string, courseId: string): Promise<UserCourseRole | undefined> {
+    const [role] = await db
+      .select()
+      .from(userCourseRoles)
+      .where(and(
+        eq(userCourseRoles.userId, userId),
+        eq(userCourseRoles.courseId, courseId),
+        eq(userCourseRoles.isActive, true)
+      ));
+    return role;
+  }
+
+  async assignUserCourseRole(roleData: InsertUserCourseRole): Promise<UserCourseRole> {
+    // First check if user already has a role for this course
+    const existingRole = await this.getUserCourseRole(roleData.userId, roleData.courseId);
+    
+    if (existingRole) {
+      // Update existing role
+      const [updatedRole] = await db
+        .update(userCourseRoles)
+        .set({
+          role: roleData.role,
+          permissions: roleData.permissions,
+          assignedBy: roleData.assignedBy,
+          notes: roleData.notes,
+          isActive: true,
+          assignedAt: new Date()
+        })
+        .where(eq(userCourseRoles.id, existingRole.id))
+        .returning();
+      return updatedRole;
+    } else {
+      // Create new role
+      const [newRole] = await db
+        .insert(userCourseRoles)
+        .values(roleData)
+        .returning();
+      return newRole;
+    }
+  }
+
+  async getCourseEnrollments(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {
+    const enrollments = await db
+      .select({
+        id: userCourseRoles.id,
+        userId: userCourseRoles.userId,
+        courseId: userCourseRoles.courseId,
+        role: userCourseRoles.role,
+        permissions: userCourseRoles.permissions,
+        assignedBy: userCourseRoles.assignedBy,
+        assignedAt: userCourseRoles.assignedAt,
+        isActive: userCourseRoles.isActive,
+        notes: userCourseRoles.notes,
+        user: {
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          phone: users.phone,
+          position: users.position,
+          createdAt: users.createdAt
+        }
+      })
+      .from(userCourseRoles)
+      .innerJoin(users, eq(userCourseRoles.userId, users.id))
+      .where(and(
+        eq(userCourseRoles.courseId, courseId),
+        eq(userCourseRoles.isActive, true)
+      ))
+      .orderBy(userCourseRoles.assignedAt);
+
+    return enrollments as Array<UserCourseRole & { user: User }>;
+  }
+
+  async getCourseStudents(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {
+    const students = await db
+      .select({
+        id: userCourseRoles.id,
+        userId: userCourseRoles.userId,
+        courseId: userCourseRoles.courseId,
+        role: userCourseRoles.role,
+        permissions: userCourseRoles.permissions,
+        assignedBy: userCourseRoles.assignedBy,
+        assignedAt: userCourseRoles.assignedAt,
+        isActive: userCourseRoles.isActive,
+        notes: userCourseRoles.notes,
+        user: {
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          phone: users.phone,
+          position: users.position,
+          createdAt: users.createdAt
+        }
+      })
+      .from(userCourseRoles)
+      .innerJoin(users, eq(userCourseRoles.userId, users.id))
+      .where(and(
+        eq(userCourseRoles.courseId, courseId),
+        eq(userCourseRoles.role, 'student'),
+        eq(userCourseRoles.isActive, true)
+      ))
+      .orderBy(userCourseRoles.assignedAt);
+
+    return students as Array<UserCourseRole & { user: User }>;
+  }
+
+  async getCourseInstructors(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {
+    const instructors = await db
+      .select({
+        id: userCourseRoles.id,
+        userId: userCourseRoles.userId,
+        courseId: userCourseRoles.courseId,
+        role: userCourseRoles.role,
+        permissions: userCourseRoles.permissions,
+        assignedBy: userCourseRoles.assignedBy,
+        assignedAt: userCourseRoles.assignedAt,
+        isActive: userCourseRoles.isActive,
+        notes: userCourseRoles.notes,
+        user: {
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          phone: users.phone,
+          position: users.position,
+          createdAt: users.createdAt
+        }
+      })
+      .from(userCourseRoles)
+      .innerJoin(users, eq(userCourseRoles.userId, users.id))
+      .where(and(
+        eq(userCourseRoles.courseId, courseId),
+        eq(userCourseRoles.role, 'instructor'),
+        eq(userCourseRoles.isActive, true)
+      ))
+      .orderBy(userCourseRoles.assignedAt);
+
+    return instructors as Array<UserCourseRole & { user: User }>;
+  }
+
+  async getUserCourses(userId: string): Promise<Array<UserCourseRole & { course: Course }>> {
+    const userCourses = await db
+      .select({
+        id: userCourseRoles.id,
+        userId: userCourseRoles.userId,
+        courseId: userCourseRoles.courseId,
+        role: userCourseRoles.role,
+        permissions: userCourseRoles.permissions,
+        assignedBy: userCourseRoles.assignedBy,
+        assignedAt: userCourseRoles.assignedAt,
+        isActive: userCourseRoles.isActive,
+        notes: userCourseRoles.notes,
+        course: {
+          id: courses.id,
+          organizationId: courses.organizationId,
+          title: courses.title,
+          description: courses.description,
+          category: courses.category,
+          level: courses.level,
+          duration: courses.duration,
+          coverImage: courses.coverImage,
+          status: courses.status,
+          requirements: courses.requirements,
+          learningObjectives: courses.learningObjectives,
+          tags: courses.tags,
+          passScore: courses.passScore,
+          certificateEnabled: courses.certificateEnabled,
+          createdBy: courses.createdBy,
+          createdAt: courses.createdAt,
+          updatedAt: courses.updatedAt
+        }
+      })
+      .from(userCourseRoles)
+      .innerJoin(courses, eq(userCourseRoles.courseId, courses.id))
+      .where(and(
+        eq(userCourseRoles.userId, userId),
+        eq(userCourseRoles.isActive, true)
+      ))
+      .orderBy(userCourseRoles.assignedAt);
+
+    return userCourses as Array<UserCourseRole & { course: Course }>;
+  }
+
+  async removeUserFromCourse(userId: string, courseId: string): Promise<boolean> {
+    const result = await db
+      .update(userCourseRoles)
+      .set({ isActive: false })
+      .where(and(
+        eq(userCourseRoles.userId, userId),
+        eq(userCourseRoles.courseId, courseId)
+      ));
+    return result.rowCount > 0;
+  }
+
+  async hasUserCourseAccess(userId: string, courseId: string, requiredRole?: string): Promise<boolean> {
+    const role = await this.getUserCourseRole(userId, courseId);
+    if (!role) return false;
+    
+    if (requiredRole) {
+      return role.role === requiredRole;
+    }
+    
+    return true;
+  }
+
+  async canUserAccessCourseModules(userId: string, courseId: string): Promise<boolean> {
+    const role = await this.getUserCourseRole(userId, courseId);
+    if (!role) return false;
+    
+    // Students and instructors can access course modules
+    return ['student', 'instructor', 'assistant'].includes(role.role);
+  }
 }
