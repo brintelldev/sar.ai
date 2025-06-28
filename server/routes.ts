@@ -1454,6 +1454,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Module Form Routes
+  app.get('/api/modules/:moduleId/form-submission', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      const userId = req.session.userId!;
+      
+      const submission = await storage.getUserModuleFormSubmission(userId, moduleId);
+      res.json(submission);
+    } catch (error) {
+      console.error("Get module form submission error:", error);
+      res.status(500).json({ message: "Erro ao buscar submissão do formulário" });
+    }
+  });
+
+  app.post('/api/modules/:moduleId/form-submission', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      const { responses } = req.body;
+      const userId = req.session.userId!;
+      
+      // Buscar todos os módulos para encontrar o módulo correto
+      // Precisamos primeiro descobrir qual curso contém este módulo
+      const organizationId = req.session.organizationId!;
+      const courses = await storage.getCourses(organizationId);
+      let module: any = null;
+      
+      for (const course of courses) {
+        const courseModules = await storage.getCourseModules(course.id);
+        const foundModule = courseModules.find(m => m.id === moduleId);
+        if (foundModule) {
+          module = foundModule;
+          break;
+        }
+      }
+      
+      if (!module || !module.content) {
+        return res.status(404).json({ message: "Módulo não encontrado" });
+      }
+
+      // Calcular pontuação
+      let score = 0;
+      let maxScore = 0;
+      const content = module.content as any;
+      
+      if (content && Array.isArray(content)) {
+        const formBlocks = content.filter((block: any) => block.type === 'form');
+        
+        for (const block of formBlocks) {
+          if (block.formFields && Array.isArray(block.formFields)) {
+            for (const field of block.formFields) {
+              if (field.correctAnswer && field.points) {
+                maxScore += field.points;
+                const userAnswer = responses[field.id];
+                
+                if (field.type === 'checkbox' || field.type === 'select') {
+                  // Para campos múltiplos, verificar se as respostas coincidem
+                  const correctAnswers = Array.isArray(field.correctAnswer) ? field.correctAnswer : [field.correctAnswer];
+                  const userAnswers = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
+                  
+                  if (correctAnswers.length === userAnswers.length && 
+                      correctAnswers.every((answer: string) => userAnswers.includes(answer))) {
+                    score += field.points;
+                  }
+                } else {
+                  // Para campos de texto simples
+                  if (userAnswer === field.correctAnswer) {
+                    score += field.points;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const submissionData = {
+        userId,
+        moduleId,
+        formId: `module-${moduleId}-form`, // ID único para o formulário do módulo
+        answers: responses, // O campo é 'answers', não 'responses'
+        score,
+        maxScore,
+        passed: score >= (maxScore * 0.7), // Considerar aprovado se >= 70%
+        submittedAt: new Date()
+      };
+
+      const submission = await storage.createUserModuleFormSubmission(submissionData);
+      res.status(201).json(submission);
+    } catch (error) {
+      console.error("Create module form submission error:", error);
+      res.status(500).json({ message: "Erro ao submeter formulário" });
+    }
+  });
+
   // Course Enrollment Management Routes
   app.get('/api/courses/:courseId/enrollments', requireAuth, requireOrganization, async (req, res) => {
     try {
