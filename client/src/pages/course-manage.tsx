@@ -53,6 +53,7 @@ export function CourseManage() {
   
   const [selectedTab, setSelectedTab] = useState("students");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [assignmentData, setAssignmentData] = useState({
     userId: "",
     role: "",
@@ -73,11 +74,19 @@ export function CourseManage() {
     enabled: !!courseId
   });
 
-  // Get available users for assignment
+  // Get available users for assignment based on role
   const { data: availableUsers, isLoading: usersLoading } = useQuery<User[]>({
-    queryKey: ['/api/users'],
-    queryFn: () => apiRequest('/api/users'),
-    enabled: isAssignDialogOpen
+    queryKey: ['/api/users', assignmentData.role],
+    queryFn: () => {
+      if (assignmentData.role === 'instructor' || assignmentData.role === 'assistant') {
+        return apiRequest('/api/volunteers');
+      } else if (assignmentData.role === 'student') {
+        return apiRequest('/api/beneficiaries');
+      } else {
+        return apiRequest('/api/users');
+      }
+    },
+    enabled: isAssignDialogOpen && !!assignmentData.role
   });
 
   // Assign user to course mutation
