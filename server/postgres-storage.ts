@@ -283,6 +283,28 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
+  // Method to get beneficiaries as User format for course assignments
+  async getBeneficiariesAsUsers(organizationId: string): Promise<User[]> {
+    console.log('🗃️ PostgresStorage: Buscando beneficiários como usuários para org:', organizationId);
+    const result = await db
+      .select({
+        id: beneficiaries.userId,
+        name: beneficiaries.name,
+        email: beneficiaries.email,
+        phone: beneficiaries.phone,
+        position: sql<string>`'Beneficiário'`,
+        createdAt: beneficiaries.createdAt
+      })
+      .from(beneficiaries)
+      .where(and(
+        eq(beneficiaries.organizationId, organizationId),
+        isNotNull(beneficiaries.userId)
+      ));
+    
+    console.log('🗃️ PostgresStorage: Beneficiários como usuários:', result.length);
+    return result as User[];
+  }
+
   async getBeneficiary(id: string, organizationId: string): Promise<Beneficiary | undefined> {
     const result = await db
       .select()
