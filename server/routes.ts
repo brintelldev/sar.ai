@@ -817,15 +817,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allCourses = await storage.getCourses(organizationId);
       const publishedCourses = allCourses.filter(course => course.status === 'published');
       
-      // Get user's enrollments and progress
+      // Get user's enrollments through progress table
       const userProgress = await storage.getUserCourseProgressList(userId);
       
-      // Combine course data with enrollment status
+      // Get user's enrollments through course roles (student role)
+      const userCourseRoles = await storage.getUserCourseRoles(userId);
+      const studentRoles = userCourseRoles.filter(role => role.role === 'student');
+      
+      // Combine course data with enrollment status from both sources
       const coursesWithEnrollment = publishedCourses.map(course => {
         const progress = userProgress.find(p => p.courseId === course.id);
+        const studentRole = studentRoles.find(role => role.courseId === course.id);
+        const isEnrolled = !!progress || !!studentRole;
+        
         return {
           ...course,
-          isEnrolled: !!progress,
+          isEnrolled,
           progress: progress?.progress || 0
         };
       });
