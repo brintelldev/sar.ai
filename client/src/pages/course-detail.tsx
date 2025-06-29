@@ -76,19 +76,19 @@ export default function CourseDetailPage() {
 
   // Fetch course details
   const { data: course, isLoading: courseLoading } = useQuery<Course>({
-    queryKey: ['/api/courses', courseId],
+    queryKey: [`/api/courses/${courseId}`],
     enabled: !!courseId
   });
 
   // Fetch course modules
   const { data: modules, isLoading: modulesLoading } = useQuery<CourseModule[]>({
-    queryKey: ['/api/courses', courseId, 'modules'],
+    queryKey: [`/api/courses/${courseId}/modules`],
     enabled: !!courseId
   });
 
   // Fetch user progress
   const { data: userProgress } = useQuery<UserProgress>({
-    queryKey: ['/api/courses', courseId, 'progress'],
+    queryKey: [`/api/courses/${courseId}/progress`],
     enabled: !!courseId
   });
 
@@ -349,7 +349,11 @@ export default function CourseDetailPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {modules?.map((module, index) => (
-                      <div key={module.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div 
+                        key={module.id} 
+                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/courses/${courseId}/start`)}
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
@@ -372,6 +376,7 @@ export default function CourseDetailPage() {
                             {userProgress?.completedModules?.includes(module.id) && (
                               <CheckCircle className="w-4 h-4 text-green-600" />
                             )}
+                            <PlayCircle className="w-4 h-4 text-blue-600" />
                           </div>
                         </div>
                       </div>
