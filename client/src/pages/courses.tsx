@@ -127,12 +127,12 @@ export default function Courses() {
 
   const formatCourseType = (type: string | undefined) => {
     if (!type) return 'Online';
-    return type.charAt(0).toUpperCase() + type.slice(1);
+    return formatCourseType(type);
   };
 
   const formatLevel = (level: string | undefined) => {
     if (!level) return 'Básico';
-    return level.charAt(0).toUpperCase() + level.slice(1);
+    return formatLevel(level);
   };
 
   // Separate enrolled and available courses
@@ -192,7 +192,7 @@ export default function Courses() {
                 <SelectItem value="all">Todos</SelectItem>
                 {levels.map(level => (
                   <SelectItem key={level} value={level}>
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                    {formatLevel(level)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -206,7 +206,7 @@ export default function Courses() {
                 <SelectItem value="all">Todos</SelectItem>
                 {types.map(type => (
                   <SelectItem key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                    {formatCourseType(type)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -290,10 +290,10 @@ export default function Courses() {
                       <CardContent className="space-y-4">
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="outline" className={getLevelBadgeColor(course.level)}>
-                            {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                            {formatLevel(course.level)}
                           </Badge>
                           <Badge variant="outline" className={getTypeBadgeColor(course.courseType)}>
-                            {course.courseType.charAt(0).toUpperCase() + course.courseType.slice(1)}
+                            {formatCourseType(course.courseType)}
                           </Badge>
                           <Badge variant="outline">{course.category}</Badge>
                         </div>
@@ -370,10 +370,10 @@ export default function Courses() {
                       <CardContent className="space-y-4">
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="outline" className={getLevelBadgeColor(course.level)}>
-                            {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                            {formatLevel(course.level)}
                           </Badge>
                           <Badge variant="outline" className={getTypeBadgeColor(course.courseType)}>
-                            {course.courseType.charAt(0).toUpperCase() + course.courseType.slice(1)}
+                            {formatCourseType(course.courseType)}
                           </Badge>
                           <Badge variant="outline">{course.category}</Badge>
                         </div>
