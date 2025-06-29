@@ -822,7 +822,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get user's enrollments through course roles (student role)
       const userCourseRoles = await storage.getUserCourseRoles(userId);
-      const studentRoles = userCourseRoles.filter(role => role.role === 'student');
+      console.log("User course roles:", userCourseRoles);
+      const studentRoles = userCourseRoles.filter((role: any) => role.role === 'student');
+      console.log("Student roles:", studentRoles);
       
       // Combine course data with enrollment status from both sources
       const coursesWithEnrollment = publishedCourses.map(course => {
