@@ -1378,9 +1378,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           progress: 0,
           completedModules: [],
           currentModuleId: null,
-          startedAt: new Date().toISOString(),
+          startedAt: new Date(),
           timeSpent: 0,
-          lastAccessedAt: new Date().toISOString(),
+          lastAccessedAt: new Date(),
           certificateGenerated: false
         });
       }
@@ -1403,8 +1403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completedModules,
           progress: Math.round(progressPercentage),
           status: isCompleted ? "completed" : "in_progress",
-          completedAt: isCompleted ? new Date().toISOString() : null,
-          lastAccessedAt: new Date().toISOString()
+          completedAt: isCompleted ? new Date() : null,
+          lastAccessedAt: new Date()
         });
       }
       
@@ -1438,7 +1438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         courseId,
         organizationId: req.session.organizationId!,
-        issuedAt: new Date().toISOString(),
+        issuedAt: new Date(),
         validationCode: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
       });
       
