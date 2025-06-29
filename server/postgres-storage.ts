@@ -1,4 +1,4 @@
-import { eq, and, count, desc, sql, asc, gte, lte, isNotNull } from 'drizzle-orm';
+import { eq, and, count, desc, sql, asc, gte, lte, isNotNull, isNull } from 'drizzle-orm';
 import { db } from './db';
 import bcrypt from 'bcrypt';
 import { 
@@ -1470,6 +1470,9 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCourseEnrollments(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {
+    // First, sync user_course_progress with user_course_roles to ensure consistency
+    await this.syncCourseEnrollments(courseId);
+    
     const enrollments = await db
       .select({
         id: userCourseRoles.id,
@@ -1499,6 +1502,40 @@ export class PostgresStorage implements IStorage {
       .orderBy(userCourseRoles.assignedAt);
 
     return enrollments as Array<UserCourseRole & { user: User }>;
+  }
+
+  // Sync method to ensure user_course_progress and user_course_roles are consistent
+  async syncCourseEnrollments(courseId: string): Promise<void> {
+    // Find users in user_course_progress who are not in user_course_roles
+    const missingRoles = await db
+      .select({
+        userId: userCourseProgress.userId,
+        courseId: userCourseProgress.courseId,
+        createdAt: userCourseProgress.createdAt
+      })
+      .from(userCourseProgress)
+      .leftJoin(userCourseRoles, and(
+        eq(userCourseProgress.userId, userCourseRoles.userId),
+        eq(userCourseProgress.courseId, userCourseRoles.courseId)
+      ))
+      .where(and(
+        eq(userCourseProgress.courseId, courseId),
+        isNull(userCourseRoles.id)
+      ));
+
+    // Insert missing roles
+    if (missingRoles.length > 0) {
+      await db.insert(userCourseRoles).values(
+        missingRoles.map(missing => ({
+          userId: missing.userId,
+          courseId: missing.courseId,
+          role: 'student',
+          isActive: true,
+          assignedAt: missing.createdAt || new Date(),
+          notes: 'Auto-inscrito'
+        }))
+      );
+    }
   }
 
   async getCourseStudents(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {
