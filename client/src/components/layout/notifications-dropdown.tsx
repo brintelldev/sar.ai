@@ -75,7 +75,7 @@ export function NotificationsDropdown() {
     markAsReadMutation.mutate(notificationId);
   };
 
-  const unreadCount = safeNotifications.filter(n => !n.read).length;
+  const unreadCount = safeNotifications.filter(n => n && !n.read).length;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

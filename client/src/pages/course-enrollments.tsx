@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface Course {
 export default function CourseEnrollments() {
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+  const [, navigate] = useLocation();
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['/api/courses/enrollments'],
@@ -175,11 +177,21 @@ export default function CourseEnrollments() {
                         </div>
                       )}
                       
-                      <Button className="w-full" size="sm">
+                      <Button 
+                        className="w-full" 
+                        size="sm"
+                        onClick={() => {
+                          if (course.progress === 100) {
+                            navigate(`/courses/${course.id}/progress`);
+                          } else {
+                            navigate(`/courses/${course.id}`);
+                          }
+                        }}
+                      >
                         {course.progress === 100 ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-2" />
-                            Concluído
+                            Ver Certificado
                           </>
                         ) : (
                           <>
