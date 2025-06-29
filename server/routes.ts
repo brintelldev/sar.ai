@@ -1546,6 +1546,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEMPORARILY COMMENTED FOR DEBUGGING
+  /*
   app.post('/api/modules/:moduleId/form-submission', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { moduleId } = req.params;
@@ -1694,6 +1696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao submeter formulario" });
     }
   });
+  */
 
   // Course Enrollment Management Routes
   app.get('/api/courses/:courseId/enrollments', requireAuth, requireOrganization, async (req, res) => {
