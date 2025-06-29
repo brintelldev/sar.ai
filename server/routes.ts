@@ -1593,70 +1593,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Processing form fields:", block.formFields.length);
           for (const field of block.formFields) {
             // Só avaliar campos que têm resposta correta e pontuação definida
-              if (field.correctAnswer !== undefined && field.correctAnswer !== null && field.points && field.points > 0) {
-                maxScore += field.points;
-                const userAnswer = responses[field.id];
-                let isCorrect = false;
-                let fieldScore = 0;
-                
-                // Avaliar diferentes tipos de campo
-                switch (field.type) {
-                  case 'radio':
-                  case 'select':
-                    // Para campos de única escolha
-                    isCorrect = userAnswer === field.correctAnswer;
-                    if (isCorrect) {
-                      fieldScore = field.points;
-                      score += field.points;
-                    }
-                    break;
-                    
-                  case 'checkbox':
-                    // Para checkbox único (true/false)
-                    const correctBool = field.correctAnswer === 'true' || field.correctAnswer === true;
-                    const userBool = userAnswer === 'true' || userAnswer === true;
-                    isCorrect = correctBool === userBool;
-                    if (isCorrect) {
-                      fieldScore = field.points;
-                      score += field.points;
-                    }
-                    break;
-                    
-                  case 'text':
-                  case 'textarea':
-                    // Para campos de texto, comparação case-insensitive e trim
-                    const correctText = String(field.correctAnswer).toLowerCase().trim();
-                    const userText = String(userAnswer || '').toLowerCase().trim();
-                    isCorrect = correctText === userText;
-                    if (isCorrect) {
-                      fieldScore = field.points;
-                      score += field.points;
-                    }
-                    break;
-                    
-                  default:
-                    // Fallback para outros tipos
-                    isCorrect = userAnswer === field.correctAnswer;
-                    if (isCorrect) {
-                      fieldScore = field.points;
-                      score += field.points;
-                    }
-                }
-                
-                // Armazenar resultado detalhado para cada campo
-                detailedResults.push({
-                  fieldId: field.id,
-                  fieldLabel: field.label,
-                  fieldType: field.type,
-                  userAnswer: userAnswer,
-                  correctAnswer: field.correctAnswer,
-                  isCorrect: isCorrect,
-                  pointsEarned: fieldScore,
-                  pointsTotal: field.points
-                });
+            if (field.correctAnswer !== undefined && field.correctAnswer !== null && field.points && field.points > 0) {
+              maxScore += field.points;
+              const userAnswer = responses[field.id];
+              let isCorrect = false;
+              let fieldScore = 0;
+              
+              // Avaliar diferentes tipos de campo
+              switch (field.type) {
+                case 'radio':
+                case 'select':
+                  // Para campos de única escolha
+                  isCorrect = userAnswer === field.correctAnswer;
+                  if (isCorrect) {
+                    fieldScore = field.points;
+                    score += field.points;
+                  }
+                  break;
+                  
+                case 'checkbox':
+                  // Para checkbox único (true/false)
+                  const correctBool = field.correctAnswer === 'true' || field.correctAnswer === true;
+                  const userBool = userAnswer === 'true' || userAnswer === true;
+                  isCorrect = correctBool === userBool;
+                  if (isCorrect) {
+                    fieldScore = field.points;
+                    score += field.points;
+                  }
+                  break;
+                  
+                case 'text':
+                case 'textarea':
+                  // Para campos de texto, comparação case-insensitive e trim
+                  const correctText = String(field.correctAnswer).toLowerCase().trim();
+                  const userText = String(userAnswer || '').toLowerCase().trim();
+                  isCorrect = correctText === userText;
+                  if (isCorrect) {
+                    fieldScore = field.points;
+                    score += field.points;
+                  }
+                  break;
+                  
+                default:
+                  // Fallback para outros tipos
+                  isCorrect = userAnswer === field.correctAnswer;
+                  if (isCorrect) {
+                    fieldScore = field.points;
+                    score += field.points;
+                  }
               }
+              
+              // Armazenar resultado detalhado para cada campo
+              detailedResults.push({
+                fieldId: field.id,
+                fieldLabel: field.label,
+                fieldType: field.type,
+                userAnswer: userAnswer,
+                correctAnswer: field.correctAnswer,
+                isCorrect: isCorrect,
+                pointsEarned: fieldScore,
+                pointsTotal: field.points
+              });
             }
-          }
         }
       }
 
