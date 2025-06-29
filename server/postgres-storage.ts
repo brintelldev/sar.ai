@@ -739,7 +739,21 @@ export class PostgresStorage implements IStorage {
       }
 
       // Deletar todos os dados relacionados em sequência (sem transação devido ao neon-http driver)
-      // 1. Deletar progress de módulos
+      // 1. Deletar progress do usuário no curso
+      await db.execute(sql`DELETE FROM user_course_progress WHERE course_id = ${id}`);
+
+      // 2. Deletar roles de usuário no curso
+      await db.execute(sql`DELETE FROM user_course_roles WHERE course_id = ${id}`);
+
+      // 3. Deletar submissões de formulários de módulos
+      await db.execute(sql`
+        DELETE FROM user_module_form_submissions 
+        WHERE module_id IN (
+          SELECT id FROM course_modules WHERE course_id = ${id}
+        )
+      `);
+
+      // 4. Deletar progress de módulos
       await db.execute(sql`
         DELETE FROM user_module_progress 
         WHERE module_id IN (
@@ -747,7 +761,10 @@ export class PostgresStorage implements IStorage {
         )
       `);
 
-      // 2. Deletar registros de frequência
+      // 5. Deletar certificados do curso
+      await db.execute(sql`DELETE FROM certificates WHERE course_id = ${id}`);
+
+      // 6. Deletar registros de frequência
       await db.execute(sql`
         DELETE FROM course_attendance 
         WHERE enrollment_id IN (
@@ -755,19 +772,19 @@ export class PostgresStorage implements IStorage {
         )
       `);
 
-      // 3. Deletar inscrições
+      // 7. Deletar inscrições
       await db.execute(sql`DELETE FROM course_enrollments WHERE course_id = ${id}`);
 
-      // 4. Deletar instrutores
+      // 8. Deletar instrutores
       await db.execute(sql`DELETE FROM course_instructors WHERE course_id = ${id}`);
 
-      // 5. Deletar avaliações
+      // 9. Deletar avaliações
       await db.execute(sql`DELETE FROM course_assessments WHERE course_id = ${id}`);
 
-      // 6. Deletar módulos
+      // 10. Deletar módulos
       await db.execute(sql`DELETE FROM course_modules WHERE course_id = ${id}`);
 
-      // 7. Finalmente deletar o curso
+      // 11. Finalmente deletar o curso
       await db.execute(sql`
         DELETE FROM courses WHERE id = ${id} AND organization_id = ${organizationId}
       `);
