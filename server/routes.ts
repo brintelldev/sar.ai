@@ -1546,16 +1546,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TEMPORARILY COMMENTED FOR DEBUGGING
-  /*
   app.post('/api/modules/:moduleId/form-submission', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { moduleId } = req.params;
       const { responses } = req.body;
       const userId = req.session.userId!;
       
-      // Buscar todos os módulos para encontrar o módulo correto
-      // Precisamos primeiro descobrir qual curso contém este módulo
       const organizationId = req.session.organizationId!;
       const courses = await storage.getCourses(organizationId);
       let module: any = null;
@@ -1570,42 +1566,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!module || !module.content) {
-        return res.status(404).json({ message: "Módulo não encontrado" });
+        return res.status(404).json({ message: "Modulo nao encontrado" });
       }
 
-      // Calcular pontuação com algoritmo melhorado
       let score = 0;
       let maxScore = 0;
       let detailedResults: any[] = [];
       const content = module.content as any;
       
-      // Handle both array format and object with blocks array
       let formBlocks: any[] = [];
       if (content && Array.isArray(content)) {
         formBlocks = content.filter((block: any) => block.type === 'form');
       } else if (content && content.blocks && Array.isArray(content.blocks)) {
         formBlocks = content.blocks.filter((block: any) => block.type === 'form');
       }
-      
-      console.log("Form blocks found:", formBlocks.length);
-      console.log("First form block:", formBlocks[0]);
         
       for (const block of formBlocks) {
         if (block.formFields && Array.isArray(block.formFields)) {
-          console.log("Processing form fields:", block.formFields.length);
           for (const field of block.formFields) {
-            // Só avaliar campos que têm resposta correta e pontuação definida
             if (field.correctAnswer !== undefined && field.correctAnswer !== null && field.points && field.points > 0) {
               maxScore += field.points;
               const userAnswer = responses[field.id];
               let isCorrect = false;
               let fieldScore = 0;
               
-              // Avaliar diferentes tipos de campo
               switch (field.type) {
                 case 'radio':
                 case 'select':
-                  // Para campos de única escolha
                   isCorrect = userAnswer === field.correctAnswer;
                   if (isCorrect) {
                     fieldScore = field.points;
@@ -1614,7 +1601,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   break;
                   
                 case 'checkbox':
-                  // Para checkbox único (true/false)
                   const correctBool = field.correctAnswer === 'true' || field.correctAnswer === true;
                   const userBool = userAnswer === 'true' || userAnswer === true;
                   isCorrect = correctBool === userBool;
@@ -1626,7 +1612,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   
                 case 'text':
                 case 'textarea':
-                  // Para campos de texto, comparação case-insensitive e trim
                   const correctText = String(field.correctAnswer).toLowerCase().trim();
                   const userText = String(userAnswer || '').toLowerCase().trim();
                   isCorrect = correctText === userText;
@@ -1637,7 +1622,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   break;
                   
                 default:
-                  // Fallback para outros tipos
                   isCorrect = userAnswer === field.correctAnswer;
                   if (isCorrect) {
                     fieldScore = field.points;
@@ -1645,7 +1629,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
               }
               
-              // Armazenar resultado detalhado para cada campo
               detailedResults.push({
                 fieldId: field.id,
                 fieldLabel: field.label,
@@ -1657,12 +1640,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 pointsTotal: field.points
               });
             }
+          }
         }
       }
 
-      // Calcular porcentagem de acerto
       const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-      const passed = percentage >= 70; // Considerar aprovado se >= 70%
+      const passed = percentage >= 70;
 
       const submissionData = {
         userId,
@@ -1681,7 +1664,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const submission = await storage.createUserModuleFormSubmission(submissionData);
       
-      // Retornar resposta completa com resultados detalhados
       const response = {
         ...submission,
         percentage,
@@ -1696,7 +1678,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao submeter formulario" });
     }
   });
-  */
 
   // Course Enrollment Management Routes
   app.get('/api/courses/:courseId/enrollments', requireAuth, requireOrganization, async (req, res) => {
