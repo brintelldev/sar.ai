@@ -112,7 +112,12 @@ export function CourseAdmin() {
     };
 
     console.log("Creating course:", courseData);
-    createCourseMutation.mutate(courseData);
+    createCourseMutation.mutate(courseData, {
+      onSuccess: () => {
+        setSelectedCategory("");
+        setIsCreateDialogOpen(false);
+      }
+    });
   };
 
   const coursesList = Array.isArray(courses) ? courses : [];
@@ -201,7 +206,7 @@ export function CourseAdmin() {
                       <Label htmlFor="category">Categoria</Label>
                       <CategoryCombobox
                         value={selectedCategory}
-                        onValueChange={setSelectedCategory}
+                        onChange={setSelectedCategory}
                         placeholder="Selecione ou digite uma categoria"
                       />
                     </div>
@@ -252,7 +257,10 @@ export function CourseAdmin() {
                 </div>
                 
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => {
+                    setIsCreateDialogOpen(false);
+                    setSelectedCategory("");
+                  }}>
                     Cancelar
                   </Button>
                   <Button 
