@@ -1688,6 +1688,19 @@ export class PostgresStorage implements IStorage {
     return userCourses as Array<UserCourseRole & { course: Course }>;
   }
 
+  async getUserCourseRoles(userId: string): Promise<UserCourseRole[]> {
+    const roles = await db
+      .select()
+      .from(userCourseRoles)
+      .where(and(
+        eq(userCourseRoles.userId, userId),
+        eq(userCourseRoles.isActive, true)
+      ))
+      .orderBy(userCourseRoles.assignedAt);
+
+    return roles;
+  }
+
   async removeUserFromCourse(userId: string, courseId: string): Promise<boolean> {
     const result = await db
       .update(userCourseRoles)
