@@ -17,6 +17,7 @@ import {
   courseModules,
   userCourseProgress,
   userModuleFormSubmissions,
+  userGrades,
   courseAssessments,
   certificates,
   whitelabelSites,
@@ -1729,5 +1730,50 @@ export class PostgresStorage implements IStorage {
     
     // Students and instructors can access course modules
     return ['student', 'instructor', 'assistant'].includes(role.role);
+  }
+
+  // User Grades methods
+  async getUserModuleGrade(userId: string, moduleId: string): Promise<any | undefined> {
+    const [result] = await db
+      .select()
+      .from(userGrades)
+      .where(and(
+        eq(userGrades.userId, userId),
+        eq(userGrades.moduleId, moduleId),
+        eq(userGrades.gradeType, 'module')
+      ))
+      .limit(1);
+    
+    return result;
+  }
+
+  async createUserGrade(grade: any): Promise<any> {
+    const [result] = await db
+      .insert(userGrades)
+      .values(grade)
+      .returning();
+    
+    return result;
+  }
+
+  async updateUserGrade(id: string, updates: any): Promise<any | undefined> {
+    const [result] = await db
+      .update(userGrades)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userGrades.id, id))
+      .returning();
+    
+    return result;
+  }
+
+  async getUserCourseGrades(userId: string, courseId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(userGrades)
+      .where(and(
+        eq(userGrades.userId, userId),
+        eq(userGrades.courseId, courseId)
+      ))
+      .orderBy(desc(userGrades.gradedAt));
   }
 }

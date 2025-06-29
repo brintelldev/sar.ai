@@ -1647,6 +1647,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
       const passed = percentage >= 70;
 
+      // Calculate grade on 1-10 scale
+      let gradeScale = 1.0;
+      if (maxScore > 0) {
+        // Convert percentage to 1-10 scale
+        // 0% = 1.0, 100% = 10.0
+        gradeScale = Math.round(((percentage / 100) * 9 + 1) * 10) / 10;
+        // Ensure grade is between 1.0 and 10.0
+        gradeScale = Math.max(1.0, Math.min(10.0, gradeScale));
+      }
+
       const submissionData = {
         userId,
         moduleId,
@@ -1662,11 +1672,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         submittedAt: new Date()
       };
 
+      // Create form submission
       const submission = await storage.createUserModuleFormSubmission(submissionData);
+
+      // Find the course ID for this module (reuse the courses array from earlier)
+      let courseId = null;
+      
+      for (const course of courses) {
+        const courseModules = await storage.getCourseModules(course.id);
+        const foundModule = courseModules.find(m => m.id === moduleId);
+        if (foundModule) {
+          courseId = course.id;
+          break;
+        }
+      }
+
+      // Create or update grade record
+      if (courseId) {
+        // Check if grade already exists for this user/module
+        const existingGrade = await storage.getUserModuleGrade(userId, moduleId);
+        
+        const gradeData = {
+          userId,
+          courseId,
+          moduleId,
+          gradeType: 'module',
+          scoreRaw: score,
+          scoreMax: maxScore,
+          gradeScale,
+          passed,
+          feedback: `Formulário do módulo concluído com ${detailedResults.filter(r => r.isCorrect).length}/${detailedResults.length} questões corretas`,
+          gradedBy: userId // Auto-graded by system
+        };
+
+        if (existingGrade) {
+          await storage.updateUserGrade(existingGrade.id, gradeData);
+        } else {
+          await storage.createUserGrade(gradeData);
+        }
+      }
       
       const response = {
         ...submission,
         percentage,
+        gradeScale,
         detailedResults,
         totalQuestions: detailedResults.length,
         correctAnswers: detailedResults.filter(r => r.isCorrect).length
