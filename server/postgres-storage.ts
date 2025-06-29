@@ -814,10 +814,10 @@ export class PostgresStorage implements IStorage {
     ];
     
     // Combinar e remover duplicatas
-    const uniqueCategories = new Set([...categories, ...defaultCategories]);
-    const allCategories = Array.from(uniqueCategories);
+    const allCategories = categories.concat(defaultCategories);
+    const uniqueCategories = allCategories.filter((item, index) => allCategories.indexOf(item) === index);
     
-    return allCategories.sort();
+    return uniqueCategories.sort();
   }
 
   // Course Modules

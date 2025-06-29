@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CategoryCombobox } from "@/components/CategoryCombobox";
 import { 
   Plus, 
   BookOpen, 
@@ -52,6 +53,7 @@ export function CourseAdmin() {
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedAction, setSelectedAction] = useState<'delete' | 'deactivate' | 'activate' | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,7 +104,7 @@ export function CourseAdmin() {
     const courseData = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
-      category: formData.get('category') as string,
+      category: selectedCategory,
       level: formData.get('level') as string,
       courseType: formData.get('courseType') as string,
       duration: parseInt(formData.get('duration') as string),
@@ -197,18 +199,11 @@ export function CourseAdmin() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="category">Categoria</Label>
-                      <Select name="category" required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                          <SelectItem value="empreendedorismo">Empreendedorismo</SelectItem>
-                          <SelectItem value="direitos">Direitos</SelectItem>
-                          <SelectItem value="saude">Saúde</SelectItem>
-                          <SelectItem value="comunicacao">Comunicação</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <CategoryCombobox
+                        value={selectedCategory}
+                        onValueChange={setSelectedCategory}
+                        placeholder="Selecione ou digite uma categoria"
+                      />
                     </div>
                     
                     <div className="grid gap-2">
