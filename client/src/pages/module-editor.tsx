@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Plus, Trash2, Upload, Video, FileText, Link, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Upload, Video, FileText, Link, Save, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -668,225 +668,12 @@ export function ModuleEditor() {
                             </div>
                           )}
 
-                          {/* Bloco de Formulário */}
+                          {/* Bloco de Formulário Avançado */}
                           {block.type === 'form' && (
-                            <div className="space-y-4">
-                              <div>
-                                <label className="text-sm font-medium">Instruções do Exercício</label>
-                                <Textarea
-                                  value={block.content || ''}
-                                  onChange={(e) => updateContentBlock(index, { content: e.target.value })}
-                                  placeholder="Explique o exercício, o que o aluno deve fazer, critérios de avaliação..."
-                                  rows={3}
-                                />
-                              </div>
-                              
-                              <div>
-                                <div className="flex items-center justify-between mb-3">
-                                  <label className="text-sm font-medium">Campos do Formulário</label>
-                                  <div className="flex gap-2">
-                                    <select
-                                      className="text-xs border rounded px-2 py-1"
-                                      onChange={(e) => {
-                                        if (e.target.value) {
-                                          const templates: Record<string, FormField> = {
-                                            'texto': {
-                                              id: Date.now().toString(),
-                                              type: 'text',
-                                              label: 'Qual é a sua resposta?',
-                                              placeholder: 'Digite sua resposta aqui...',
-                                              required: true,
-                                              points: 5,
-                                              correctAnswer: '',
-                                              explanation: ''
-                                            },
-                                            'paragrafo': {
-                                              id: Date.now().toString(),
-                                              type: 'textarea',
-                                              label: 'Desenvolva sua resposta:',
-                                              placeholder: 'Escreva uma resposta detalhada...',
-                                              required: true,
-                                              points: 10,
-                                              correctAnswer: '',
-                                              explanation: ''
-                                            },
-                                            'multipla': {
-                                              id: Date.now().toString(),
-                                              type: 'radio',
-                                              label: 'Selecione a opção correta:',
-                                              options: ['Opção A', 'Opção B', 'Opção C', 'Opção D'],
-                                              required: true,
-                                              points: 5,
-                                              correctAnswer: 'Opção A',
-                                              explanation: ''
-                                            },
-                                            'selecao': {
-                                              id: Date.now().toString(),
-                                              type: 'select',
-                                              label: 'Escolha uma opção:',
-                                              options: ['Escolha uma opção', 'Primeira opção', 'Segunda opção', 'Terceira opção'],
-                                              required: true,
-                                              points: 5,
-                                              correctAnswer: 'Primeira opção',
-                                              explanation: ''
-                                            },
-                                            'checkbox': {
-                                              id: Date.now().toString(),
-                                              type: 'checkbox',
-                                              label: 'Marque esta opção se concordar',
-                                              required: false,
-                                              points: 2,
-                                              correctAnswer: 'true',
-                                              explanation: ''
-                                            }
-                                          };
-                                          
-                                          const newField = templates[e.target.value];
-                                          if (newField) {
-                                            const updatedFields = [...(block.formFields || []), newField];
-                                            updateContentBlock(index, { formFields: updatedFields });
-                                          }
-                                          e.target.value = '';
-                                        }
-                                      }}
-                                    >
-                                      <option value="">+ Adicionar Campo</option>
-                                      <option value="texto">📝 Pergunta de Texto</option>
-                                      <option value="paragrafo">📄 Resposta Longa</option>
-                                      <option value="multipla">◉ Múltipla Escolha</option>
-                                      <option value="selecao">📋 Lista de Opções</option>
-                                      <option value="checkbox">☑️ Concordo/Confirmo</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                
-                                {block.formFields?.map((field, fieldIndex) => (
-                                  <Card key={field.id} className="p-3">
-                                    <div className="space-y-2">
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium">Campo {fieldIndex + 1}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            const updatedFields = block.formFields?.filter((_, i) => i !== fieldIndex) || [];
-                                            updateContentBlock(index, { formFields: updatedFields });
-                                          }}
-                                        >
-                                          <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                          <label className="text-xs">Tipo</label>
-                                          <select
-                                            value={field.type}
-                                            onChange={(e) => {
-                                              const updatedFields = [...(block.formFields || [])];
-                                              updatedFields[fieldIndex] = { ...field, type: e.target.value as FormField['type'] };
-                                              updateContentBlock(index, { formFields: updatedFields });
-                                            }}
-                                            className="w-full p-1 border rounded text-sm"
-                                          >
-                                            <option value="text">Texto</option>
-                                            <option value="textarea">Texto Longo</option>
-                                            <option value="select">Seleção</option>
-                                            <option value="radio">Múltipla Escolha</option>
-                                            <option value="checkbox">Checkbox</option>
-                                          </select>
-                                        </div>
-                                        <div className="flex items-center">
-                                          <input
-                                            type="checkbox"
-                                            checked={field.required}
-                                            onChange={(e) => {
-                                              const updatedFields = [...(block.formFields || [])];
-                                              updatedFields[fieldIndex] = { ...field, required: e.target.checked };
-                                              updateContentBlock(index, { formFields: updatedFields });
-                                            }}
-                                            className="mr-2"
-                                          />
-                                          <label className="text-xs">Obrigatório</label>
-                                        </div>
-                                      </div>
-                                      <Input
-                                        value={field.label}
-                                        onChange={(e) => {
-                                          const updatedFields = [...(block.formFields || [])];
-                                          updatedFields[fieldIndex] = { ...field, label: e.target.value };
-                                          updateContentBlock(index, { formFields: updatedFields });
-                                        }}
-                                        placeholder="Pergunta ou etiqueta do campo"
-                                        className="text-sm"
-                                      />
-                                      {(field.type === 'select' || field.type === 'radio') && (
-                                        <Textarea
-                                          value={field.options?.join('\n') || ''}
-                                          onChange={(e) => {
-                                            const updatedFields = [...(block.formFields || [])];
-                                            updatedFields[fieldIndex] = { ...field, options: e.target.value.split('\n').filter(o => o.trim()) };
-                                            updateContentBlock(index, { formFields: updatedFields });
-                                          }}
-                                          placeholder="Uma opção por linha"
-                                          rows={3}
-                                          className="text-sm"
-                                        />
-                                      )}
-                                      
-                                      {/* Campos para avaliação automática */}
-                                      {(field.type === 'select' || field.type === 'radio' || field.type === 'text') && (
-                                        <div className="space-y-2 border-t pt-2">
-                                          <p className="text-xs font-medium text-muted-foreground">Configurações de Avaliação</p>
-                                          
-                                          <Input
-                                            value={field.correctAnswer as string || ''}
-                                            onChange={(e) => {
-                                              const updatedFields = [...(block.formFields || [])];
-                                              updatedFields[fieldIndex] = { ...field, correctAnswer: e.target.value };
-                                              updateContentBlock(index, { formFields: updatedFields });
-                                            }}
-                                            placeholder={field.type === 'text' ? 'Resposta correta esperada' : 'Digite a opção correta'}
-                                            className="text-sm"
-                                          />
-                                          
-                                          <div className="flex gap-2">
-                                            <Input
-                                              type="number"
-                                              value={field.points || 1}
-                                              onChange={(e) => {
-                                                const updatedFields = [...(block.formFields || [])];
-                                                updatedFields[fieldIndex] = { ...field, points: parseInt(e.target.value) || 1 };
-                                                updateContentBlock(index, { formFields: updatedFields });
-                                              }}
-                                              placeholder="Pontos"
-                                              min="1"
-                                              max="100"
-                                              className="text-sm w-20"
-                                            />
-                                            <Input
-                                              value={field.explanation || ''}
-                                              onChange={(e) => {
-                                                const updatedFields = [...(block.formFields || [])];
-                                                updatedFields[fieldIndex] = { ...field, explanation: e.target.value };
-                                                updateContentBlock(index, { formFields: updatedFields });
-                                              }}
-                                              placeholder="Explicação da resposta (opcional)"
-                                              className="text-sm flex-1"
-                                            />
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </Card>
-                                ))}
-                                
-                                {(!block.formFields || block.formFields.length === 0) && (
-                                  <p className="text-sm text-muted-foreground text-center py-4">
-                                    Nenhum campo adicionado. Clique em "Adicionar Campo" para começar.
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                            <FormEditorComponent 
+                              block={block}
+                              onUpdateBlock={(updates) => updateContentBlock(index, updates)}
+                            />
                           )}
 
                         </CardContent>
@@ -900,5 +687,495 @@ export function ModuleEditor() {
         )}
       </div>
     </MainLayout>
+  );
+}
+
+// Componente integrado para editar formulários avançados
+interface FormEditorComponentProps {
+  block: ContentBlock;
+  onUpdateBlock: (updates: Partial<ContentBlock>) => void;
+}
+
+function FormEditorComponent({ block, onUpdateBlock }: FormEditorComponentProps) {
+  const [showPreview, setShowPreview] = useState(false);
+
+  const duplicateField = (fieldIndex: number) => {
+    if (!block.formFields) return;
+    
+    const fieldToDuplicate = block.formFields[fieldIndex];
+    const duplicatedField = {
+      ...fieldToDuplicate,
+      id: Date.now().toString(),
+      label: fieldToDuplicate.label + ' (Cópia)'
+    };
+    
+    const updatedFields = [...block.formFields];
+    updatedFields.splice(fieldIndex + 1, 0, duplicatedField);
+    onUpdateBlock({ formFields: updatedFields });
+  };
+
+  const moveField = (fieldIndex: number, direction: 'up' | 'down') => {
+    if (!block.formFields) return;
+    
+    const updatedFields = [...block.formFields];
+    const targetIndex = direction === 'up' ? fieldIndex - 1 : fieldIndex + 1;
+    
+    if (targetIndex >= 0 && targetIndex < updatedFields.length) {
+      [updatedFields[fieldIndex], updatedFields[targetIndex]] = [updatedFields[targetIndex], updatedFields[fieldIndex]];
+      onUpdateBlock({ formFields: updatedFields });
+    }
+  };
+
+  const addQuickTemplate = (templateType: string) => {
+    const templates: Record<string, FormField> = {
+      'texto_curto': {
+        id: Date.now().toString(),
+        type: 'text',
+        label: 'Sua resposta:',
+        placeholder: 'Digite sua resposta aqui...',
+        required: true,
+        points: 5,
+        correctAnswer: '',
+        explanation: ''
+      },
+      'texto_longo': {
+        id: Date.now().toString(),
+        type: 'textarea',
+        label: 'Desenvolva sua resposta (mínimo 100 palavras):',
+        placeholder: 'Escreva uma resposta detalhada e fundamentada...',
+        required: true,
+        points: 10,
+        correctAnswer: '',
+        explanation: ''
+      },
+      'multipla_escolha': {
+        id: Date.now().toString(),
+        type: 'radio',
+        label: 'Selecione a alternativa correta:',
+        options: ['a) Primeira opção', 'b) Segunda opção', 'c) Terceira opção', 'd) Quarta opção'],
+        required: true,
+        points: 5,
+        correctAnswer: 'a) Primeira opção',
+        explanation: 'Explique por que esta é a resposta correta'
+      },
+      'verdadeiro_falso': {
+        id: Date.now().toString(),
+        type: 'radio',
+        label: 'A afirmação a seguir é verdadeira ou falsa?',
+        options: ['Verdadeiro', 'Falso'],
+        required: true,
+        points: 3,
+        correctAnswer: 'Verdadeiro',
+        explanation: 'Justificativa da resposta'
+      },
+      'lista_opcoes': {
+        id: Date.now().toString(),
+        type: 'select',
+        label: 'Escolha uma das opções:',
+        options: ['Selecione uma opção', 'Opção 1', 'Opção 2', 'Opção 3'],
+        required: true,
+        points: 3,
+        correctAnswer: 'Opção 1',
+        explanation: ''
+      }
+    };
+    
+    const newField = templates[templateType];
+    if (newField) {
+      const updatedFields = [...(block.formFields || []), newField];
+      onUpdateBlock({ formFields: updatedFields });
+    }
+  };
+
+  const calculateTotalPoints = () => {
+    return block.formFields?.reduce((total, field) => total + (field.points || 0), 0) || 0;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Instruções e configurações gerais */}
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium">Instruções do Exercício</label>
+          <Textarea
+            value={block.content || ''}
+            onChange={(e) => onUpdateBlock({ content: e.target.value })}
+            placeholder="Explique o exercício, critérios de avaliação, tempo estimado..."
+            rows={3}
+          />
+        </div>
+        
+        {/* Estatísticas do formulário */}
+        <div className="flex items-center gap-4 text-sm">
+          <Badge variant="outline">
+            {block.formFields?.length || 0} Questões
+          </Badge>
+          <Badge variant="outline">
+            {calculateTotalPoints()} Pontos Total
+          </Badge>
+        </div>
+      </div>
+
+      {/* Botões de templates rápidos */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium">Templates Rápidos</h4>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              {showPreview ? 'Ocultar' : 'Visualizar'} Preview
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addQuickTemplate('texto_curto')}
+          >
+            📝 Texto Curto
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addQuickTemplate('texto_longo')}
+          >
+            📄 Texto Longo
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addQuickTemplate('multipla_escolha')}
+          >
+            ◉ Múltipla Escolha
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addQuickTemplate('verdadeiro_falso')}
+          >
+            ✓✗ Verdadeiro/Falso
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addQuickTemplate('lista_opcoes')}
+          >
+            📋 Lista de Opções
+          </Button>
+        </div>
+      </div>
+
+      {/* Preview do formulário */}
+      {showPreview && block.formFields && block.formFields.length > 0 && (
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              👁️ Preview do Formulário
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {block.formFields.map((field) => (
+              <div key={field.id} className="space-y-2">
+                <label className="text-sm font-medium block">
+                  {field.label}
+                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.points && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {field.points} pts
+                    </Badge>
+                  )}
+                </label>
+                
+                {field.type === 'text' && (
+                  <Input placeholder={field.placeholder || ''} disabled />
+                )}
+                
+                {field.type === 'textarea' && (
+                  <Textarea placeholder={field.placeholder || ''} rows={3} disabled />
+                )}
+                
+                {field.type === 'select' && (
+                  <select className="w-full p-2 border rounded" disabled>
+                    {field.options?.map((option, i) => (
+                      <option key={i} value={option}>{option}</option>
+                    ))}
+                  </select>
+                )}
+                
+                {field.type === 'radio' && (
+                  <div className="space-y-2">
+                    {field.options?.map((option, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input type="radio" name={field.id} disabled />
+                        <span className="text-sm">{option}</span>
+                        {option === field.correctAnswer && (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {field.type === 'checkbox' && (
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" disabled />
+                    <span className="text-sm">{field.label}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Editor de campos */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-medium">Campos do Formulário</h4>
+        
+        {block.formFields?.map((field, fieldIndex) => (
+          <Card key={field.id} className="relative">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">
+                    {field.type === 'text' ? '📝' : 
+                     field.type === 'textarea' ? '📄' : 
+                     field.type === 'radio' ? '◉' : 
+                     field.type === 'select' ? '📋' : '☑️'}
+                  </Badge>
+                  <span className="text-sm font-medium">Questão {fieldIndex + 1}</span>
+                  {field.points && (
+                    <Badge variant="secondary" className="text-xs">
+                      {field.points} pts
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveField(fieldIndex, 'up')}
+                    disabled={fieldIndex === 0}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveField(fieldIndex, 'down')}
+                    disabled={fieldIndex === (block.formFields?.length || 0) - 1}
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => duplicateField(fieldIndex)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const updatedFields = block.formFields?.filter((_, i) => i !== fieldIndex) || [];
+                      onUpdateBlock({ formFields: updatedFields });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {/* Configurações básicas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Tipo de Campo</label>
+                  <select
+                    value={field.type}
+                    onChange={(e) => {
+                      const updatedFields = [...(block.formFields || [])];
+                      updatedFields[fieldIndex] = { ...field, type: e.target.value as FormField['type'] };
+                      onUpdateBlock({ formFields: updatedFields });
+                    }}
+                    className="w-full p-2 border rounded text-sm"
+                  >
+                    <option value="text">Texto Curto</option>
+                    <option value="textarea">Texto Longo</option>
+                    <option value="select">Lista de Seleção</option>
+                    <option value="radio">Múltipla Escolha</option>
+                    <option value="checkbox">Checkbox</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={field.required}
+                      onChange={(e) => {
+                        const updatedFields = [...(block.formFields || [])];
+                        updatedFields[fieldIndex] = { ...field, required: e.target.checked };
+                        onUpdateBlock({ formFields: updatedFields });
+                      }}
+                      className="mr-2"
+                    />
+                    <label className="text-xs">Obrigatório</label>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Pergunta */}
+              <div>
+                <label className="text-xs text-muted-foreground">Pergunta / Enunciado</label>
+                <Textarea
+                  value={field.label}
+                  onChange={(e) => {
+                    const updatedFields = [...(block.formFields || [])];
+                    updatedFields[fieldIndex] = { ...field, label: e.target.value };
+                    onUpdateBlock({ formFields: updatedFields });
+                  }}
+                  placeholder="Escreva a pergunta ou enunciado completo..."
+                  rows={2}
+                  className="text-sm"
+                />
+              </div>
+              
+              {/* Placeholder (apenas para text e textarea) */}
+              {(field.type === 'text' || field.type === 'textarea') && (
+                <div>
+                  <label className="text-xs text-muted-foreground">Texto de Exemplo (Placeholder)</label>
+                  <Input
+                    value={field.placeholder || ''}
+                    onChange={(e) => {
+                      const updatedFields = [...(block.formFields || [])];
+                      updatedFields[fieldIndex] = { ...field, placeholder: e.target.value };
+                      onUpdateBlock({ formFields: updatedFields });
+                    }}
+                    placeholder="Ex: Digite sua resposta aqui..."
+                    className="text-sm"
+                  />
+                </div>
+              )}
+              
+              {/* Opções (para select e radio) */}
+              {(field.type === 'select' || field.type === 'radio') && (
+                <div>
+                  <label className="text-xs text-muted-foreground">Opções de Resposta</label>
+                  <Textarea
+                    value={field.options?.join('\n') || ''}
+                    onChange={(e) => {
+                      const updatedFields = [...(block.formFields || [])];
+                      updatedFields[fieldIndex] = { 
+                        ...field, 
+                        options: e.target.value.split('\n').filter(o => o.trim()) 
+                      };
+                      onUpdateBlock({ formFields: updatedFields });
+                    }}
+                    placeholder="Uma opção por linha&#10;a) Primeira opção&#10;b) Segunda opção&#10;c) Terceira opção"
+                    rows={4}
+                    className="text-sm font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    💡 Dica: Use prefixos como a), b), c) ou 1., 2., 3. para melhor organização
+                  </p>
+                </div>
+              )}
+              
+              {/* Configurações de avaliação */}
+              <div className="border-t pt-4 space-y-3">
+                <h5 className="text-xs font-medium text-muted-foreground">⚖️ Configurações de Avaliação</h5>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Pontuação</label>
+                    <Input
+                      type="number"
+                      value={field.points || 1}
+                      onChange={(e) => {
+                        const updatedFields = [...(block.formFields || [])];
+                        updatedFields[fieldIndex] = { ...field, points: parseInt(e.target.value) || 1 };
+                        onUpdateBlock({ formFields: updatedFields });
+                      }}
+                      min="1"
+                      max="100"
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground">Resposta Correta</label>
+                    {field.type === 'select' || field.type === 'radio' ? (
+                      <select
+                        value={field.correctAnswer as string || ''}
+                        onChange={(e) => {
+                          const updatedFields = [...(block.formFields || [])];
+                          updatedFields[fieldIndex] = { ...field, correctAnswer: e.target.value };
+                          onUpdateBlock({ formFields: updatedFields });
+                        }}
+                        className="w-full p-2 border rounded text-sm"
+                      >
+                        <option value="">Selecione a resposta correta</option>
+                        {field.options?.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        value={field.correctAnswer as string || ''}
+                        onChange={(e) => {
+                          const updatedFields = [...(block.formFields || [])];
+                          updatedFields[fieldIndex] = { ...field, correctAnswer: e.target.value };
+                          onUpdateBlock({ formFields: updatedFields });
+                        }}
+                        placeholder="Resposta esperada ou palavras-chave"
+                        className="text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-muted-foreground">Explicação da Resposta (Feedback)</label>
+                  <Textarea
+                    value={field.explanation || ''}
+                    onChange={(e) => {
+                      const updatedFields = [...(block.formFields || [])];
+                      updatedFields[fieldIndex] = { ...field, explanation: e.target.value };
+                      onUpdateBlock({ formFields: updatedFields });
+                    }}
+                    placeholder="Explique por que esta é a resposta correta ou dê dicas para o aluno..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {(!block.formFields || block.formFields.length === 0) && (
+          <Card className="border-dashed">
+            <CardContent className="text-center py-8">
+              <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-4">
+                Nenhuma questão foi adicionada ainda.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Use os templates rápidos acima para começar a criar seu formulário de exercício.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
   );
 }
