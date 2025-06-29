@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { MainLayout } from "@/components/layout/main-layout";
+import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
 import { 
   Clock, 
   BookOpen, 
@@ -73,6 +74,7 @@ interface UserProgress {
 export default function CourseDetailPage() {
   const { id: courseId } = useParams();
   const [, navigate] = useLocation();
+  const { user, userRole } = useAuth();
 
   // Fetch course details
   const { data: course, isLoading: courseLoading } = useQuery<Course>({
@@ -263,21 +265,24 @@ export default function CourseDetailPage() {
                           </Button>
                         )}
 
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => navigate(`/courses/${courseId}/manage`)}
-                          >
-                            <User className="w-4 h-4 mr-1" />
-                            Gerenciar
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <Download className="w-4 h-4 mr-1" />
-                            Material
-                          </Button>
-                        </div>
+                        {/* Botões administrativos - apenas para admins e managers */}
+                        {userRole !== 'beneficiary' && (
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => navigate(`/courses/${courseId}/manage`)}
+                            >
+                              <User className="w-4 h-4 mr-1" />
+                              Gerenciar
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <Download className="w-4 h-4 mr-1" />
+                              Material
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       <Separator />
