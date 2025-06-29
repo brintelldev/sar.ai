@@ -124,6 +124,14 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 29, 2025. Correção crítica do bug de validação de inscrições em cursos:
+  * Implementado método getUserCourseRoles na interface IStorage e PostgresStorage
+  * Endpoint /api/courses/enrollments agora verifica inscrições em duas fontes:
+    - Tabela user_course_progress (inscrições via formulário)
+    - Tabela user_course_roles (usuários atribuídos como 'student' via admin)
+  * Bug corrigido: usuários com role 'student' agora veem botão "Acessar Curso" corretamente
+  * Sistema de inscrição em cursos totalmente funcional para ambos os métodos de enrollment
+  * Validação bidirecional garante que isEnrolled seja true independente da forma de inscrição
 - June 28, 2025. Sistema completo de gerenciamento de inscrições e roles de curso implementado:
   * Nova página /courses/:courseId/manage para gestão de participantes
   * Tabela user_course_roles no banco para controle granular de permissões

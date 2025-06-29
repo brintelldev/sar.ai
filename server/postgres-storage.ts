@@ -1689,7 +1689,6 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUserCourseRoles(userId: string): Promise<UserCourseRole[]> {
-    console.log("getUserCourseRoles called with userId:", userId);
     const roles = await db
       .select()
       .from(userCourseRoles)
@@ -1699,7 +1698,6 @@ export class PostgresStorage implements IStorage {
       ))
       .orderBy(userCourseRoles.assignedAt);
 
-    console.log("getUserCourseRoles returned:", roles);
     return roles;
   }
 
