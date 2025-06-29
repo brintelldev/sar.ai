@@ -1691,7 +1691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(response);
     } catch (error) {
       console.error("Create module form submission error:", error);
-      res.status(500).json({ message: "Erro ao submeter formulário" });
+      res.status(500).json({ message: "Erro ao submeter formulario" });
     }
   });
 
