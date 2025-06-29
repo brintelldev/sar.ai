@@ -71,6 +71,16 @@ interface UserProgress {
   timeSpent: number;
 }
 
+interface ModuleGrade {
+  moduleId: string;
+  moduleTitle: string;
+  score: number | null;
+  maxScore: number | null;
+  percentage: number | null;
+  passed: boolean | null;
+  submittedAt: string | null;
+}
+
 export default function CourseDetailPage() {
   const { id: courseId } = useParams();
   const [, navigate] = useLocation();
@@ -91,6 +101,12 @@ export default function CourseDetailPage() {
   // Fetch user progress
   const { data: userProgress } = useQuery<UserProgress>({
     queryKey: [`/api/courses/${courseId}/progress`],
+    enabled: !!courseId
+  });
+
+  // Fetch user module grades
+  const { data: moduleGrades } = useQuery<ModuleGrade[]>({
+    queryKey: [`/api/courses/${courseId}/module-grades`],
     enabled: !!courseId
   });
 
@@ -308,6 +324,53 @@ export default function CourseDetailPage() {
                           </span>
                         </div>
                       </div>
+
+                      {/* Module Grades Section */}
+                      {moduleGrades && moduleGrades.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-gray-900 flex items-center">
+                              <Award className="w-4 h-4 mr-2 text-yellow-600" />
+                              Notas por Módulo
+                            </h4>
+                            <div className="space-y-2">
+                              {moduleGrades.map((grade, index) => (
+                                <div 
+                                  key={grade.moduleId} 
+                                  className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-xs"
+                                >
+                                  <span className="text-gray-700 truncate flex-1 mr-2">
+                                    {index + 1}. {grade.moduleTitle}
+                                  </span>
+                                  <div className="flex items-center space-x-1">
+                                    {grade.percentage !== null ? (
+                                      <>
+                                        <span className={`font-medium ${
+                                          grade.passed 
+                                            ? 'text-green-600' 
+                                            : 'text-red-600'
+                                        }`}>
+                                          {grade.percentage}%
+                                        </span>
+                                        {grade.passed ? (
+                                          <CheckCircle className="w-3 h-3 text-green-600" />
+                                        ) : (
+                                          <span className="w-3 h-3 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">×</span>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <span className="text-gray-500 font-medium">
+                                        N/A
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

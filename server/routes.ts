@@ -1746,6 +1746,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user module grades for a specific course
+  app.get('/api/courses/:courseId/module-grades', requireAuth, async (req: any, res: any) => {
+    try {
+      const { courseId } = req.params;
+      const userId = req.session.userId!;
+      
+      // Get all modules for the course
+      const modules = await storage.getCourseModules(courseId);
+      
+      // Get user form submissions for each module
+      const moduleGrades = [];
+      
+      for (const module of modules) {
+        const submission = await storage.getUserModuleFormSubmission(userId, module.id);
+        
+        if (submission && submission.score !== null && submission.maxScore !== null) {
+          // Calculate percentage grade
+          const percentage = submission.maxScore > 0 ? Math.round((submission.score / submission.maxScore) * 100) : 0;
+          
+          moduleGrades.push({
+            moduleId: module.id,
+            moduleTitle: module.title,
+            score: submission.score,
+            maxScore: submission.maxScore,
+            percentage: percentage,
+            passed: percentage >= 70,
+            submittedAt: submission.createdAt
+          });
+        } else {
+          // Module has no form or no submission
+          moduleGrades.push({
+            moduleId: module.id,
+            moduleTitle: module.title,
+            score: null,
+            maxScore: null,
+            percentage: null,
+            passed: null,
+            submittedAt: null
+          });
+        }
+      }
+      
+      res.json(moduleGrades);
+    } catch (error) {
+      console.error("Get module grades error:", error);
+      res.status(500).json({ message: "Erro ao buscar notas dos módulos" });
+    }
+  });
+
   app.get('/api/courses/:courseId/students', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { courseId } = req.params;
