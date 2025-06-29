@@ -1577,13 +1577,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let detailedResults: any[] = [];
       const content = module.content as any;
       
+      // Handle both array format and object with blocks array
+      let formBlocks: any[] = [];
       if (content && Array.isArray(content)) {
-        const formBlocks = content.filter((block: any) => block.type === 'form');
+        formBlocks = content.filter((block: any) => block.type === 'form');
+      } else if (content && content.blocks && Array.isArray(content.blocks)) {
+        formBlocks = content.blocks.filter((block: any) => block.type === 'form');
+      }
+      
+      console.log("Form blocks found:", formBlocks.length);
+      console.log("First form block:", formBlocks[0]);
         
-        for (const block of formBlocks) {
-          if (block.formFields && Array.isArray(block.formFields)) {
-            for (const field of block.formFields) {
-              // Só avaliar campos que têm resposta correta e pontuação definida
+      for (const block of formBlocks) {
+        if (block.formFields && Array.isArray(block.formFields)) {
+          console.log("Processing form fields:", block.formFields.length);
+          for (const field of block.formFields) {
+            // Só avaliar campos que têm resposta correta e pontuação definida
               if (field.correctAnswer !== undefined && field.correctAnswer !== null && field.points && field.points > 0) {
                 maxScore += field.points;
                 const userAnswer = responses[field.id];
