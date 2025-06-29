@@ -158,7 +158,7 @@ export function NotificationsDropdown() {
           )}
         </div>
         
-        {notifications.length > 0 && (
+        {safeNotifications.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <div className="p-3">
