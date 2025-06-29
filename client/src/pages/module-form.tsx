@@ -275,6 +275,119 @@ export function ModuleForm() {
   const contentBlocks = module.content || [];
   const formBlocks = contentBlocks.filter((block: ContentBlock) => block.type === 'form');
 
+  // Function to render detailed results
+  const renderDetailedResults = (result: any) => {
+    if (!result?.detailedResults) return null;
+
+    const percentage = result.percentage || 0;
+    const isApproved = result.passed;
+    
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Award className="h-5 w-5" />
+            <span>Resultados Detalhados</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Overall Score */}
+          <div className={`p-4 rounded-lg border-2 ${isApproved ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {isApproved ? (
+                  <Check className="h-6 w-6 text-green-600" />
+                ) : (
+                  <X className="h-6 w-6 text-red-600" />
+                )}
+                <div>
+                  <h3 className={`text-lg font-semibold ${isApproved ? 'text-green-800' : 'text-red-800'}`}>
+                    {isApproved ? 'Aprovado!' : 'Reprovado'}
+                  </h3>
+                  <p className={`text-sm ${isApproved ? 'text-green-600' : 'text-red-600'}`}>
+                    {result.correctAnswers}/{result.totalQuestions} respostas corretas
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className={`text-2xl font-bold ${isApproved ? 'text-green-800' : 'text-red-800'}`}>
+                  {percentage}%
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {result.score}/{result.maxScore} pontos
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Individual Question Results */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-base">Resultado por Questão:</h4>
+            {result.detailedResults.map((questionResult: any, index: number) => (
+              <div key={questionResult.fieldId} className={`p-3 rounded border ${questionResult.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      {questionResult.isCorrect ? (
+                        <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-600 flex-shrink-0" />
+                      )}
+                      <h5 className="font-medium text-sm">
+                        Questão {index + 1}: {questionResult.fieldLabel}
+                      </h5>
+                    </div>
+                    
+                    <div className="space-y-1 text-sm pl-6">
+                      <div>
+                        <span className="font-medium">Sua resposta: </span>
+                        <span className={questionResult.isCorrect ? 'text-green-700' : 'text-red-700'}>
+                          {typeof questionResult.userAnswer === 'boolean' 
+                            ? (questionResult.userAnswer ? 'Sim' : 'Não')
+                            : (questionResult.userAnswer || 'Não respondido')
+                          }
+                        </span>
+                      </div>
+                      {!questionResult.isCorrect && (
+                        <div>
+                          <span className="font-medium">Resposta correta: </span>
+                          <span className="text-green-700">
+                            {typeof questionResult.correctAnswer === 'boolean' 
+                              ? (questionResult.correctAnswer ? 'Sim' : 'Não')
+                              : questionResult.correctAnswer
+                            }
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-right ml-4">
+                    <div className={`text-sm font-medium ${questionResult.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      {questionResult.pointsEarned}/{questionResult.pointsTotal} pts
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {!isApproved && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start space-x-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium">Nota mínima não atingida</p>
+                  <p>É necessário obter pelo menos 70% para ser aprovado. Você pode tentar novamente.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (formBlocks.length === 0) {
     return (
       <MainLayout>
@@ -367,22 +480,15 @@ export function ModuleForm() {
           </div>
         )}
 
-        {/* Submission Result */}
-        {submissionResult && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 text-green-700">
-                <CheckCircle className="h-5 w-5" />
-                <div>
-                  <p className="font-medium">Formulário enviado com sucesso!</p>
-                  <p className="text-sm">
-                    Você obteve {submissionResult.score} de {submissionResult.maxScore} pontos.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Display detailed results */}
+        {submissionResult && renderDetailedResults(submissionResult)}
+        {existingSubmission && !submissionResult && existingSubmission.answers?.detailedResults && renderDetailedResults({
+          ...existingSubmission,
+          detailedResults: existingSubmission.answers.detailedResults,
+          percentage: Math.round((existingSubmission.score / existingSubmission.maxScore) * 100),
+          totalQuestions: existingSubmission.answers.detailedResults.length,
+          correctAnswers: existingSubmission.answers.detailedResults.filter((r: any) => r.isCorrect).length
+        })}
       </div>
     </MainLayout>
   );
