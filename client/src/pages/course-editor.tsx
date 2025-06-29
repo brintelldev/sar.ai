@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -382,6 +382,112 @@ ___________________________
                       {modulesList.reduce((total, m) => total + (Number(m.duration) || 30), 0)} min
                     </div>
                     <div className="text-sm text-gray-500">Duração Total</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Certificate Tab */}
+          <TabsContent value="certificate" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="w-5 h-5" />
+                  Certificado de Conclusão
+                </CardTitle>
+                <CardDescription>
+                  Configure o modelo de certificado que será gerado automaticamente quando o aluno concluir o curso
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Certificate Template Editor */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="certificateTemplate" className="text-base font-medium">
+                      Modelo do Certificado
+                    </Label>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Use as variáveis disponíveis para personalizar o certificado. O texto será gerado automaticamente quando o aluno concluir o curso.
+                    </p>
+                    <Textarea
+                      id="certificateTemplate"
+                      placeholder="Digite o modelo do certificado..."
+                      value={certificateTemplate}
+                      onChange={(e) => setCertificateTemplate(e.target.value)}
+                      rows={12}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+
+                  {/* Available Variables */}
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium mb-3">Variáveis Disponíveis:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{studentName}}"}</code> - Nome do aluno</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{studentCpf}}"}</code> - CPF do aluno</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{courseTitle}}"}</code> - Título do curso</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{courseDuration}}"}</code> - Duração em horas</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{startDate}}"}</code> - Data de início</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{completionDate}}"}</code> - Data de conclusão</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{grade}}"}</code> - Nota final (%)</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{certificateId}}"}</code> - ID único do certificado</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{organizationName}}"}</code> - Nome da organização</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{instructorName}}"}</code> - Nome do instrutor</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{instructorTitle}}"}</code> - Cargo do instrutor</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{issueDate}}"}</code> - Data de emissão</div>
+                      <div><code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{"{{city}}"}</code> - Cidade</div>
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-base font-medium">Pré-visualização</Label>
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-4 h-4 mr-2" />
+                        Visualizar Certificado
+                      </Button>
+                    </div>
+                    <div className="bg-white border-2 border-dashed border-gray-300 p-6 rounded-lg min-h-[300px]">
+                      <div className="text-center space-y-4">
+                        <div className="text-2xl font-bold text-gray-800">CERTIFICADO</div>
+                        <div className="text-base text-gray-700 whitespace-pre-line">
+                          {certificateTemplate
+                            .replace(/\{\{organizationName\}\}/g, "Instituto Esperança")
+                            .replace(/\{\{studentName\}\}/g, "João Silva Santos")
+                            .replace(/\{\{studentCpf\}\}/g, "123.456.789-00")
+                            .replace(/\{\{courseTitle\}\}/g, course?.title || "Nome do Curso")
+                            .replace(/\{\{courseDuration\}\}/g, course?.duration || "40")
+                            .replace(/\{\{startDate\}\}/g, "10 de janeiro de 2025")
+                            .replace(/\{\{completionDate\}\}/g, "30 de janeiro de 2025")
+                            .replace(/\{\{grade\}\}/g, "95")
+                            .replace(/\{\{certificateId\}\}/g, "CERT-2025-001234")
+                            .replace(/\{\{instructorName\}\}/g, "Maria Silva")
+                            .replace(/\{\{instructorTitle\}\}/g, "Instrutora do Curso")
+                            .replace(/\{\{issueDate\}\}/g, "30 de janeiro de 2025")
+                            .replace(/\{\{city\}\}/g, "São Paulo")
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => {
+                        updateCourseMutation.mutate({
+                          certificateTemplate,
+                          certificateEnabled: true
+                        });
+                      }}
+                      disabled={updateCourseMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {updateCourseMutation.isPending ? "Salvando..." : "Salvar Modelo"}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
