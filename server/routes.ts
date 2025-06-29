@@ -1553,9 +1553,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Módulo não encontrado" });
       }
 
-      // Calcular pontuação
+      // Calcular pontuação com algoritmo melhorado
       let score = 0;
       let maxScore = 0;
+      let detailedResults: any[] = [];
       const content = module.content as any;
       
       if (content && Array.isArray(content)) {
@@ -1564,44 +1565,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const block of formBlocks) {
           if (block.formFields && Array.isArray(block.formFields)) {
             for (const field of block.formFields) {
-              if (field.correctAnswer && field.points) {
+              // Só avaliar campos que têm resposta correta e pontuação definida
+              if (field.correctAnswer !== undefined && field.correctAnswer !== null && field.points && field.points > 0) {
                 maxScore += field.points;
                 const userAnswer = responses[field.id];
+                let isCorrect = false;
+                let fieldScore = 0;
                 
-                if (field.type === 'checkbox' || field.type === 'select') {
-                  // Para campos múltiplos, verificar se as respostas coincidem
-                  const correctAnswers = Array.isArray(field.correctAnswer) ? field.correctAnswer : [field.correctAnswer];
-                  const userAnswers = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
-                  
-                  if (correctAnswers.length === userAnswers.length && 
-                      correctAnswers.every((answer: string) => userAnswers.includes(answer))) {
-                    score += field.points;
-                  }
-                } else {
-                  // Para campos de texto simples
-                  if (userAnswer === field.correctAnswer) {
-                    score += field.points;
-                  }
+                // Avaliar diferentes tipos de campo
+                switch (field.type) {
+                  case 'radio':
+                  case 'select':
+                    // Para campos de única escolha
+                    isCorrect = userAnswer === field.correctAnswer;
+                    if (isCorrect) {
+                      fieldScore = field.points;
+                      score += field.points;
+                    }
+                    break;
+                    
+                  case 'checkbox':
+                    // Para checkbox único (true/false)
+                    const correctBool = field.correctAnswer === 'true' || field.correctAnswer === true;
+                    const userBool = userAnswer === 'true' || userAnswer === true;
+                    isCorrect = correctBool === userBool;
+                    if (isCorrect) {
+                      fieldScore = field.points;
+                      score += field.points;
+                    }
+                    break;
+                    
+                  case 'text':
+                  case 'textarea':
+                    // Para campos de texto, comparação case-insensitive e trim
+                    const correctText = String(field.correctAnswer).toLowerCase().trim();
+                    const userText = String(userAnswer || '').toLowerCase().trim();
+                    isCorrect = correctText === userText;
+                    if (isCorrect) {
+                      fieldScore = field.points;
+                      score += field.points;
+                    }
+                    break;
+                    
+                  default:
+                    // Fallback para outros tipos
+                    isCorrect = userAnswer === field.correctAnswer;
+                    if (isCorrect) {
+                      fieldScore = field.points;
+                      score += field.points;
+                    }
                 }
+                
+                // Armazenar resultado detalhado para cada campo
+                detailedResults.push({
+                  fieldId: field.id,
+                  fieldLabel: field.label,
+                  fieldType: field.type,
+                  userAnswer: userAnswer,
+                  correctAnswer: field.correctAnswer,
+                  isCorrect: isCorrect,
+                  pointsEarned: fieldScore,
+                  pointsTotal: field.points
+                });
               }
             }
           }
         }
       }
 
+      // Calcular porcentagem de acerto
+      const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      const passed = percentage >= 70; // Considerar aprovado se >= 70%
+
       const submissionData = {
         userId,
         moduleId,
-        formId: `module-${moduleId}-form`, // ID único para o formulário do módulo
-        answers: responses, // O campo é 'answers', não 'responses'
+        formId: `module-${moduleId}-form`,
+        answers: {
+          responses: responses,
+          detailedResults: detailedResults,
+          submissionTimestamp: new Date().toISOString()
+        },
         score,
         maxScore,
-        passed: score >= (maxScore * 0.7), // Considerar aprovado se >= 70%
+        passed,
         submittedAt: new Date()
       };
 
       const submission = await storage.createUserModuleFormSubmission(submissionData);
-      res.status(201).json(submission);
+      
+      // Retornar resposta completa com resultados detalhados
+      const response = {
+        ...submission,
+        percentage,
+        detailedResults,
+        totalQuestions: detailedResults.length,
+        correctAnswers: detailedResults.filter(r => r.isCorrect).length
+      };
+      
+      res.status(201).json(response);
     } catch (error) {
       console.error("Create module form submission error:", error);
       res.status(500).json({ message: "Erro ao submeter formulário" });

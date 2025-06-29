@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, AlertCircle, Award, X, Check, AlertTriangle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -103,9 +103,14 @@ export function ModuleForm() {
     onSuccess: (data) => {
       setSubmissionResult(data);
       queryClient.invalidateQueries({ queryKey: ['/api/modules', moduleId, 'form-submission'] });
+      
+      const percentage = data.percentage || 0;
+      const status = data.passed ? "Aprovado" : "Reprovado";
+      const statusColor = data.passed ? "text-green-600" : "text-red-600";
+      
       toast({
-        title: "Formulário enviado!",
-        description: `Você obteve ${data.score}/${data.maxScore} pontos.`,
+        title: `${status}! ${percentage}%`,
+        description: `Você obteve ${data.score}/${data.maxScore} pontos (${data.correctAnswers}/${data.totalQuestions} respostas corretas).`,
       });
     },
     onError: (error) => {
