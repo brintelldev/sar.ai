@@ -36,8 +36,6 @@ import Whitelabel from "@/pages/whitelabel";
 import { Suspense } from 'react';
 import PublicSite from "@/pages/public-site";
 import SuperAdminPage from "@/pages/super-admin";
-import CourseEnrollment from "@/pages/course-enrollment";
-import CourseEnrollments from "@/pages/course-enrollments";
 import CourseManagement from "@/pages/course-management";
 import BeneficiaryProjects from "@/pages/beneficiary-projects";
 import AccessControl from "@/pages/access-control";
@@ -46,7 +44,7 @@ function BeneficiaryHomeRedirect() {
   const { userRole } = useAuth();
   
   if (userRole === 'beneficiary') {
-    return <CourseEnrollments />;
+    return <Courses />;
   }
   
   return <Dashboard />;
@@ -217,14 +215,9 @@ function Router() {
           </AdminGuard>
         </ProtectedRoute>
       </Route>
-      <Route path="/course-enrollment">
+      <Route path="/courses">
         <ProtectedRoute>
-          <CourseEnrollment />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/course-enrollments">
-        <ProtectedRoute>
-          <CourseEnrollments />
+          <Courses />
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:courseId/manage">
