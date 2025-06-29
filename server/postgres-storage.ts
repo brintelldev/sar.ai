@@ -792,6 +792,34 @@ export class PostgresStorage implements IStorage {
     }
   }
 
+  async getCourseCategories(organizationId: string): Promise<string[]> {
+    const result = await db
+      .selectDistinct({ category: courses.category })
+      .from(courses)
+      .where(and(
+        eq(courses.organizationId, organizationId),
+        isNotNull(courses.category)
+      ))
+      .orderBy(asc(courses.category));
+    
+    const categories = result.map(row => row.category).filter(Boolean);
+    
+    // Adicionar categorias padrão caso não existam outras
+    const defaultCategories = [
+      'Tecnologia',
+      'Empreendedorismo', 
+      'Direitos',
+      'Saúde',
+      'Comunicação'
+    ];
+    
+    // Combinar e remover duplicatas
+    const uniqueCategories = new Set([...categories, ...defaultCategories]);
+    const allCategories = Array.from(uniqueCategories);
+    
+    return allCategories.sort();
+  }
+
   // Course Modules
   async getCourseModules(courseId: string): Promise<CourseModule[]> {
     console.log("📚 PostgresStorage: Buscando módulos para curso:", courseId);

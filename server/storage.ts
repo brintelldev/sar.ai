@@ -98,6 +98,7 @@ export interface IStorage {
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: string, organizationId: string, updates: Partial<Course>): Promise<Course | undefined>;
   deleteCourse(id: string, organizationId: string): Promise<boolean>;
+  getCourseCategories(organizationId: string): Promise<string[]>;
 
   // Course Modules
   getCourseModules(courseId: string): Promise<CourseModule[]>;

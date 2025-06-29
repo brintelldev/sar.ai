@@ -1097,6 +1097,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // General courses routes
+  // Get course categories
+  app.get("/api/courses/categories", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const categories = await storage.getCourseCategories(req.session.organizationId!);
+      res.json(categories);
+    } catch (error) {
+      console.error("Get categories error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.get("/api/courses", requireAuth, requireOrganization, async (req, res) => {
     try {
       console.log("Getting courses for organization:", req.session.organizationId);
