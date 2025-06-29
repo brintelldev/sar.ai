@@ -130,6 +130,8 @@ export function ModuleForm() {
   const handleSubmit = async () => {
     if (!module) return;
 
+    console.log('Form submission started:', { moduleId, formResponses });
+
     const contentBlocks = module.content || [];
     const formBlocks = contentBlocks.filter((block: ContentBlock) => block.type === 'form');
     
@@ -154,7 +156,13 @@ export function ModuleForm() {
 
     if (!hasErrors) {
       setIsSubmitting(true);
-      await submitFormMutation.mutateAsync(formResponses);
+      try {
+        console.log('Submitting form with responses:', formResponses);
+        await submitFormMutation.mutateAsync(formResponses);
+        console.log('Form submission successful');
+      } catch (error) {
+        console.error('Form submission error:', error);
+      }
       setIsSubmitting(false);
     }
   };

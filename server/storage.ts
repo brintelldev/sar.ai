@@ -356,6 +356,12 @@ export class MemStorage implements IStorage {
 
   async getUserCertificates(userId: string): Promise<Certificate[]> { return []; }
   async createCertificate(certificate: any): Promise<Certificate> { throw new Error("Not implemented in MemStorage"); }
+
+  // User Grades methods
+  async getUserModuleGrade(userId: string, moduleId: string): Promise<any | undefined> { return undefined; }
+  async createUserGrade(grade: any): Promise<any> { throw new Error("Not implemented in MemStorage"); }
+  async updateUserGrade(id: string, updates: any): Promise<any | undefined> { throw new Error("Not implemented in MemStorage"); }
+  async getUserCourseGrades(userId: string, courseId: string): Promise<any[]> { return []; }
 }
 
 // Export a configured storage instance
