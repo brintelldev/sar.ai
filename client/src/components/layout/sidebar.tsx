@@ -33,7 +33,7 @@ const superAdminNavigation = [
 
 // Navegação restrita para beneficiários - apenas cursos e projetos
 const beneficiaryNavigation = [
-  { name: "Meus Cursos", href: "/course-enrollments", icon: BookOpen },
+  { name: "Capacitação", href: "/courses", icon: BookOpen },
   { name: "Projetos", href: "/projects", icon: FolderOpen },
 ];
 

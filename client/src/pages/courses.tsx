@@ -131,6 +131,9 @@ export default function Courses() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Cursos de Capacitação</h1>
+        </div>
         {/* Search and Filters */}
         <div className="flex flex-col gap-4 p-4 bg-white rounded-lg border">
           <div className="flex gap-4 items-center">
@@ -164,8 +167,8 @@ export default function Courses() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                {categories.map((category, index) => (
+                  <SelectItem key={`category-${index}`} value={category}>{category}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

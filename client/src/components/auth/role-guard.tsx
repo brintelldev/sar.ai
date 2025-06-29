@@ -24,7 +24,7 @@ export function RoleGuard({ allowedRoles, children, fallbackPath = "/" }: RoleGu
   if (!userRole || !allowedRoles.includes(userRole)) {
     // Para beneficiários, redirecionar para cursos
     if (userRole === 'beneficiary') {
-      setLocation('/course-enrollments');
+      setLocation('/courses');
     } else {
       setLocation(fallbackPath);
     }
@@ -42,7 +42,7 @@ export function RoleGuard({ allowedRoles, children, fallbackPath = "/" }: RoleGu
 // Componente para páginas apenas de admin/manager
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   return (
-    <RoleGuard allowedRoles={['admin', 'manager']} fallbackPath="/course-enrollments">
+    <RoleGuard allowedRoles={['admin', 'manager']} fallbackPath="/courses">
       {children}
     </RoleGuard>
   );

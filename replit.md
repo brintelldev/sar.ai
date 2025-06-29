@@ -124,6 +124,15 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 29, 2025. Consolidação completa das páginas duplicadas de cursos:
+  * Removidas páginas duplicadas course-enrollment.tsx e course-enrollments.tsx
+  * Criada página unificada /courses com interface moderna e funcional
+  * Sistema de filtros abrangente (status, categoria, nível, tipo)
+  * Seções separadas para "Meus Cursos" e "Cursos Disponíveis"  
+  * Estatísticas em tempo real e interface responsiva
+  * Navegação atualizada: sidebar agora usa "Capacitação" -> /courses
+  * Redirecionamentos atualizados no role-guard para nova rota
+  * Interface unificada elimina confusão entre funcionalidades duplicadas
 - June 29, 2025. Correção crítica do bug de validação de inscrições em cursos:
   * Implementado método getUserCourseRoles na interface IStorage e PostgresStorage
   * Endpoint /api/courses/enrollments agora verifica inscrições em duas fontes:
