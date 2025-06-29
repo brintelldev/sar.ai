@@ -24,7 +24,10 @@ import {
   File,
   Edit,
   Settings,
-  BookOpen
+  BookOpen,
+  Award,
+  Download,
+  Eye
 } from "lucide-react";
 
 interface CourseModule {
@@ -51,6 +54,7 @@ interface Course {
   status: string;
   learningObjectives?: string[];
   certificateEnabled: boolean;
+  certificateTemplate?: string;
   modules?: CourseModule[];
 }
 
@@ -58,6 +62,7 @@ export function CourseEditor() {
   const [, params] = useRoute("/course-admin/:id");
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("info");
+  const [certificateTemplate, setCertificateTemplate] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,6 +79,32 @@ export function CourseEditor() {
     queryFn: () => apiRequest(`/api/courses/${courseId}/modules`),
     enabled: !!courseId
   });
+
+  // Default certificate template
+  const defaultCertificateTemplate = `
+CERTIFICADO
+
+{{organizationName}} certifica que
+
+{{studentName}}
+
+CPF nº {{studentCpf}}, concluiu o curso de {{courseTitle}}, com aproveitamento de {{grade}}% e duração de {{courseDuration}} horas, no período de {{startDate}} a {{completionDate}}.
+
+{{city}}, {{issueDate}}.
+
+Certificado digital nº: {{certificateId}}
+
+___________________________
+{{instructorName}}
+{{instructorTitle}}
+  `.trim();
+
+  // Initialize certificate template when course loads
+  React.useEffect(() => {
+    if (course && !certificateTemplate) {
+      setCertificateTemplate(course.certificateTemplate || defaultCertificateTemplate);
+    }
+  }, [course, certificateTemplate]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (data: Partial<Course>) => apiRequest(`/api/courses/${courseId}`, 'PATCH', data),
@@ -147,9 +178,10 @@ export function CourseEditor() {
 
         {/* Course Editor Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Informações Básicas</TabsTrigger>
             <TabsTrigger value="modules">Gerenciar Módulos</TabsTrigger>
+            <TabsTrigger value="certificate">Certificado</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
