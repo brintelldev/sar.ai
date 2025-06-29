@@ -1237,6 +1237,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual module by ID
+  app.get("/api/modules/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const { moduleId } = req.params;
+      console.log("Getting module by ID:", moduleId);
+      
+      // Buscar o módulo específico através de todos os cursos da organização
+      const organizationId = req.session.organizationId!;
+      const courses = await storage.getCourses(organizationId);
+      let foundModule = null;
+      
+      for (const course of courses) {
+        const modules = await storage.getCourseModules(course.id);
+        const module = modules.find(m => m.id === moduleId);
+        if (module) {
+          foundModule = module;
+          break;
+        }
+      }
+      
+      if (!foundModule) {
+        return res.status(404).json({ message: "Módulo não encontrado" });
+      }
+      
+      console.log("Found module:", foundModule.title);
+      res.json(foundModule);
+    } catch (error) {
+      console.error("Get module by ID error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Get individual module by course and module ID (for specific course context)
+  app.get("/api/courses/:courseId/modules/:moduleId", requireAuth, async (req, res) => {
+    try {
+      const { courseId, moduleId } = req.params;
+      console.log("Getting module by course and module ID:", courseId, moduleId);
+      
+      // Verificar se o curso pertence à organização
+      const course = await storage.getCourse(courseId, req.session.organizationId!);
+      if (!course) {
+        return res.status(404).json({ message: "Curso não encontrado" });
+      }
+      
+      // Buscar os módulos do curso
+      const modules = await storage.getCourseModules(courseId);
+      const module = modules.find(m => m.id === moduleId);
+      
+      if (!module) {
+        return res.status(404).json({ message: "Módulo não encontrado neste curso" });
+      }
+      
+      console.log("Found module in course:", module.title);
+      res.json(module);
+    } catch (error) {
+      console.error("Get course module by ID error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.post("/api/courses/:id/modules", requireAuth, async (req, res) => {
     try {
       const moduleData = {
