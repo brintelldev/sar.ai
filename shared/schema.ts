@@ -527,6 +527,24 @@ export const userCourseRoles = pgTable("user_course_roles", {
   notes: text("notes") // observações sobre a atribuição
 });
 
+// User Grades (notas finais de 1-10 para módulos e cursos)
+export const userGrades = pgTable("user_grades", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
+  moduleId: uuid("module_id").references(() => courseModules.id), // null = nota final do curso
+  gradeType: text("grade_type").notNull(), // 'module', 'course', 'final'
+  scoreRaw: integer("score_raw"), // pontuação bruta (ex: 15/20)
+  scoreMax: integer("score_max"), // pontuação máxima possível
+  gradeScale: decimal("grade_scale", { precision: 3, scale: 1 }).notNull(), // nota de 1.0 a 10.0
+  passed: boolean("passed").notNull().default(false),
+  feedback: text("feedback"), // comentários sobre a nota
+  gradedBy: uuid("graded_by").references(() => users.id), // quem atribuiu a nota
+  gradedAt: timestamp("graded_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
+
 // Insert schemas for training module
 export const insertCourseSchema = createInsertSchema(courses).omit({
   id: true,
@@ -618,8 +636,18 @@ export const insertUserCourseRoleSchema = createInsertSchema(userCourseRoles).om
   assignedAt: true
 });
 
+export const insertUserGradeSchema = createInsertSchema(userGrades).omit({
+  id: true,
+  gradedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export type UserCourseRole = typeof userCourseRoles.$inferSelect;
 export type InsertUserCourseRole = z.infer<typeof insertUserCourseRoleSchema>;
+
+export type UserGrade = typeof userGrades.$inferSelect;
+export type InsertUserGrade = z.infer<typeof insertUserGradeSchema>;
 
 // Site Whitelabel tables
 export const whitelabelSites = pgTable("whitelabel_sites", {

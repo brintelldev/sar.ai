@@ -2,7 +2,7 @@ import {
   users, organizations, userRoles, projects, donors, beneficiaries, 
   volunteers, donations, accountsReceivable, accountsPayable, funders,
   courses, courseModules, userCourseProgress, courseAssessments, certificates,
-  userModuleFormSubmissions,
+  userModuleFormSubmissions, userGrades,
   whitelabelSites, whitelabelTemplates, whitelabelPages, whitelabelMenus, 
   whitelabelForms, whitelabelFormSubmissions, permissionTemplates, accessControlSettings,
   type User, type InsertUser, type Organization, type InsertOrganization,
@@ -14,6 +14,7 @@ import {
   type UserCourseProgress, type InsertUserCourseProgress,
   type UserModuleFormSubmission, type InsertUserModuleFormSubmission,
   type CourseAssessment, type InsertCourseAssessment, type Certificate,
+  type UserGrade, type InsertUserGrade,
   type WhitelabelSite, type InsertWhitelabelSite, type WhitelabelTemplate,
   type InsertWhitelabelTemplate, type WhitelabelPage, type InsertWhitelabelPage,
   type WhitelabelMenu, type InsertWhitelabelMenu, type WhitelabelForm,
@@ -180,6 +181,12 @@ export interface IStorage {
   createPermissionTemplate(template: InsertPermissionTemplate): Promise<PermissionTemplate>;
   updatePermissionTemplate(id: string, organizationId: string, updates: Partial<PermissionTemplate>): Promise<PermissionTemplate | undefined>;
   deletePermissionTemplate(id: string, organizationId: string): Promise<boolean>;
+
+  // User Grades
+  getUserModuleGrade(userId: string, moduleId: string): Promise<any | undefined>;
+  createUserGrade(grade: any): Promise<any>;
+  updateUserGrade(id: string, updates: any): Promise<any | undefined>;
+  getUserCourseGrades(userId: string, courseId: string): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
