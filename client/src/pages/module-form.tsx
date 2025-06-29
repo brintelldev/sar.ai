@@ -102,7 +102,12 @@ export function ModuleForm() {
     },
     onSuccess: (data) => {
       setSubmissionResult(data);
+      // Invalidate multiple caches to ensure all grade displays are updated
       queryClient.invalidateQueries({ queryKey: ['/api/modules', moduleId, 'form-submission'] });
+      // Invalidate course grades cache to update the course detail page
+      queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/module-grades`] });
+      // Invalidate course progress cache
+      queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/progress`] });
       
       const percentage = data.percentage || 0;
       const status = data.passed ? "Aprovado" : "Reprovado";
