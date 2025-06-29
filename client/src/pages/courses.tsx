@@ -116,12 +116,23 @@ export default function Courses() {
   };
 
   const getTypeBadgeColor = (type: string) => {
-    switch(type) {
+    if (!type) return 'bg-gray-100 text-gray-800 border-gray-200';
+    switch(type.toLowerCase()) {
       case 'online': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'presencial': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'hibrido': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const formatCourseType = (type: string | undefined) => {
+    if (!type) return 'Online';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  const formatLevel = (level: string | undefined) => {
+    if (!level) return 'Básico';
+    return level.charAt(0).toUpperCase() + level.slice(1);
   };
 
   // Separate enrolled and available courses
