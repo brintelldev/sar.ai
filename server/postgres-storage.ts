@@ -1445,32 +1445,28 @@ export class PostgresStorage implements IStorage {
   }
 
   async assignUserCourseRole(roleData: InsertUserCourseRole): Promise<UserCourseRole> {
-    // First check if user already has a role for this course
-    const existingRole = await this.getUserCourseRole(roleData.userId, roleData.courseId);
-    
-    if (existingRole) {
-      // Update existing role
-      const [updatedRole] = await db
-        .update(userCourseRoles)
-        .set({
-          role: roleData.role,
-          permissions: roleData.permissions,
-          assignedBy: roleData.assignedBy,
-          notes: roleData.notes,
-          isActive: true,
-          assignedAt: new Date()
-        })
-        .where(eq(userCourseRoles.id, existingRole.id))
-        .returning();
-      return updatedRole;
-    } else {
-      // Create new role
-      const [newRole] = await db
-        .insert(userCourseRoles)
-        .values(roleData)
-        .returning();
-      return newRole;
-    }
+    // Create new role
+    const [newRole] = await db
+      .insert(userCourseRoles)
+      .values(roleData)
+      .returning();
+    return newRole;
+  }
+
+  async updateUserCourseRole(userId: string, courseId: string, updates: Partial<UserCourseRole>): Promise<UserCourseRole | undefined> {
+    const [updatedRole] = await db
+      .update(userCourseRoles)
+      .set({
+        ...updates,
+        assignedAt: new Date()
+      })
+      .where(and(
+        eq(userCourseRoles.userId, userId),
+        eq(userCourseRoles.courseId, courseId),
+        eq(userCourseRoles.isActive, true)
+      ))
+      .returning();
+    return updatedRole;
   }
 
   async getCourseEnrollments(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {

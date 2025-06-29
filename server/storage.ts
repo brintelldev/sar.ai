@@ -110,6 +110,16 @@ export interface IStorage {
   updateUserCourseProgress(userId: string, courseId: string, updates: Partial<UserCourseProgress>): Promise<UserCourseProgress>;
   getUserCourseProgressList(userId: string): Promise<UserCourseProgress[]>;
 
+  // Course Role Management
+  getUserCourseRole(userId: string, courseId: string): Promise<any>;
+  assignUserCourseRole(roleData: any): Promise<any>;
+  updateUserCourseRole(userId: string, courseId: string, updates: any): Promise<any>;
+  removeUserFromCourse(userId: string, courseId: string): Promise<boolean>;
+  getCourseEnrollments(courseId: string): Promise<any[]>;
+  getCourseStudents(courseId: string): Promise<any[]>;
+  getCourseInstructors(courseId: string): Promise<any[]>;
+  getUserCourses(userId: string): Promise<any[]>;
+
   // Course Assessments
   getCourseAssessments(courseId: string): Promise<CourseAssessment[]>;
   createCourseAssessment(assessment: InsertCourseAssessment): Promise<CourseAssessment>;

@@ -1687,6 +1687,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { courseId } = req.params;
       const { userId, role, notes, assignedBy } = req.body;
       
+      // Verificar se o usuário já está atribuído ao curso
+      const existingRole = await storage.getUserCourseRole(userId, courseId);
+      
+      if (existingRole) {
+        // Se já existe, atualizar o papel do usuário
+        const updatedRole = await storage.updateUserCourseRole(userId, courseId, {
+          role,
+          notes: notes || null,
+          assignedBy,
+          permissions: role === 'instructor' ? { canEditModules: true, canGradeAssignments: true } : null
+        });
+        return res.status(200).json(updatedRole);
+      }
+      
+      // Se não existe, criar novo
       const roleData = {
         userId,
         courseId,
@@ -1700,6 +1715,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(userRole);
     } catch (error) {
       console.error("Assign user to course error:", error);
+      
+      // Tratar erro de duplicação especificamente
+      if (error && typeof error === 'object' && 'code' in error && 'constraint' in error) {
+        if (error.code === '23505' && error.constraint === 'user_course_roles_user_id_course_id_key') {
+          return res.status(409).json({ 
+            message: "Usuário já está atribuído a este curso",
+            error: "DUPLICATE_ASSIGNMENT"
+          });
+        }
+      }
+      
       res.status(500).json({ message: "Erro ao atribuir usuário ao curso" });
     }
   });

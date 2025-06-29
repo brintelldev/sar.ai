@@ -112,10 +112,30 @@ export function CourseManage() {
       setSearchTerm("");
       setUserComboboxOpen(false);
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = "Erro ao atribuir usuário ao curso.";
+      
+      // Check if it's a duplicate assignment error
+      if (error.message && error.message.includes('409')) {
+        errorMessage = "Este usuário já está atribuído ao curso. A função foi atualizada.";
+        // Refresh data to show the updated role
+        queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'enrollments'] });
+        setIsAssignDialogOpen(false);
+        setAssignmentData({ userId: "", role: "", notes: "" });
+        setSearchTerm("");
+        setUserComboboxOpen(false);
+        
+        toast({
+          title: "Usuário já Atribuído",
+          description: errorMessage,
+          variant: "default"
+        });
+        return;
+      }
+      
       toast({
         title: "Erro",
-        description: "Erro ao atribuir usuário ao curso.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
