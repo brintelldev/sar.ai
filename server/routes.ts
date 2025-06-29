@@ -1552,6 +1552,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { responses } = req.body;
       const userId = req.session.userId!;
       
+      console.log('Form submission received:', { moduleId, responses, userId });
+      
       const organizationId = req.session.organizationId!;
       const courses = await storage.getCourses(organizationId);
       let module: any = null;
