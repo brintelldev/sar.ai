@@ -2032,4 +2032,25 @@ export class PostgresStorage implements IStorage {
       return result;
     }
   }
+
+  async getUserAttendanceRecords(userId: string, courseId: string): Promise<any[]> {
+    const result = await db
+      .select({
+        id: courseAttendance.id,
+        sessionDate: courseAttendance.sessionDate,
+        sessionTitle: courseAttendance.sessionTitle,
+        attendanceStatus: courseAttendance.attendanceStatus,
+        userId: courseAttendance.userId,
+        courseId: courseAttendance.courseId,
+        createdAt: courseAttendance.createdAt
+      })
+      .from(courseAttendance)
+      .where(and(
+        eq(courseAttendance.courseId, courseId),
+        eq(courseAttendance.userId, userId)
+      ))
+      .orderBy(desc(courseAttendance.sessionDate));
+
+    return result;
+  }
 }

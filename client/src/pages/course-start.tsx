@@ -180,8 +180,8 @@ export default function CourseStartPage() {
 
   // Get user's attendance for in-person courses  
   const { data: userAttendance } = useQuery<AttendanceRecord[]>({
-    queryKey: ['/api/courses', courseId, 'attendance', 'summary'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/attendance/summary?userId=${authData?.user?.id}`),
+    queryKey: ['/api/courses', courseId, 'attendance', 'records'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/attendance/records`),
     enabled: !!courseId && !!authData?.user?.id && course?.courseType === 'in_person'
   });
 

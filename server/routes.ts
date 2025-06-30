@@ -2655,6 +2655,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint for individual user attendance records
+  app.get('/api/courses/:courseId/attendance/records', requireAuth, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const userId = req.session.userId!;
+      
+      const records = await storage.getUserAttendanceRecords(userId, courseId);
+      res.json(records);
+    } catch (error) {
+      console.error('Get user attendance records error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Save attendance records for a course session
   app.post('/api/courses/:courseId/attendance', requireAuth, requireOrganization, async (req, res) => {
     try {
