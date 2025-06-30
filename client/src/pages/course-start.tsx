@@ -27,6 +27,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { generateCertificatePDF, CertificateData } from "@/lib/pdf-generator";
 
 interface CourseModule {
   id: string;
@@ -122,6 +123,24 @@ export default function CourseStartPage() {
     enabled: !!courseId
   });
 
+  // Get user's existing certificate for this course
+  const { data: userCertificate, refetch: refetchCertificate } = useQuery({
+    queryKey: ['/api/courses', courseId, 'certificate'],
+    queryFn: async () => {
+      try {
+        // Esta chamada pode falhar se não houver certificado, então tratamos como opcional
+        const response = await fetch(`/api/courses/${courseId}/certificate`);
+        if (response.ok) {
+          return response.json();
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!courseId
+  });
+
   const currentModule = modules?.[currentModuleIndex];
   const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
 
@@ -148,6 +167,24 @@ export default function CourseStartPage() {
     }
   });
 
+  // Função para gerar PDF do certificado
+  const generateCertificatePDFFromData = (certificate: any, courseData: any, userData: any, orgData: any) => {
+    const certificateData: CertificateData = {
+      userName: userData?.name || 'Usuário',
+      courseName: courseData?.title || 'Curso',
+      courseCategory: courseData?.category || 'Geral',
+      completionDate: new Date(certificate.issuedAt).toLocaleDateString('pt-BR'),
+      certificateNumber: certificate.certificateNumber,
+      organizationName: orgData?.name || 'Organização',
+      courseHours: courseData?.duration || 0,
+      overallScore: certificate.metadata?.courseCompletion?.overallPercentage,
+      passScore: certificate.metadata?.courseCompletion?.passScore,
+      verificationCode: certificate.verificationCode
+    };
+
+    generateCertificatePDF(certificateData);
+  };
+
   // Emitir certificado
   const issueCertificate = useMutation({
     mutationFn: () => apiRequest(`/api/courses/${courseId}/certificate/issue`, 'POST'),
@@ -156,7 +193,17 @@ export default function CourseStartPage() {
         title: "Certificado Emitido!",
         description: "Parabéns! Seu certificado foi gerado com sucesso.",
       });
+      
+      // Gerar automaticamente o PDF do certificado
+      if (data.certificate && course) {
+        // Obter dados do usuário da sessão
+        const userData = { name: "Usuário" }; // Será substituído por dados reais
+        const orgData = { name: "Organização" }; // Será substituído por dados reais
+        generateCertificatePDFFromData(data.certificate, course, userData, orgData);
+      }
+      
       refetchEligibility();
+      refetchCertificate();
       queryClient.invalidateQueries({ queryKey: ['/api/users', 'certificates'] });
     },
     onError: (error: any) => {
@@ -167,6 +214,15 @@ export default function CourseStartPage() {
       });
     }
   });
+
+  // Baixar certificado existente
+  const downloadCertificate = () => {
+    if (userCertificate && course) {
+      const userData = { name: "Usuário" }; // Será substituído por dados reais  
+      const orgData = { name: "Organização" }; // Será substituído por dados reais
+      generateCertificatePDFFromData(userCertificate, course, userData, orgData);
+    }
+  };
 
   const renderContentBlock = (block: ContentBlock) => {
     switch (block.type) {
@@ -458,44 +514,85 @@ export default function CourseStartPage() {
                 </div>
 
                 {/* Certificate Section */}
-                {course.certificateEnabled && certificateEligibility && (
+                {course.certificateEnabled && (
                   <div className="border-t pt-4">
-                    {certificateEligibility.eligible ? (
+                    {userCertificate ? (
+                      // Certificado já emitido - mostrar botão de download
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-green-600 flex items-center gap-2">
+                          <h3 className="font-semibold text-blue-600 flex items-center gap-2">
                             <Award className="h-5 w-5" />
-                            Certificado Disponível!
+                            Certificado Emitido
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            Parabéns! Você completou todos os requisitos para receber o certificado.
+                            Certificado emitido em {new Date(userCertificate.issuedAt).toLocaleDateString('pt-BR')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Nº: {userCertificate.certificateNumber}
                           </p>
                         </div>
                         <Button 
-                          onClick={() => issueCertificate.mutate()}
-                          disabled={issueCertificate.isPending}
-                          className="bg-green-600 hover:bg-green-700"
+                          onClick={downloadCertificate}
+                          className="bg-blue-600 hover:bg-blue-700"
                         >
-                          {issueCertificate.isPending ? "Gerando..." : "Emitir Certificado"}
-                          <Award className="h-4 w-4 ml-2" />
+                          <Download className="h-4 w-4 mr-2" />
+                          Baixar Certificado
                         </Button>
                       </div>
+                    ) : certificateEligibility ? (
+                      // Verificar elegibilidade
+                      certificateEligibility.eligible ? (
+                        // Elegível para emitir certificado
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-green-600 flex items-center gap-2">
+                              <Award className="h-5 w-5" />
+                              Certificado Disponível!
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Parabéns! Você completou todos os requisitos para receber o certificado.
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={() => issueCertificate.mutate()}
+                            disabled={issueCertificate.isPending}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {issueCertificate.isPending ? "Gerando..." : "Emitir Certificado"}
+                            <Award className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
+                      ) : (
+                        // Não elegível ainda
+                        <div className="flex items-start gap-3">
+                          <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <h3 className="font-semibold text-muted-foreground">
+                              Certificado Indisponível
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {certificateEligibility.reason}
+                            </p>
+                            {certificateEligibility.courseCompletion && (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Progresso: {certificateEligibility.courseCompletion.overallPercentage}% 
+                                (mínimo: {certificateEligibility.courseCompletion.passScore}%)
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
                     ) : (
-                      <div className="flex items-start gap-3">
-                        <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      // Carregando elegibilidade
+                      <div className="flex items-center gap-3">
+                        <Award className="h-5 w-5 text-muted-foreground" />
                         <div>
                           <h3 className="font-semibold text-muted-foreground">
-                            Certificado Indisponível
+                            Verificando Certificado...
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {certificateEligibility.reason}
+                            Analisando seu progresso no curso.
                           </p>
-                          {certificateEligibility.courseCompletion && (
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              Progresso: {certificateEligibility.courseCompletion.overallPercentage}% 
-                              (mínimo: {certificateEligibility.courseCompletion.passScore}%)
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}

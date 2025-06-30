@@ -1963,6 +1963,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/courses/:courseId/certificate', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { userId } = req.session as SessionData;
+      
+      const certificate = await storage.getUserCertificate(userId, courseId);
+      if (!certificate) {
+        return res.status(404).json({ message: "Certificado não encontrado" });
+      }
+      
+      res.json(certificate);
+    } catch (error) {
+      console.error("Get course certificate error:", error);
+      res.status(500).json({ message: "Erro ao buscar certificado do curso" });
+    }
+  });
+
   // Whitelabel Site Routes
   app.get('/api/whitelabel/site', requireAuth, async (req: Request, res: Response) => {
     try {
