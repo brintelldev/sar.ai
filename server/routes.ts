@@ -973,11 +973,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Getting courses for admin organization:", req.session.organizationId);
       console.log("Session debug:", {
         userId: req.session.userId,
-        userRole: req.session.userRole,
+        userRole: (req.session as any).userRole,
         organizationId: req.session.organizationId
       });
       
-      const userRole = req.session.userRole;
+      const userRole = (req.session as any).userRole;
       const userId = req.session.userId!;
       
       let courses;
