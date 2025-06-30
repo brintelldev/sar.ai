@@ -311,6 +311,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/users/:userId/role", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { newRole } = req.body;
+      const organizationId = req.session.organizationId!;
+
+      if (!newRole || !['admin', 'manager', 'volunteer', 'beneficiary'].includes(newRole)) {
+        return res.status(400).json({ message: "Tipo de usuário inválido" });
+      }
+
+      // Verify user exists in organization
+      const users = await storage.getOrganizationUsers(organizationId);
+      const targetUser = users.find(u => u.id === userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "Usuário não encontrado na organização" });
+      }
+
+      // Update user role in the user_organization_roles table
+      await storage.updateUserRole(userId, organizationId, newRole);
+
+      res.json({ message: "Tipo de usuário alterado com sucesso" });
+    } catch (error) {
+      console.error("Change user role error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // User settings routes
   app.patch("/api/user/update", requireAuth, async (req, res) => {
     try {

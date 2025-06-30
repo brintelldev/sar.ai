@@ -334,15 +334,26 @@ export default function UsersPage() {
                         {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="p-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openResetDialog(user)}
-                          className="flex items-center space-x-2"
-                        >
-                          <Key className="h-3 w-3" />
-                          <span>Redefinir Senha</span>
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openResetDialog(user)}
+                            className="flex items-center space-x-1"
+                          >
+                            <Key className="h-3 w-3" />
+                            <span>Redefinir Senha</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openRoleDialog(user)}
+                            className="flex items-center space-x-1"
+                          >
+                            <UserCog className="h-3 w-3" />
+                            <span>Alterar Tipo</span>
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -405,6 +416,54 @@ export default function UsersPage() {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {resetPasswordMutation.isPending ? "Redefinindo..." : "Redefinir Senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para alterar tipo de usuário */}
+      <Dialog open={isRoleDialogOpen} onOpenChange={(open) => {
+        setIsRoleDialogOpen(open);
+        if (!open) {
+          setSelectedUser(null);
+          setNewUserRole("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <UserCog className="h-5 w-5 text-blue-500" />
+              <span>Alterar Tipo de Usuário</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione o novo tipo para <strong>{selectedUser?.name}</strong>:
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="userRole">Novo Tipo de Usuário</Label>
+              <Select value={newUserRole} onValueChange={setNewUserRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="manager">Gerente</SelectItem>
+                  <SelectItem value="volunteer">Voluntário</SelectItem>
+                  <SelectItem value="beneficiary">Beneficiário</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRoleDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleChangeRole}
+              disabled={changeUserRoleMutation.isPending || !newUserRole}
+            >
+              {changeUserRoleMutation.isPending ? "Alterando..." : "Alterar Tipo"}
             </Button>
           </DialogFooter>
         </DialogContent>

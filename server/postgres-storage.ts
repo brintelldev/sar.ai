@@ -2115,4 +2115,21 @@ export class PostgresStorage implements IStorage {
 
     return result;
   }
+
+  async updateUserRole(userId: string, organizationId: string, newRole: string): Promise<void> {
+    console.log('🗃️ PostgresStorage: Atualizando role do usuário:', { userId, organizationId, newRole });
+    
+    await db
+      .update(userRoles)
+      .set({
+        role: newRole,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(userRoles.userId, userId),
+        eq(userRoles.organizationId, organizationId)
+      ));
+    
+    console.log('🗃️ PostgresStorage: Role do usuário atualizada com sucesso');
+  }
 }
