@@ -307,6 +307,7 @@ export const courses = pgTable("courses", {
   description: text("description").notNull(),
   category: text("category").notNull(), // 'tecnologia', 'empreendedorismo', 'direitos', 'saude'
   level: text("level").notNull(), // 'iniciante', 'intermediario', 'avancado'
+  courseType: text("course_type").default("online"), // 'online', 'in_person', 'hybrid'
   duration: integer("duration"), // em horas
   coverImage: text("cover_image"),
   status: text("status").default("draft"), // 'draft', 'published', 'archived'

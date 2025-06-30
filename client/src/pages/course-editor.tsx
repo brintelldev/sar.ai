@@ -50,6 +50,7 @@ interface Course {
   description: string;
   category: string;
   level: string;
+  courseType: string;
   duration: string;
   status: string;
   learningObjectives?: string[];
@@ -178,9 +179,17 @@ ___________________________
 
         {/* Course Editor Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className={`grid w-full ${course?.courseType === 'in_person' ? 'grid-cols-5' : 'grid-cols-4'}`}>
             <TabsTrigger value="info">Informações Básicas</TabsTrigger>
-            <TabsTrigger value="modules">Gerenciar Módulos</TabsTrigger>
+            {course?.courseType !== 'in_person' && (
+              <TabsTrigger value="modules">Gerenciar Módulos</TabsTrigger>
+            )}
+            {course?.courseType === 'in_person' && (
+              <>
+                <TabsTrigger value="grades">Diário de Notas</TabsTrigger>
+                <TabsTrigger value="attendance">Diário de Presença</TabsTrigger>
+              </>
+            )}
             <TabsTrigger value="certificate">Certificado</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
