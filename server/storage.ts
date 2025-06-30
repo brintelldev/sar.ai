@@ -201,6 +201,7 @@ export interface IStorage {
   getCourseAttendance(courseId: string, date: string): Promise<any[]>;
   markAttendance(attendance: any): Promise<any>;
   getCourseAttendanceSummary(courseId: string): Promise<any[]>;
+  getUserAttendanceRecords(userId: string, courseId: string): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
