@@ -27,6 +27,7 @@ import {
   whitelabelForms,
   whitelabelFormSubmissions,
   activityLogs,
+  notifications,
   subscriptionPlans,
   subscriptions,
   platformMetrics,
@@ -89,7 +90,9 @@ import {
   type PermissionTemplate,
   type InsertPermissionTemplate,
   type AccessControlSettings,
-  type InsertAccessControlSettings
+  type InsertAccessControlSettings,
+  type Notification,
+  type InsertNotification
 } from '../shared/schema';
 import { 
   volunteerCourseApplications,

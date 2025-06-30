@@ -17,6 +17,53 @@ declare module 'express-session' {
   }
 }
 
+// Helper function to create notifications based on role
+async function createRoleBasedNotification(
+  type: string,
+  title: string,
+  message: string,
+  organizationId: string,
+  targetUserId?: string,
+  link?: string,
+  metadata?: any
+) {
+  try {
+    if (targetUserId) {
+      // Create notification for specific user
+      await storage.createNotification({
+        userId: targetUserId,
+        organizationId,
+        type,
+        title,
+        message,
+        link,
+        metadata,
+        isRead: false
+      });
+    } else {
+      // Create notifications for all admins in the organization
+      const adminUsers = await storage.getUsersByRole(organizationId, 'admin');
+      const managerUsers = await storage.getUsersByRole(organizationId, 'manager');
+      const allAdmins = [...adminUsers, ...managerUsers];
+
+      for (const admin of allAdmins) {
+        await storage.createNotification({
+          userId: admin.id,
+          organizationId,
+          type,
+          title,
+          message,
+          link,
+          metadata,
+          isRead: false
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Session middleware with more robust configuration
@@ -709,6 +756,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const beneficiary = await storage.createBeneficiary(beneficiaryData);
+
+      // Create notification for admins about new beneficiary registration
+      await createRoleBasedNotification(
+        'beneficiary_created',
+        'Nova Beneficiária Cadastrada',
+        `${beneficiary.name} foi cadastrada na organização`,
+        organizationId,
+        undefined, // Send to all admins
+        '/beneficiarios',
+        { beneficiaryId: beneficiary.id, beneficiaryName: beneficiary.name }
+      );
+      
       res.status(201).json(beneficiary);
     } catch (error) {
       console.error("Create beneficiary error:", error);
@@ -2467,15 +2526,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Notifications endpoint
-  app.get('/api/notifications', requireAuth, async (req: Request, res: Response) => {
+  // Notifications endpoints
+  app.get('/api/notifications', requireAuth, requireOrganization, async (req, res) => {
     try {
-      const { organizationId } = (req as any).session as SessionData;
-      const limit = parseInt(req.query.limit as string) || 5;
+      const userId = req.session.userId!;
+      const organizationId = req.session.organizationId!;
       
-      // Get recent activities as notifications
-      const notifications = await storage.getActivityLogs(organizationId!, limit);
-      
+      const notifications = await storage.getNotifications(userId, organizationId);
       res.json(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -2484,13 +2541,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark notification as read
-  app.patch('/api/notifications/:id/read', requireAuth, async (req: Request, res: Response) => {
+  app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
     try {
-      // For now, just return success since we don't have a read status in the schema
-      // In a real implementation, you'd update the activity log or have a separate notifications table
+      const { id } = req.params;
+      const userId = req.session.userId!;
+      
+      await storage.markNotificationAsRead(id, userId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Mark all notifications as read
+  app.patch('/api/notifications/read-all', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const organizationId = req.session.organizationId!;
+      
+      await storage.markAllNotificationsAsRead(userId, organizationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Delete notification
+  app.delete('/api/notifications/:id', requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.session.userId!;
+      
+      await storage.deleteNotification(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
