@@ -1900,4 +1900,54 @@ export class PostgresStorage implements IStorage {
       ))
       .orderBy(desc(userGrades.gradedAt));
   }
+
+  async getUserGrades(courseId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(userGrades)
+      .where(eq(userGrades.courseId, courseId))
+      .orderBy(desc(userGrades.gradedAt));
+  }
+
+
+
+  async getBeneficiaryByUserId(userId: string): Promise<any | undefined> {
+    const [result] = await db
+      .select()
+      .from(beneficiaries)
+      .where(eq(beneficiaries.userId, userId))
+      .limit(1);
+    
+    return result;
+  }
+
+  async getCourseAttendance(courseId: string, date: string): Promise<any[]> {
+    // Get enrollments for this course first
+    const enrollments = await db
+      .select({ id: courseEnrollments.id })
+      .from(courseEnrollments)
+      .where(eq(courseEnrollments.courseId, courseId));
+    
+    if (enrollments.length === 0) return [];
+    
+    const enrollmentIds = enrollments.map(e => e.id);
+    
+    return await db
+      .select()
+      .from(courseAttendance)
+      .where(and(
+        inArray(courseAttendance.enrollmentId, enrollmentIds),
+        eq(courseAttendance.sessionDate, date)
+      ))
+      .orderBy(courseAttendance.markedAt);
+  }
+
+  async markAttendance(attendance: any): Promise<any> {
+    const [result] = await db
+      .insert(courseAttendance)
+      .values(attendance)
+      .returning();
+    
+    return result;
+  }
 }

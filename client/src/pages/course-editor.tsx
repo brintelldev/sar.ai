@@ -575,7 +575,7 @@ ___________________________
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <GradesDiary courseId={courseId} />
+                  <GradesDiary courseId={courseId!} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -597,7 +597,7 @@ ___________________________
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <AttendanceDiary courseId={courseId} />
+                  <AttendanceDiary courseId={courseId!} />
                 </CardContent>
               </Card>
             </TabsContent>

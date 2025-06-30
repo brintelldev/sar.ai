@@ -2528,6 +2528,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get students enrolled in a course
+  app.get('/api/courses/:courseId/students', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { organizationId } = (req as any).session;
+      
+      // Get enrolled students from course_enrollments and user_course_roles
+      const enrollments = await storage.getCourseEnrollments(courseId);
+      const courseRoles = await storage.getUserCourseRoles(courseId);
+      
+      // Get all student IDs from both sources
+      const studentIds = new Set([
+        ...enrollments.map((e: any) => e.userId),
+        ...courseRoles.filter((r: any) => r.role === 'student').map((r: any) => r.userId)
+      ]);
+      
+      // Get user details for all students
+      const students = [];
+      for (const userId of studentIds) {
+        const user = await storage.getUser(userId);
+        if (user && user.organizationId === organizationId) {
+          // Get beneficiary data for registration number
+          const beneficiary = await storage.getBeneficiaryByUserId(userId);
+          students.push({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            registrationNumber: beneficiary?.registrationNumber || 'N/A'
+          });
+        }
+      }
+      
+      res.json(students);
+    } catch (error) {
+      console.error('Get course students error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Get grades for a course
+  app.get('/api/courses/:courseId/grades', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { organizationId } = (req as any).session;
+      
+      const grades = await storage.getUserGrades(courseId);
+      res.json(grades);
+    } catch (error) {
+      console.error('Get course grades error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Save/update grade for a student
+  app.post('/api/courses/:courseId/grades', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { userId, gradeScale, feedback, passed, gradeType } = req.body;
+      const { organizationId } = (req as any).session;
+      
+      // Check if grade already exists
+      const existingGrades = await storage.getUserGrades(courseId);
+      const existingGrade = existingGrades.find((g: any) => g.userId === userId);
+      
+      if (existingGrade) {
+        // Update existing grade
+        await storage.updateUserGrade(existingGrade.id, {
+          gradeScale,
+          feedback,
+          passed,
+          gradedAt: new Date()
+        });
+      } else {
+        // Create new grade
+        await storage.createUserGrade({
+          userId,
+          courseId,
+          gradeType: gradeType || 'course',
+          gradeScale,
+          feedback,
+          passed,
+          gradedAt: new Date()
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Save course grade error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Get attendance records for a course and date
+  app.get('/api/courses/:courseId/attendance', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { date } = req.query;
+      const { organizationId } = (req as any).session;
+      
+      const attendance = await storage.getCourseAttendance(courseId, date as string);
+      res.json(attendance);
+    } catch (error) {
+      console.error('Get course attendance error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Save attendance records for a course session
+  app.post('/api/courses/:courseId/attendance', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { sessionDate, sessionTitle, attendanceRecords } = req.body;
+      const { organizationId } = (req as any).session;
+      
+      // Save each attendance record
+      for (const record of attendanceRecords) {
+        await storage.markAttendance({
+          courseId,
+          enrollmentId: record.enrollmentId,
+          sessionDate,
+          sessionTitle,
+          attendanceStatus: record.attendanceStatus,
+          arrivalTime: record.arrivalTime,
+          departureTime: record.departureTime,
+          notes: record.notes,
+          markedAt: new Date()
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Save course attendance error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

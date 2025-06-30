@@ -189,6 +189,16 @@ export interface IStorage {
   createUserGrade(grade: any): Promise<any>;
   updateUserGrade(id: string, updates: any): Promise<any | undefined>;
   getUserCourseGrades(userId: string, courseId: string): Promise<any[]>;
+  getUserGrades(courseId: string): Promise<any[]>;
+
+  // Course Management
+  getCourseEnrollments(courseId: string): Promise<any[]>;
+  getUserCourseRoles(courseId: string): Promise<any[]>;
+  getBeneficiaryByUserId(userId: string): Promise<any | undefined>;
+
+  // Attendance Management
+  getCourseAttendance(courseId: string, date: string): Promise<any[]>;
+  markAttendance(attendance: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
