@@ -124,6 +124,20 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Sistema completo de notificações baseado em roles implementado e funcionando:
+  * Infraestrutura completa de notificações no PostgreSQL com tabela notifications
+  * API endpoints para criar, listar, marcar como lida e excluir notificações
+  * Sistema de notificações automáticas ao cadastrar beneficiários
+  * Notificações enviadas para todos os administradores e gerentes da organização
+  * Metadados detalhados incluindo ID e nome da beneficiária
+  * Correção crítica do campo category obrigatório nas notificações
+  * Testado: notificação criada automaticamente para "Isabel Mendes Final" cadastrada
+- June 30, 2025. Correção crítica do sistema de edição de cursos:
+  * Problema de conversão de dados resolvido (duration "4 horas" -> número 4)
+  * Validação de campos numéricos (passScore, duration) antes do salvamento
+  * Botão "Salvar Alterações" totalmente funcional
+  * Conversão automática de strings formatadas para números no backend
+  * Testado: curso "Curso Presencial Teste Final" editado com sucesso
 - June 30, 2025. Controle de permissões na aba Organização das configurações:
   * Campos de edição da organização agora disponíveis apenas para administradores (admin e manager)
   * Usuários não-administradores veem campos desabilitados com aviso informativo
