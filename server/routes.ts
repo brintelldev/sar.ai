@@ -142,16 +142,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.organizationId = organizations[0].id;
       }
 
-      // Debug session logging
-      console.log('Setting session:', { userId: user.id, organizationId: organizations[0]?.id });
-      console.log('Session after setting:', req.session);
-
       // Get user role in the organization
       let userRole = null;
       if (organizations.length > 0) {
         const roleData = await storage.getUserRole(user.id, organizations[0].id);
         userRole = roleData?.role || null;
+        // Salvar o role na sessão também
+        (req.session as any).userRole = userRole;
       }
+
+      // Debug session logging
+      console.log('Setting session:', { userId: user.id, organizationId: organizations[0]?.id, userRole });
+      console.log('Session after setting:', req.session);
 
       res.json({ 
         user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
@@ -969,6 +971,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/courses/admin", requireAuth, requireOrganization, async (req, res) => {
     try {
       console.log("Getting courses for admin organization:", req.session.organizationId);
+      console.log("Session debug:", {
+        userId: req.session.userId,
+        userRole: req.session.userRole,
+        organizationId: req.session.organizationId
+      });
+      
       const userRole = req.session.userRole;
       const userId = req.session.userId!;
       
@@ -978,12 +986,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userRole === 'volunteer') {
         console.log("Filtering courses for volunteer:", userId);
         const allCourses = await storage.getCourses(req.session.organizationId!);
+        console.log("All courses found:", allCourses.length);
         
         // Buscar cursos onde o voluntário tem role de instructor
         const volunteerCourseRoles = await storage.getUserCourseRoles(userId);
+        console.log("Volunteer course roles:", volunteerCourseRoles);
+        
         const instructorCourseIds = volunteerCourseRoles
           .filter((role: any) => role.role === 'instructor')
           .map((role: any) => role.courseId);
+        console.log("Instructor course IDs:", instructorCourseIds);
         
         // Filtrar apenas os cursos onde é instrutor
         courses = allCourses.filter(course => instructorCourseIds.includes(course.id));
