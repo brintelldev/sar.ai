@@ -1672,7 +1672,7 @@ export class PostgresStorage implements IStorage {
 
   // Sync method to ensure user_course_progress and user_course_roles are consistent
   async syncCourseEnrollments(courseId: string): Promise<void> {
-    // Find users in user_course_progress who are not in user_course_roles
+    // 1. Find users in user_course_progress who are not in user_course_roles
     const missingRoles = await db
       .select({
         userId: userCourseProgress.userId,
@@ -1699,6 +1699,41 @@ export class PostgresStorage implements IStorage {
           isActive: true,
           assignedAt: missing.createdAt || new Date(),
           notes: 'Auto-inscrito'
+        }))
+      );
+    }
+
+    // 2. Find users in user_course_roles (students) who are not in user_course_progress
+    const missingProgress = await db
+      .select({
+        userId: userCourseRoles.userId,
+        courseId: userCourseRoles.courseId,
+        assignedAt: userCourseRoles.assignedAt
+      })
+      .from(userCourseRoles)
+      .leftJoin(userCourseProgress, and(
+        eq(userCourseRoles.userId, userCourseProgress.userId),
+        eq(userCourseRoles.courseId, userCourseProgress.courseId)
+      ))
+      .where(and(
+        eq(userCourseRoles.courseId, courseId),
+        eq(userCourseRoles.role, 'student'),
+        eq(userCourseRoles.isActive, true),
+        isNull(userCourseProgress.id)
+      ));
+
+    // Insert missing progress records
+    if (missingProgress.length > 0) {
+      await db.insert(userCourseProgress).values(
+        missingProgress.map(missing => ({
+          userId: missing.userId,
+          courseId: missing.courseId,
+          progress: 0,
+          status: 'in_progress',
+          startedAt: missing.assignedAt || new Date(),
+          lastAccessedAt: new Date(),
+          completedModules: [],
+          timeSpent: 0
         }))
       );
     }

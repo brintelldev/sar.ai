@@ -817,6 +817,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allCourses = await storage.getCourses(organizationId);
       const publishedCourses = allCourses.filter(course => course.status === 'published');
       
+      // Sync enrollment data for all courses to ensure consistency
+      for (const course of publishedCourses) {
+        await storage.syncCourseEnrollments(course.id);
+      }
+      
       // Get user's enrollments through progress table
       const userProgress = await storage.getUserCourseProgressList(userId);
       
