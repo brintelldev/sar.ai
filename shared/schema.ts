@@ -316,6 +316,7 @@ export const courses = pgTable("courses", {
   tags: jsonb("tags"), // tags para busca
   passScore: integer("pass_score").default(70), // pontuação mínima para aprovação
   certificateEnabled: boolean("certificate_enabled").default(true),
+  certificateTemplate: text("certificate_template"), // template personalizado do certificado
   createdBy: uuid("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()

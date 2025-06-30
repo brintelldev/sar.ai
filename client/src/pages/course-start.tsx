@@ -60,6 +60,7 @@ interface Course {
   requirements: any;
   passScore: number;
   certificateEnabled: boolean;
+  certificateTemplate?: string | null;
 }
 
 interface ContentBlock {
