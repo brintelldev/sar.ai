@@ -124,7 +124,7 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
     const attendancePayload = students?.map((student: Student) => {
       const data = attendanceData[student.id];
       return {
-        enrollmentId: student.id, // Usando o ID do estudante como enrollment ID por simplicidade
+        userId: student.id, // Usando o ID do usuário estudante
         sessionDate: format(selectedDate, 'yyyy-MM-dd'),
         sessionTitle,
         attendanceStatus: data?.status || 'absent',
@@ -142,7 +142,7 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
   };
 
   const getStudentAttendance = (studentId: string) => {
-    return attendanceRecords?.find((record: AttendanceRecord) => record.enrollmentId === studentId);
+    return attendanceRecords?.find((record: AttendanceRecord) => record.userId === studentId);
   };
 
   const getAttendanceStats = () => {
