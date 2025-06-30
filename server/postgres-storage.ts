@@ -210,6 +210,33 @@ export class PostgresStorage implements IStorage {
     return result.map(row => row.organizations);
   }
 
+  async getUsersByRole(organizationId: string, role: string): Promise<User[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        position: users.position,
+        passwordHash: users.passwordHash,
+        isGlobalAdmin: users.isGlobalAdmin,
+        lastLoginAt: users.lastLoginAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .where(
+        and(
+          eq(userRoles.organizationId, organizationId),
+          eq(userRoles.role, role),
+          eq(userRoles.isActive, true)
+        )
+      );
+    
+    return result;
+  }
+
   // Notifications operations
   async getNotifications(userId: string, organizationId: string): Promise<Notification[]> {
     const result = await db

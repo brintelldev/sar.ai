@@ -50,6 +50,7 @@ export interface IStorage {
   createUserRole(role: InsertUserRole): Promise<UserRole>;
   getUserRoles(userId: string): Promise<UserRole[]>;
   updateUserRole(userId: string, organizationId: string, newRole: string): Promise<void>;
+  getUsersByRole(organizationId: string, role: string): Promise<User[]>;
 
   // Projects
   getProjects(organizationId: string): Promise<Project[]>;
