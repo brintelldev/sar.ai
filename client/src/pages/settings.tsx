@@ -17,10 +17,13 @@ import { apiRequest } from '@/lib/queryClient';
 import { Bell, Shield, Database, Users, Mail, Globe, Palette } from 'lucide-react';
 
 export default function Settings() {
-  const { user, currentOrganization } = useAuth();
+  const { user, currentOrganization, userRole } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
+  
+  // Verificar se o usuário tem permissão de administrador
+  const isAdmin = userRole === 'admin' || userRole === 'manager';
   
   const [accountForm, setAccountForm] = useState({
     name: '',
@@ -418,25 +421,7 @@ export default function Settings() {
                       />
                     </div>
                   </div>
-                  <Separator />
-                  <div>
-                    <Label className="text-base font-medium">Autenticação de Dois Fatores</Label>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Adicione uma camada extra de segurança à sua conta
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline">Desabilitado</Badge>
-                      <Button variant="outline" size="sm">Ativar 2FA</Button>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div>
-                    <Label className="text-base font-medium">Sessões Ativas</Label>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Gerencie onde você está conectado
-                    </p>
-                    <Button variant="outline" size="sm">Ver Sessões</Button>
-                  </div>
+
                 </div>
                 <Separator />
                 <div className="flex justify-end">
@@ -467,26 +452,41 @@ export default function Settings() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Nome da Organização</Label>
-                    <Input defaultValue={currentOrganization?.name || ''} />
+                    <Input 
+                      defaultValue={currentOrganization?.name || ''} 
+                      disabled={!isAdmin}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>CNPJ</Label>
-                    <Input defaultValue={currentOrganization?.cnpj || ''} />
+                    <Input 
+                      defaultValue={currentOrganization?.cnpj || ''} 
+                      disabled={!isAdmin}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Email Institucional</Label>
-                    <Input defaultValue={currentOrganization?.email || ''} />
+                    <Input 
+                      defaultValue={currentOrganization?.email || ''} 
+                      disabled={!isAdmin}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Telefone</Label>
-                    <Input placeholder="(11) 3333-3333" />
+                    <Input 
+                      placeholder="(11) 3333-3333" 
+                      disabled={!isAdmin}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Endereço</Label>
-                  <Input placeholder="Rua, Número, Bairro, Cidade - UF, CEP" />
+                  <Input 
+                    placeholder="Rua, Número, Bairro, Cidade - UF, CEP" 
+                    disabled={!isAdmin}
+                  />
                 </div>
                 <Separator />
                 <div>

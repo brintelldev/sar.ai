@@ -124,6 +124,17 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Interface de configurações simplificada:
+  * Removidos campos "Autenticação de Dois Fatores" e "Sessões Ativas" da aba Segurança
+  * Aba de segurança agora contém apenas funcionalidade de alteração de senha
+  * Interface mais limpa e focada nas funcionalidades essenciais
+- June 30, 2025. Sistema completo de alteração de senhas implementado:
+  * Funcionalidade de alteração de senha na aba Segurança das configurações
+  * Endpoint /api/user/change-password com validações de segurança completas
+  * Verificação obrigatória de senha atual antes da alteração
+  * Criptografia bcrypt para hash de novas senhas
+  * Validação de comprimento mínimo da senha (6 caracteres)
+  * Testado: senha atual incorreta rejeitada, nova senha criptografada corretamente
 - June 30, 2025. Níveis de acesso para voluntários ajustados conforme solicitado:
   * Voluntários agora têm acesso aos links "Capacitação" e "Projetos" no menu
   * Na área de Capacitação, voluntários possuem credenciais de administrador
