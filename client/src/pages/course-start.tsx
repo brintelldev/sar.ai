@@ -115,6 +115,13 @@ export default function CourseStartPage() {
     enabled: !!courseId
   });
 
+  // Get certificate eligibility
+  const { data: certificateEligibility, refetch: refetchEligibility } = useQuery({
+    queryKey: ['/api/courses', courseId, 'certificate', 'eligibility'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/certificate/eligibility`),
+    enabled: !!courseId
+  });
+
   const currentModule = modules?.[currentModuleIndex];
   const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
 
@@ -135,7 +142,29 @@ export default function CourseStartPage() {
           description: "Parabéns! Você completou este módulo.",
         });
         queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'progress'] });
+        // Verificar elegibilidade do certificado após completar módulo
+        refetchEligibility();
       }
+    }
+  });
+
+  // Emitir certificado
+  const issueCertificate = useMutation({
+    mutationFn: () => apiRequest(`/api/courses/${courseId}/certificate/issue`, 'POST'),
+    onSuccess: (data) => {
+      toast({
+        title: "Certificado Emitido!",
+        description: "Parabéns! Seu certificado foi gerado com sucesso.",
+      });
+      refetchEligibility();
+      queryClient.invalidateQueries({ queryKey: ['/api/users', 'certificates'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao emitir certificado",
+        description: error.message || "Não foi possível gerar o certificado.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -427,6 +456,51 @@ export default function CourseStartPage() {
                   </div>
                   <Progress value={progressPercentage} className="h-2" />
                 </div>
+
+                {/* Certificate Section */}
+                {course.certificateEnabled && certificateEligibility && (
+                  <div className="border-t pt-4">
+                    {certificateEligibility.eligible ? (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-green-600 flex items-center gap-2">
+                            <Award className="h-5 w-5" />
+                            Certificado Disponível!
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Parabéns! Você completou todos os requisitos para receber o certificado.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => issueCertificate.mutate()}
+                          disabled={issueCertificate.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {issueCertificate.isPending ? "Gerando..." : "Emitir Certificado"}
+                          <Award className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-3">
+                        <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <h3 className="font-semibold text-muted-foreground">
+                            Certificado Indisponível
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {certificateEligibility.reason}
+                          </p>
+                          {certificateEligibility.courseCompletion && (
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              Progresso: {certificateEligibility.courseCompletion.overallPercentage}% 
+                              (mínimo: {certificateEligibility.courseCompletion.passScore}%)
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               {course.coverImage && (
