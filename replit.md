@@ -124,6 +124,17 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Unificação das páginas course-start e course-progress:
+  * Removida página duplicada course-progress.tsx 
+  * Mantida apenas /courses/:courseId/start como rota unificada
+  * Corrigidas todas as referências de navegação para usar rota /start
+  * Eliminada redundância entre funcionalidades similares
+  * Interface mais limpa e experiência de usuário consistente
+- June 30, 2025. Correções críticas no sistema:
+  * Corrigido erro de exclusão de cursos (foreign key constraints)
+  * Corrigido erro na emissão de certificados (organização undefined)
+  * Sistema de certificados totalmente funcional com PDF automático
+  * Exclusão em cascata correta para user_grades antes de módulos
 - June 29, 2025. Consolidação completa das páginas duplicadas de cursos:
   * Removidas páginas duplicadas course-enrollment.tsx e course-enrollments.tsx
   * Criada página unificada /courses com interface moderna e funcional
