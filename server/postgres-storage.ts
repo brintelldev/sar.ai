@@ -1068,9 +1068,9 @@ export class PostgresStorage implements IStorage {
       // 3. CURSOS PRESENCIAIS: Verificar nota final lançada pelo instrutor
       if (course.courseType === 'in_person' || course.courseType === 'presencial') {
         const finalGrades = await this.getUserCourseGrades(userId, courseId);
-        console.log('📋 Certificate check - Final grades found:', finalGrades);
-        const finalGrade = finalGrades.find(grade => grade.type === 'final_grade');
-        console.log('📋 Certificate check - Final grade object:', finalGrade);
+        
+        // Buscar por qualquer nota final do curso
+        const finalGrade = finalGrades.length > 0 ? finalGrades[0] : null;
         
         if (!finalGrade) {
           return { 
