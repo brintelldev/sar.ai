@@ -24,6 +24,7 @@ import Settings from "@/pages/settings";
 import Support from "@/pages/support";
 import Courses from "@/pages/courses";
 import CourseDetail from "@/pages/course-detail";
+import Users from "@/pages/users";
 
 import Certificate from "@/pages/certificate";
 import { CourseAdmin } from "@/pages/course-admin";
@@ -119,6 +120,13 @@ function Router() {
         <ProtectedRoute>
           <AdminGuard>
             <Volunteers />
+          </AdminGuard>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/users">
+        <ProtectedRoute>
+          <AdminGuard>
+            <Users />
           </AdminGuard>
         </ProtectedRoute>
       </Route>

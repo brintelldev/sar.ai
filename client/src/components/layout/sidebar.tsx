@@ -44,6 +44,7 @@ const standardNavigation = [
   { name: "Projetos", href: "/projects", icon: FolderOpen },
   { name: "Beneficiários", href: "/beneficiaries", icon: Users },
   { name: "Voluntários", href: "/volunteers", icon: HandHeart },
+  { name: "Usuários", href: "/users", icon: UserCheck },
   { name: "Doadores", href: "/donors", icon: Heart },
   { name: "Doações", href: "/donations", icon: DollarSign },
   { name: "Capacitação", href: "/admin/courses", icon: BookOpen },

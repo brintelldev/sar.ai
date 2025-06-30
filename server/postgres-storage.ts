@@ -287,6 +287,32 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
+  // Get all users in organization with their roles
+  async getOrganizationUsers(organizationId: string): Promise<Array<User & { userRole: string }>> {
+    console.log('🗃️ PostgresStorage: Buscando todos os usuários da organização:', organizationId);
+    const result = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        position: users.position,
+        passwordHash: users.passwordHash,
+        isGlobalAdmin: users.isGlobalAdmin,
+        lastLoginAt: users.lastLoginAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        userRole: userRoles.role
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .where(eq(userRoles.organizationId, organizationId))
+      .orderBy(users.name);
+    
+    console.log('🗃️ PostgresStorage: Usuários encontrados:', result.length);
+    return result as Array<User & { userRole: string }>;
+  }
+
   // Method to get beneficiaries as User format for course assignments
   async getBeneficiariesAsUsers(organizationId: string): Promise<User[]> {
     console.log('🗃️ PostgresStorage: Buscando beneficiários como usuários para org:', organizationId);

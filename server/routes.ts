@@ -268,6 +268,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Users management routes
+  app.get("/api/users", requireAuth, async (req, res) => {
+    try {
+      const organizationId = req.session.organizationId!;
+      const users = await storage.getOrganizationUsers(organizationId);
+      res.json(users);
+    } catch (error) {
+      console.error("Get organization users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // User settings routes
   app.patch("/api/user/update", requireAuth, async (req, res) => {
     try {
