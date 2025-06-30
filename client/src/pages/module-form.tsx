@@ -132,7 +132,7 @@ export function ModuleForm() {
 
     console.log('Form submission started:', { moduleId, formResponses });
 
-    const contentBlocks = module.content || [];
+    const contentBlocks = module.content?.blocks || [];
     const formBlocks = contentBlocks.filter((block: ContentBlock) => block.type === 'form');
     
     // Validar campos obrigatórios
@@ -285,7 +285,7 @@ export function ModuleForm() {
     );
   }
 
-  const contentBlocks = module.content || [];
+  const contentBlocks = module.content?.blocks || [];
   const formBlocks = contentBlocks.filter((block: ContentBlock) => block.type === 'form');
 
   // Function to render detailed results
