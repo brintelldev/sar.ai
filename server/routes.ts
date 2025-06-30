@@ -2580,6 +2580,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark all notifications as read
+  app.patch('/api/notifications/mark-all-read', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const organizationId = req.session.organizationId!;
+      
+      await storage.markAllNotificationsAsRead(userId, organizationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Clear all notifications (delete)
+  app.delete('/api/notifications/clear-all', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const organizationId = req.session.organizationId!;
+      
+      await storage.clearAllNotifications(userId, organizationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Mark all notifications as read
   app.patch('/api/notifications/read-all', requireAuth, requireOrganization, async (req, res) => {
     try {
       const userId = req.session.userId!;

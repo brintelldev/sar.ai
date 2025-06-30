@@ -44,6 +44,7 @@ export interface IStorage {
   markNotificationAsRead(id: string, userId: string): Promise<void>;
   markAllNotificationsAsRead(userId: string, organizationId: string): Promise<void>;
   deleteNotification(id: string, userId: string): Promise<void>;
+  clearAllNotifications(userId: string, organizationId: string): Promise<void>;
 
   // User roles
   getUserRole(userId: string, organizationId: string): Promise<UserRole | undefined>;

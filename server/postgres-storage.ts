@@ -289,6 +289,17 @@ export class PostgresStorage implements IStorage {
       .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
   }
 
+  async clearAllNotifications(userId: string, organizationId: string): Promise<void> {
+    await db
+      .delete(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.organizationId, organizationId)
+        )
+      );
+  }
+
   // User roles
   async getUserRole(userId: string, organizationId: string): Promise<UserRole | undefined> {
     const result = await db

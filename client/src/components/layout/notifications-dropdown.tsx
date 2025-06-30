@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Bell, Check, X } from 'lucide-react';
+import { Bell, Check, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,13 +11,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatRelativeTime } from '@/lib/utils';
+import { useLocation } from 'wouter';
 
 interface Notification {
   id: string;
   type: string;
   title: string;
-  description: string;
+  message: string;
   createdAt: string;
+  isRead: boolean;
+  actionUrl?: string;
+  metadata?: any;
   userName?: string;
 }
 
@@ -46,6 +50,7 @@ function getNotificationIcon(type: string) {
 
 export function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
 
   const { data: notifications = [], isLoading } = useQuery({
@@ -71,11 +76,87 @@ export function NotificationsDropdown() {
     },
   });
 
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/notifications/clear-all', {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to clear all notifications');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    },
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/notifications/mark-all-read', {
+        method: 'PATCH',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to mark all as read');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    },
+  });
+
   const handleMarkAsRead = (notificationId: string) => {
     markAsReadMutation.mutate(notificationId);
   };
 
-  const unreadCount = safeNotifications.filter(n => n && !n.read).length;
+  const handleClearAll = () => {
+    clearAllMutation.mutate();
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsReadMutation.mutate();
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read when clicking
+    if (!notification.isRead) {
+      handleMarkAsRead(notification.id);
+    }
+
+    // Navigate based on notification type and metadata
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+      setIsOpen(false);
+      return;
+    }
+
+    // Generate navigation based on notification type
+    switch (notification.type) {
+      case 'beneficiary_created':
+        if (notification.metadata?.beneficiaryId) {
+          navigate('/beneficiaries');
+        }
+        break;
+      case 'course_enrollment':
+        if (notification.metadata?.courseId) {
+          navigate(`/courses/${notification.metadata.courseId}/start`);
+        }
+        break;
+      case 'project_assignment':
+        if (notification.metadata?.projectId) {
+          navigate(`/projects/${notification.metadata.projectId}`);
+        }
+        break;
+      default:
+        // Default to dashboard
+        navigate('/dashboard');
+        break;
+    }
+    setIsOpen(false);
+  };
+
+  const unreadCount = safeNotifications.filter(n => n && !n.isRead).length;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
