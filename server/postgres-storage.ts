@@ -1953,4 +1953,24 @@ export class PostgresStorage implements IStorage {
     
     return result;
   }
+
+  async getCourseAttendanceSummary(courseId: string): Promise<any[]> {
+    const result = await db
+      .select({
+        sessionDate: courseAttendance.sessionDate,
+        sessionTitle: courseAttendance.sessionTitle,
+        totalStudents: sql<number>`COUNT(DISTINCT ${courseAttendance.userId})`,
+        presentCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'present' THEN 1 END)`,
+        absentCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'absent' THEN 1 END)`,
+        lateCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'late' THEN 1 END)`,
+        excusedCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'excused' THEN 1 END)`,
+        createdAt: sql<string>`MIN(${courseAttendance.createdAt})`
+      })
+      .from(courseAttendance)
+      .where(eq(courseAttendance.courseId, courseId))
+      .groupBy(courseAttendance.sessionDate, courseAttendance.sessionTitle)
+      .orderBy(desc(courseAttendance.sessionDate));
+
+    return result;
+  }
 }

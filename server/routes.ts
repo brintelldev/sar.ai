@@ -2610,6 +2610,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get attendance summary (all sessions) for a course
+  app.get('/api/courses/:courseId/attendance/summary', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { organizationId } = (req as any).session;
+      
+      const summary = await storage.getCourseAttendanceSummary(courseId);
+      res.json(summary);
+    } catch (error) {
+      console.error('Get course attendance summary error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Save attendance records for a course session
   app.post('/api/courses/:courseId/attendance', requireAuth, requireOrganization, async (req, res) => {
     try {

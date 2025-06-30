@@ -199,6 +199,7 @@ export interface IStorage {
   // Attendance Management
   getCourseAttendance(courseId: string, date: string): Promise<any[]>;
   markAttendance(attendance: any): Promise<any>;
+  getCourseAttendanceSummary(courseId: string): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -378,6 +379,11 @@ export class MemStorage implements IStorage {
   async createUserGrade(grade: any): Promise<any> { throw new Error("Not implemented in MemStorage"); }
   async updateUserGrade(id: string, updates: any): Promise<any | undefined> { throw new Error("Not implemented in MemStorage"); }
   async getUserCourseGrades(userId: string, courseId: string): Promise<any[]> { return []; }
+
+  // Attendance methods
+  async getCourseAttendance(courseId: string, date: string): Promise<any[]> { return []; }
+  async markAttendance(attendance: any): Promise<any> { throw new Error("Not implemented in MemStorage"); }
+  async getCourseAttendanceSummary(courseId: string): Promise<any[]> { return []; }
 }
 
 // Export a configured storage instance
