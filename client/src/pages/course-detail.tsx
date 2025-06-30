@@ -263,7 +263,7 @@ export default function CourseDetailPage() {
                           </Button>
                         ) : isCompleted ? (
                           <Button 
-                            onClick={() => navigate(`/courses/${courseId}/progress`)}
+                            onClick={() => navigate(`/courses/${courseId}/start`)}
                             className="w-full bg-blue-600 hover:bg-blue-700"
                             size="lg"
                           >

@@ -338,7 +338,7 @@ export default function Courses() {
                           className="w-full" 
                           onClick={() => {
                             if (course.progress === 100) {
-                              navigate(`/courses/${course.id}/progress`);
+                              navigate(`/courses/${course.id}/start`);
                             } else {
                               navigate(`/courses/${course.id}`);
                             }
