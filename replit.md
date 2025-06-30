@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Correção crítica no sistema de notas dos cursos presenciais:
+  * Erro "grade.gradeScale.toFixed is not a function" corrigido
+  * Conversão automática de gradeScale de string para número usando Number()
+  * Funções calculateClassAverage e exibição de notas funcionando corretamente
+  * Sistema de filtro de alunos no resumo de frequência implementado
+  * Interface de seleção permite visualizar dados agregados ou individuais
 - June 30, 2025. Integração de templates personalizados de certificados:
   * Sistema de PDF agora usa template personalizado criado na edição do curso
   * Função replaceTemplateVariables substitui variáveis como {{studentName}}, {{courseTitle}}

@@ -149,9 +149,9 @@ export function GradesDiary({ courseId }: GradesDiaryProps) {
   };
 
   const calculateClassAverage = () => {
-    const validGrades = grades?.filter((g: Grade) => g.gradeScale > 0);
+    const validGrades = grades?.filter((g: Grade) => Number(g.gradeScale) > 0);
     if (!validGrades || validGrades.length === 0) return 0;
-    const sum = validGrades.reduce((acc: number, g: Grade) => acc + g.gradeScale, 0);
+    const sum = validGrades.reduce((acc: number, g: Grade) => acc + Number(g.gradeScale), 0);
     return (sum / validGrades.length).toFixed(1);
   };
 
@@ -236,7 +236,7 @@ export function GradesDiary({ courseId }: GradesDiaryProps) {
                         />
                       ) : (
                         <span className="text-lg font-semibold">
-                          {grade ? grade.gradeScale.toFixed(1) : '-'}
+                          {grade ? Number(grade.gradeScale).toFixed(1) : '-'}
                         </span>
                       )}
                     </TableCell>
