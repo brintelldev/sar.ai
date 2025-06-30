@@ -2122,8 +2122,7 @@ export class PostgresStorage implements IStorage {
     await db
       .update(userRoles)
       .set({
-        role: newRole,
-        updatedAt: new Date()
+        role: newRole
       })
       .where(and(
         eq(userRoles.userId, userId),
