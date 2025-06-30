@@ -92,7 +92,7 @@ export default function CertificatePage() {
               </p>
               <div className="space-x-4">
                 <Button 
-                  onClick={() => navigate(`/courses/${courseId}/progress`)}
+                  onClick={() => navigate(`/courses/${courseId}/start`)}
                   className="bg-yellow-600 hover:bg-yellow-700"
                 >
                   Continuar Curso
@@ -130,11 +130,11 @@ export default function CertificatePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/courses/${courseId}/progress`)}
+              onClick={() => navigate(`/courses/${courseId}/start`)}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Voltar ao Progresso</span>
+              <span>Voltar ao Curso</span>
             </Button>
           </div>
         </div>

@@ -24,7 +24,7 @@ import Settings from "@/pages/settings";
 import Support from "@/pages/support";
 import Courses from "@/pages/courses";
 import CourseDetail from "@/pages/course-detail";
-import CourseProgress from "@/pages/course-progress";
+
 import Certificate from "@/pages/certificate";
 import { CourseAdmin } from "@/pages/course-admin";
 import { CourseEditor } from "@/pages/course-editor";
@@ -196,11 +196,6 @@ function Router() {
       <Route path="/courses/:courseId/start">
         <ProtectedRoute>
           <CourseStart />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/courses/:courseId/progress">
-        <ProtectedRoute>
-          <CourseProgress />
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:id/certificate">
