@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserCheck, Search, Filter, Users as UsersIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { UserCheck, Search, Filter, Users as UsersIcon, Key, AlertTriangle } from "lucide-react";
 
 interface User {
   id: string;
@@ -42,6 +46,12 @@ const getRoleBadgeVariant = (role: string) => {
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ["/api/users"],
@@ -55,6 +65,66 @@ export default function UsersPage() {
       return response.json() as Promise<User[]>;
     }
   });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const response = await fetch(`/api/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ newPassword: password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao redefinir senha');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Senha redefinida",
+        description: "A senha do usuário foi redefinida com sucesso.",
+      });
+      setIsDialogOpen(false);
+      setSelectedUser(null);
+      setNewPassword("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleResetPassword = () => {
+    if (!selectedUser || !newPassword) return;
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    resetPasswordMutation.mutate({ 
+      userId: selectedUser.id, 
+      password: newPassword 
+    });
+  };
+
+  const openResetDialog = (user: User) => {
+    setSelectedUser(user);
+    setNewPassword("");
+    setIsDialogOpen(true);
+  };
 
   // Filter users based on search term and role
   const filteredUsers = users.filter(user => {
@@ -181,6 +251,7 @@ export default function UsersPage() {
                     <th className="text-left p-4 font-semibold">Posição</th>
                     <th className="text-left p-4 font-semibold">Último Acesso</th>
                     <th className="text-left p-4 font-semibold">Data de Cadastro</th>
+                    <th className="text-left p-4 font-semibold">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,6 +276,17 @@ export default function UsersPage() {
                       <td className="p-4 text-muted-foreground">
                         {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                       </td>
+                      <td className="p-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openResetDialog(user)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Key className="h-3 w-3" />
+                          <span>Redefinir Senha</span>
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -213,6 +295,63 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog para redefinir senha */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) {
+          setSelectedUser(null);
+          setNewPassword("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <span>Redefinir Senha</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Você está prestes a redefinir a senha para:
+            </p>
+            <div className="p-3 bg-muted rounded-md">
+              <p className="font-medium">{selectedUser?.name}</p>
+              <p className="text-sm text-muted-foreground">{selectedUser?.email}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Nova senha</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                placeholder="Digite a nova senha"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={6}
+              />
+              <p className="text-xs text-muted-foreground">
+                A senha deve ter pelo menos 6 caracteres.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              disabled={resetPasswordMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetPasswordMutation.isPending || !newPassword}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {resetPasswordMutation.isPending ? "Redefinindo..." : "Redefinir Senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

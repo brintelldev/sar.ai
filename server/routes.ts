@@ -280,6 +280,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/users/:userId/reset-password", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { newPassword } = req.body;
+      const organizationId = req.session.organizationId!;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Nova senha deve ter pelo menos 6 caracteres" });
+      }
+
+      // Verify user exists in organization
+      const users = await storage.getOrganizationUsers(organizationId);
+      const targetUser = users.find(u => u.id === userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "Usuário não encontrado na organização" });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update user password
+      await storage.updateUser(userId, { passwordHash: hashedPassword });
+
+      res.json({ message: "Senha redefinida com sucesso" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // User settings routes
   app.patch("/api/user/update", requireAuth, async (req, res) => {
     try {

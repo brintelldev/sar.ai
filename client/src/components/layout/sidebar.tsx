@@ -49,7 +49,6 @@ const standardNavigation = [
   { name: "Doações", href: "/donations", icon: DollarSign },
   { name: "Capacitação", href: "/admin/courses", icon: BookOpen },
   { name: "Site Whitelabel", href: "/whitelabel", icon: Globe },
-  { name: "Usuários", href: "/users", icon: UserCheck },
   { name: "Contas a Receber", href: "/accounts-receivable", icon: Receipt },
   { name: "Contas a Pagar", href: "/accounts-payable", icon: CreditCard },
   { name: "Relatórios", href: "/reports", icon: TrendingUp },
