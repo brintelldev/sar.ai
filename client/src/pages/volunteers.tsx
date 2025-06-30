@@ -46,6 +46,15 @@ export default function Volunteers() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
   
+  // Estados para filtros
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    backgroundCheck: 'all',
+    skills: [] as string[],
+    availability: [] as string[]
+  });
+  
   // Estados para o sistema de tags dinâmicas
   const [customSkills, setCustomSkills] = useState<string[]>([]);
   const [newSkillInput, setNewSkillInput] = useState('');
@@ -225,10 +234,30 @@ export default function Volunteers() {
     }
   };
 
-  const filteredVolunteers = volunteers?.filter((volunteer: any) =>
-    volunteer.volunteerNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (volunteer.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredVolunteers = volunteers?.filter((volunteer: any) => {
+    // Filtro de busca por texto
+    const matchesSearch = searchTerm === '' || 
+      volunteer.volunteerNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (volunteer.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (volunteer.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Filtro por status
+    const matchesStatus = filters.status === 'all' || volunteer.status === filters.status;
+
+    // Filtro por verificação de antecedentes
+    const matchesBackgroundCheck = filters.backgroundCheck === 'all' || 
+      volunteer.backgroundCheckStatus === filters.backgroundCheck;
+
+    // Filtro por habilidades
+    const matchesSkills = filters.skills.length === 0 || 
+      filters.skills.some(skill => volunteer.skills?.includes(skill));
+
+    // Filtro por disponibilidade
+    const matchesAvailability = filters.availability.length === 0 || 
+      filters.availability.some(period => volunteer.availability?.includes(period));
+
+    return matchesSearch && matchesStatus && matchesBackgroundCheck && matchesSkills && matchesAvailability;
+  }) || [];
 
   const handleSkillToggle = (skill: string) => {
     setNewVolunteer(prev => ({
@@ -312,6 +341,44 @@ export default function Volunteers() {
         ? prev.availability.filter(a => a !== period)
         : [...prev.availability, period]
     }));
+  };
+
+  // Funções para filtros
+  const handleFilterSkillToggle = (skill: string) => {
+    setFilters(prev => ({
+      ...prev,
+      skills: prev.skills.includes(skill)
+        ? prev.skills.filter(s => s !== skill)
+        : [...prev.skills, skill]
+    }));
+  };
+
+  const handleFilterAvailabilityToggle = (period: string) => {
+    setFilters(prev => ({
+      ...prev,
+      availability: prev.availability.includes(period)
+        ? prev.availability.filter(a => a !== period)
+        : [...prev.availability, period]
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      status: 'all',
+      backgroundCheck: 'all',
+      skills: [],
+      availability: []
+    });
+    setSearchTerm('');
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.status !== 'all') count++;
+    if (filters.backgroundCheck !== 'all') count++;
+    if (filters.skills.length > 0) count++;
+    if (filters.availability.length > 0) count++;
+    return count;
   };
 
   return (
@@ -617,10 +684,26 @@ export default function Volunteers() {
                 className="pl-10 w-full"
               />
             </div>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsFilterOpen(true)}
+              className={getActiveFiltersCount() > 0 ? "border-blue-500 text-blue-700 dark:text-blue-400" : ""}
+            >
               <Filter className="h-4 w-4 mr-2" />
-              Filtros
+              Filtros {getActiveFiltersCount() > 0 && `(${getActiveFiltersCount()})`}
             </Button>
+            {getActiveFiltersCount() > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearAllFilters}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Limpar
+              </Button>
+            )}
           </div>
         </div>
 
@@ -1095,6 +1178,145 @@ export default function Volunteers() {
                 </div>
               </form>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Filter Modal */}
+        <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Filtros Avançados</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Status Filter */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Status do Voluntário</Label>
+                <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({...prev, status: value}))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                    <SelectItem value="suspended">Suspenso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Background Check Filter */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Verificação de Antecedentes</Label>
+                <Select value={filters.backgroundCheck} onValueChange={(value) => setFilters(prev => ({...prev, backgroundCheck: value}))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a verificação" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as verificações</SelectItem>
+                    <SelectItem value="approved">Aprovado</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="rejected">Rejeitado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Skills Filter */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Habilidades</Label>
+                <p className="text-sm text-muted-foreground">Selecione as habilidades para filtrar voluntários</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
+                  {getAllSkills().map((skill) => (
+                    <div key={skill} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-skill-${skill}`}
+                        checked={filters.skills.includes(skill)}
+                        onCheckedChange={() => handleFilterSkillToggle(skill)}
+                      />
+                      <Label htmlFor={`filter-skill-${skill}`} className="text-sm cursor-pointer">
+                        {skill}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {filters.skills.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Habilidades selecionadas:</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {filters.skills.map((skill) => (
+                        <Badge
+                          key={skill}
+                          variant="secondary"
+                          className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => handleFilterSkillToggle(skill)}
+                        >
+                          {skill}
+                          <X className="h-3 w-3" />
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Availability Filter */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Disponibilidade</Label>
+                <p className="text-sm text-muted-foreground">Selecione os períodos de disponibilidade</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {availabilityOptions.map((period) => (
+                    <div key={period.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-${period.id}`}
+                        checked={filters.availability.includes(period.id)}
+                        onCheckedChange={() => handleFilterAvailabilityToggle(period.id)}
+                      />
+                      <Label htmlFor={`filter-${period.id}`} className="text-sm cursor-pointer">
+                        {period.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {filters.availability.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Períodos selecionados:</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {filters.availability.map((periodId) => {
+                        const period = availabilityOptions.find(opt => opt.id === periodId);
+                        return (
+                          <Badge
+                            key={periodId}
+                            variant="outline"
+                            className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => handleFilterAvailabilityToggle(periodId)}
+                          >
+                            {period?.label || periodId}
+                            <X className="h-3 w-3" />
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Filter Actions */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <Button variant="outline" onClick={clearAllFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Limpar Todos os Filtros
+                </Button>
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={() => setIsFilterOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={() => setIsFilterOpen(false)}>
+                    Aplicar Filtros
+                  </Button>
+                </div>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
