@@ -38,6 +38,13 @@ export interface IStorage {
   updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | undefined>;
   getUserOrganizations(userId: string): Promise<Organization[]>;
 
+  // Notifications operations
+  getNotifications(userId: string, organizationId: string): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: string, userId: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string, organizationId: string): Promise<void>;
+  deleteNotification(id: string, userId: string): Promise<void>;
+
   // User roles
   getUserRole(userId: string, organizationId: string): Promise<UserRole | undefined>;
   createUserRole(role: InsertUserRole): Promise<UserRole>;

@@ -489,19 +489,31 @@ export const volunteerCourseApplications = pgTable("volunteer_course_application
 
 
 
-// Training Notifications
-export const trainingNotifications = pgTable("training_notifications", {
+// Sistema de Notificações Abrangente
+export const notifications = pgTable("notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").references(() => organizations.id).notNull(),
-  userId: uuid("user_id").references(() => users.id),
-  type: text("type").notNull(), // 'new_course', 'course_reminder', 'completion', 'certificate'
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  type: text("type").notNull(), // 'course_enrollment', 'project_assignment', 'info_update', 'system_change', 'achievement', 'reminder'
+  category: text("category").notNull(), // 'course', 'project', 'user', 'system', 'achievement'
   title: text("title").notNull(),
   message: text("message").notNull(),
+  priority: text("priority").default("normal"), // 'low', 'normal', 'high', 'urgent'
   isRead: boolean("is_read").default(false),
-  emailSent: boolean("email_sent").default(false),
-  relatedCourseId: uuid("related_course_id").references(() => courses.id),
+  actionUrl: text("action_url"), // URL para ação relacionada
+  metadata: jsonb("metadata"), // dados extras (ex: courseId, projectId, etc.)
+  createdBy: uuid("created_by").references(() => users.id), // quem criou a notificação
+  expiresAt: timestamp("expires_at", { withTimezone: true }), // notificações temporárias
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
 });
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 // Activity logs table for real-time dashboard activities
 export const activityLogs = pgTable("activity_logs", {

@@ -207,6 +207,58 @@ export class PostgresStorage implements IStorage {
     return result.map(row => row.organizations);
   }
 
+  // Notifications operations
+  async getNotifications(userId: string, organizationId: string): Promise<Notification[]> {
+    const result = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.organizationId, organizationId),
+          or(
+            isNull(notifications.expiresAt),
+            gt(notifications.expiresAt, new Date())
+          )
+        )
+      )
+      .orderBy(desc(notifications.createdAt))
+      .limit(50);
+    
+    return result;
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const result = await db.insert(notifications).values(notification).returning();
+    return result[0];
+  }
+
+  async markNotificationAsRead(id: string, userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
+  async markAllNotificationsAsRead(userId: string, organizationId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.organizationId, organizationId),
+          eq(notifications.isRead, false)
+        )
+      );
+  }
+
+  async deleteNotification(id: string, userId: string): Promise<void> {
+    await db
+      .delete(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
   // User roles
   async getUserRole(userId: string, organizationId: string): Promise<UserRole | undefined> {
     const result = await db
