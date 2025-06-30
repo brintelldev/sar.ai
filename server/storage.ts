@@ -135,6 +135,8 @@ export interface IStorage {
   // User Certificates
   getUserCertificates(userId: string): Promise<Certificate[]>;
   createCertificate(certificate: any): Promise<Certificate>;
+  getUserCertificate(userId: string, courseId: string): Promise<Certificate | undefined>;
+  isCourseEligibleForCertificate(userId: string, courseId: string): Promise<{ eligible: boolean; reason?: string; courseCompletion?: any }>;
 
   // Whitelabel Sites
   getWhitelabelSite(organizationId: string): Promise<WhitelabelSite | undefined>;
@@ -356,6 +358,10 @@ export class MemStorage implements IStorage {
 
   async getUserCertificates(userId: string): Promise<Certificate[]> { return []; }
   async createCertificate(certificate: any): Promise<Certificate> { throw new Error("Not implemented in MemStorage"); }
+  async getUserCertificate(userId: string, courseId: string): Promise<Certificate | undefined> { return undefined; }
+  async isCourseEligibleForCertificate(userId: string, courseId: string): Promise<{ eligible: boolean; reason?: string; courseCompletion?: any }> { 
+    return { eligible: false, reason: "Not implemented in MemStorage" }; 
+  }
 
   // User Grades methods
   async getUserModuleGrade(userId: string, moduleId: string): Promise<any | undefined> { return undefined; }

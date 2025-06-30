@@ -1888,6 +1888,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Certificate Routes
+  app.get('/api/courses/:courseId/certificate/eligibility', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { userId } = req.session as SessionData;
+      
+      const eligibility = await storage.isCourseEligibleForCertificate(userId, courseId);
+      res.json(eligibility);
+    } catch (error) {
+      console.error("Check certificate eligibility error:", error);
+      res.status(500).json({ message: "Erro ao verificar elegibilidade para certificado" });
+    }
+  });
+
+  app.post('/api/courses/:courseId/certificate/issue', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const { userId, currentOrganization } = req.session as SessionData;
+      
+      // Verificar elegibilidade primeiro
+      const eligibility = await storage.isCourseEligibleForCertificate(userId, courseId);
+      if (!eligibility.eligible) {
+        return res.status(400).json({ 
+          message: `Não é possível emitir certificado: ${eligibility.reason}` 
+        });
+      }
+
+      // Verificar se já existe certificado
+      const existingCertificate = await storage.getUserCertificate(userId, courseId);
+      if (existingCertificate) {
+        return res.status(400).json({ 
+          message: "Certificado já foi emitido para este curso" 
+        });
+      }
+
+      // Gerar certificado
+      const certificateNumber = `CERT-${currentOrganization.slug.toUpperCase()}-${Date.now()}`;
+      const verificationCode = `${certificateNumber}-${Math.random().toString(36).substring(2, 15)}`;
+      
+      const certificate = await storage.createCertificate({
+        userId,
+        courseId,
+        certificateNumber,
+        verificationCode,
+        issuedAt: new Date(),
+        validUntil: null, // Certificado sem data de validade
+        metadata: {
+          courseCompletion: eligibility.courseCompletion,
+          organizationName: currentOrganization.name,
+          issuedBy: currentOrganization.id
+        }
+      });
+
+      res.json({
+        success: true,
+        certificate,
+        message: "Certificado emitido com sucesso!"
+      });
+    } catch (error) {
+      console.error("Issue certificate error:", error);
+      res.status(500).json({ message: "Erro ao emitir certificado" });
+    }
+  });
+
+  app.get('/api/users/:userId/certificates', requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const certificates = await storage.getUserCertificates(userId);
+      res.json(certificates);
+    } catch (error) {
+      console.error("Get user certificates error:", error);
+      res.status(500).json({ message: "Erro ao buscar certificados do usuário" });
+    }
+  });
+
   // Whitelabel Site Routes
   app.get('/api/whitelabel/site', requireAuth, async (req: Request, res: Response) => {
     try {

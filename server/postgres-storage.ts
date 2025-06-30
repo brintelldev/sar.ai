@@ -1022,6 +1022,114 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
+  async getUserCertificate(userId: string, courseId: string): Promise<Certificate | undefined> {
+    const [result] = await db
+      .select()
+      .from(certificates)
+      .where(and(
+        eq(certificates.userId, userId),
+        eq(certificates.courseId, courseId)
+      ));
+    return result;
+  }
+
+  async isCourseEligibleForCertificate(userId: string, courseId: string): Promise<{ eligible: boolean; reason?: string; courseCompletion?: any }> {
+    try {
+      // 1. Verificar se o curso existe e possui certificação habilitada
+      const [course] = await db
+        .select()
+        .from(courses)
+        .where(eq(courses.id, courseId));
+      
+      if (!course) {
+        return { eligible: false, reason: "Curso não encontrado" };
+      }
+
+      if (!course.certificateEnabled) {
+        return { eligible: false, reason: "Certificação não habilitada para este curso" };
+      }
+
+      // 2. Verificar se já possui certificado para este curso
+      const existingCertificate = await this.getUserCertificate(userId, courseId);
+      if (existingCertificate) {
+        return { eligible: false, reason: "Certificado já emitido para este curso" };
+      }
+
+      // 3. Obter todos os módulos do curso
+      const courseModules = await this.getCourseModules(courseId);
+      if (courseModules.length === 0) {
+        return { eligible: false, reason: "Curso não possui módulos" };
+      }
+
+      // 4. Verificar se todos os módulos com formulários foram respondidos
+      const moduleIds = courseModules.map(m => m.id);
+      const submissions = await db
+        .select()
+        .from(userModuleFormSubmissions)
+        .where(and(
+          eq(userModuleFormSubmissions.userId, userId),
+          inArray(userModuleFormSubmissions.moduleId, moduleIds)
+        ));
+
+      // 5. Identificar módulos que possuem formulários
+      const modulesWithForms = courseModules.filter(module => {
+        if (!module.content || typeof module.content !== 'object') return false;
+        const content = module.content as any;
+        return content.blocks && Array.isArray(content.blocks) && 
+               content.blocks.some((block: any) => block.type === 'form');
+      });
+
+      if (modulesWithForms.length === 0) {
+        return { eligible: false, reason: "Curso não possui módulos com formulários para avaliação" };
+      }
+
+      // 6. Verificar se todos os módulos com formulários foram respondidos
+      const submittedModuleIds = submissions.map(s => s.moduleId);
+      const missingSubmissions = modulesWithForms.filter(module => 
+        !submittedModuleIds.includes(module.id)
+      );
+
+      if (missingSubmissions.length > 0) {
+        return { 
+          eligible: false, 
+          reason: `Módulos não completados: ${missingSubmissions.map(m => m.title).join(', ')}` 
+        };
+      }
+
+      // 7. Calcular nota geral e verificar se atinge a nota mínima
+      const totalScore = submissions.reduce((sum, sub) => sum + (sub.score || 0), 0);
+      const totalMaxScore = submissions.reduce((sum, sub) => sum + (sub.maxScore || 0), 0);
+      const overallPercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+
+      const passScore = course.passScore || 70;
+      if (overallPercentage < passScore) {
+        return { 
+          eligible: false, 
+          reason: `Nota insuficiente: ${overallPercentage.toFixed(1)}% (mínimo: ${passScore}%)` 
+        };
+      }
+
+      // 8. Curso elegível para certificação
+      return { 
+        eligible: true, 
+        courseCompletion: {
+          courseTitle: course.title,
+          completedModules: modulesWithForms.length,
+          totalModules: courseModules.length,
+          overallScore: totalScore,
+          overallMaxScore: totalMaxScore,
+          overallPercentage: Math.round(overallPercentage),
+          passScore,
+          submissions
+        }
+      };
+
+    } catch (error) {
+      console.error('Error checking certificate eligibility:', error);
+      return { eligible: false, reason: "Erro interno ao verificar elegibilidade" };
+    }
+  }
+
   // Whitelabel Sites
   async getWhitelabelSite(organizationId: string): Promise<WhitelabelSite | undefined> {
     const [result] = await db
