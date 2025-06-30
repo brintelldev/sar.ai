@@ -253,67 +253,94 @@ export default function CourseStartPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                {block.title}
+                {block.title || 'Exercício'}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-4">{block.content}</p>
-              <div className="space-y-4">
-                {block.formFields?.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    
-                    {field.type === 'text' && (
-                      <input
-                        type="text"
-                        placeholder={field.placeholder}
-                        className="w-full p-2 border rounded-md"
-                      />
-                    )}
-                    
-                    {field.type === 'textarea' && (
-                      <textarea
-                        placeholder={field.placeholder}
-                        rows={3}
-                        className="w-full p-2 border rounded-md"
-                      />
-                    )}
-                    
-                    {field.type === 'select' && (
-                      <select className="w-full p-2 border rounded-md">
-                        {field.options?.map((option, i) => (
-                          <option key={i} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    )}
-                    
-                    {field.type === 'radio' && (
-                      <div className="space-y-2">
-                        {field.options?.map((option, i) => (
-                          <label key={i} className="flex items-center gap-2">
-                            <input type="radio" name={field.id} value={option} />
-                            <span>{option}</span>
+              {block.content && (
+                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-l-4 border-blue-500">
+                  <div className="prose dark:prose-invert max-w-none">
+                    {block.content.split('\n').map((line, i) => (
+                      <p key={i} className="mb-2 last:mb-0">{line}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {block.formFields && block.formFields.length > 0 ? (
+                <div className="space-y-6">
+                  <div className="text-sm text-muted-foreground">
+                    <strong>Instruções:</strong> Este é um exercício interativo. Responda todas as questões e clique em "Acessar Exercício" para ir para a página de envio completa.
+                  </div>
+                  
+                  {/* Preview das questões */}
+                  <div className="space-y-4">
+                    {block.formFields.slice(0, 3).map((field, index) => (
+                      <div key={field.id} className="p-4 border rounded-lg bg-muted/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium">
+                            <span className="mr-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs">
+                              {index + 1}
+                            </span>
+                            {field.label}
+                            {field.required && <span className="text-red-500 ml-1">*</span>}
                           </label>
-                        ))}
+                          {field.points && (
+                            <Badge variant="secondary" className="text-xs">
+                              {field.points} pts
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Tipo: {field.type === 'text' ? 'Texto Curto' : 
+                                field.type === 'textarea' ? 'Texto Longo' : 
+                                field.type === 'radio' ? 'Múltipla Escolha' : 
+                                field.type === 'select' ? 'Seleção' : 'Checkbox'}
+                        </div>
+                        
+                        {field.type === 'radio' && field.options && (
+                          <div className="text-sm text-muted-foreground">
+                            Opções: {field.options.join(', ')}
+                          </div>
+                        )}
+                        
+                        {field.type === 'select' && field.options && (
+                          <div className="text-sm text-muted-foreground">
+                            {field.options.length} opções disponíveis
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {block.formFields.length > 3 && (
+                      <div className="text-center text-sm text-muted-foreground p-4 border rounded-lg bg-muted/20">
+                        + {block.formFields.length - 3} questões adicionais
                       </div>
                     )}
-                    
-                    {field.type === 'checkbox' && (
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" />
-                        <span>{field.label}</span>
-                      </label>
-                    )}
                   </div>
-                ))}
-                
-                <Button className="mt-4">
-                  Enviar Respostas
-                </Button>
-              </div>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      <strong>{block.formFields.length}</strong> questões • 
+                      <strong> {block.formFields.reduce((total, field) => total + (field.points || 0), 0)}</strong> pontos totais
+                    </div>
+                    
+                    <Button 
+                      onClick={() => navigate(`/courses/${courseId}/modules/${currentModule.id}/form`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      Acessar Exercício
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Este exercício ainda não possui questões configuradas.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         );
