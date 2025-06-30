@@ -124,6 +124,13 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Interface de aluno atualizada com resumo de notas e frequência para cursos presenciais:
+  * Seções "Minhas Notas" e "Minha Frequência" adicionadas para beneficiários
+  * Exibição de notas finais com feedback do instrutor
+  * Resumo detalhado de presença com estatísticas (presenças, atrasos, faltas)
+  * Taxa de presença calculada automaticamente
+  * Interface responsiva e organizada em cards separados
+  * Dados carregados via API existente dos endpoints de notas e frequência
 - June 30, 2025. Correção crítica no sistema de notas dos cursos presenciais:
   * Erro "grade.gradeScale.toFixed is not a function" corrigido
   * Conversão automática de gradeScale de string para número usando Number()

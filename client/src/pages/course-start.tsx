@@ -22,7 +22,11 @@ import {
   Video,
   Download,
   ExternalLink,
-  Users
+  Users,
+  GraduationCap,
+  Calendar,
+  Star,
+  BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -51,6 +55,7 @@ interface Course {
   level: string;
   duration: number;
   status: string;
+  courseType: string;
   coverImage: string | null;
   requirements: any;
   passScore: number;
@@ -84,6 +89,25 @@ interface UserProgress {
   startedAt: Date | null;
   completedAt: Date | null;
   lastAccessedAt: Date | null;
+}
+
+interface Grade {
+  id: string;
+  userId: string;
+  courseId: string;
+  gradeScale: number;
+  feedback?: string;
+  passed: boolean;
+  gradedAt: string;
+}
+
+interface AttendanceRecord {
+  id: string;
+  userId: string;
+  courseId: string;
+  sessionDate: string;
+  sessionTitle: string;
+  attendanceStatus: 'present' | 'absent' | 'late';
 }
 
 export default function CourseStartPage() {
@@ -145,6 +169,20 @@ export default function CourseStartPage() {
       }
     },
     enabled: !!courseId
+  });
+
+  // Get user's grades for in-person courses
+  const { data: userGrades } = useQuery<Grade[]>({
+    queryKey: ['/api/courses', courseId, 'module-grades'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/module-grades?userId=${authData?.user?.id}`),
+    enabled: !!courseId && !!authData?.user?.id && course?.courseType === 'in_person'
+  });
+
+  // Get user's attendance for in-person courses  
+  const { data: userAttendance } = useQuery<AttendanceRecord[]>({
+    queryKey: ['/api/courses', courseId, 'attendance', 'summary'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/attendance/summary?userId=${authData?.user?.id}`),
+    enabled: !!courseId && !!authData?.user?.id && course?.courseType === 'in_person'
   });
 
   const currentModule = modules?.[currentModuleIndex];
@@ -776,6 +814,158 @@ export default function CourseStartPage() {
             )}
           </div>
         </div>
+
+        {/* Student Performance Section for In-Person Courses */}
+        {course?.courseType === 'in_person' && authData?.user && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            {/* Grades Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5" />
+                  Minhas Notas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userGrades && userGrades.length > 0 ? (
+                  <div className="space-y-4">
+                    {userGrades.map((grade) => (
+                      <div key={grade.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium">Nota Final do Curso</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Avaliada em {new Date(grade.gradedAt).toLocaleDateString('pt-BR')}
+                            </p>
+                            {grade.feedback && (
+                              <p className="text-sm mt-2 text-gray-600">
+                                <strong>Feedback:</strong> {grade.feedback}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold">
+                              {Number(grade.gradeScale).toFixed(1)}
+                            </div>
+                            <Badge variant={grade.passed ? "default" : "destructive"}>
+                              {grade.passed ? "Aprovado" : "Reprovado"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Overall Statistics */}
+                    <div className="border-t pt-4">
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <div className="text-lg font-semibold">
+                            {userGrades.length > 0 ? Number(userGrades[0].gradeScale).toFixed(1) : '-'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Nota Final</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-semibold">
+                            {userGrades.length > 0 && userGrades[0].passed ? (
+                              <span className="text-green-600">✓</span>
+                            ) : (
+                              <span className="text-red-600">✗</span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">Status</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Star className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      Ainda não há notas lançadas para você neste curso.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Attendance Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Minha Frequência
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userAttendance && userAttendance.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Attendance Records */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {userAttendance.map((record) => (
+                        <div key={record.id} className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <div>
+                            <div className="font-medium text-sm">{record.sessionTitle}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(record.sessionDate).toLocaleDateString('pt-BR')}
+                            </div>
+                          </div>
+                          <Badge 
+                            variant={
+                              record.attendanceStatus === 'present' ? 'default' :
+                              record.attendanceStatus === 'late' ? 'secondary' : 'destructive'
+                            }
+                          >
+                            {record.attendanceStatus === 'present' ? 'Presente' :
+                             record.attendanceStatus === 'late' ? 'Atrasado' : 'Ausente'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Overall Statistics */}
+                    <div className="border-t pt-4">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-lg font-semibold text-green-600">
+                            {userAttendance.filter(r => r.attendanceStatus === 'present').length}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Presenças</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-semibold text-yellow-600">
+                            {userAttendance.filter(r => r.attendanceStatus === 'late').length}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Atrasos</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-semibold text-red-600">
+                            {userAttendance.filter(r => r.attendanceStatus === 'absent').length}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Faltas</div>
+                        </div>
+                      </div>
+                      <div className="mt-4 text-center">
+                        <div className="text-lg font-semibold">
+                          {userAttendance.length > 0 ? 
+                            Math.round((userAttendance.filter(r => r.attendanceStatus === 'present').length / userAttendance.length) * 100) 
+                            : 0}%
+                        </div>
+                        <div className="text-sm text-muted-foreground">Taxa de Presença</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      Ainda não há registros de frequência para você neste curso.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
