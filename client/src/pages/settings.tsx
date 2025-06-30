@@ -55,6 +55,12 @@ export default function Settings() {
     currency: 'BRL',
   });
 
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
   const updateAccountMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log('Enviando dados:', data);
@@ -119,11 +125,17 @@ export default function Settings() {
         title: "Sucesso",
         description: "Senha alterada com sucesso",
       });
+      // Limpar o formulário após sucesso
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: "Erro ao alterar senha",
+        description: error?.message || "Erro ao alterar senha",
         variant: "destructive",
       });
     }
@@ -159,10 +171,38 @@ export default function Settings() {
   };
 
   const handleSaveSecurity = () => {
-    // Implementation for security settings
-    toast({
-      title: "Info",
-      description: "Funcionalidade de segurança será implementada em breve",
+    // Validações
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "Todos os campos de senha são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "A nova senha e a confirmação não coincidem",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A nova senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Enviar requisição para alterar senha
+    updatePasswordMutation.mutate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword
     });
   };
 
@@ -358,9 +398,24 @@ export default function Settings() {
                       Mantenha sua conta segura com uma senha forte
                     </p>
                     <div className="space-y-3">
-                      <Input type="password" placeholder="Senha atual" />
-                      <Input type="password" placeholder="Nova senha" />
-                      <Input type="password" placeholder="Confirmar nova senha" />
+                      <Input 
+                        type="password" 
+                        placeholder="Senha atual"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                      />
+                      <Input 
+                        type="password" 
+                        placeholder="Nova senha"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                      />
+                      <Input 
+                        type="password" 
+                        placeholder="Confirmar nova senha"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                      />
                     </div>
                   </div>
                   <Separator />

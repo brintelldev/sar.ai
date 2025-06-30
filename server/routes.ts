@@ -414,15 +414,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/user/change-password", requireAuth, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      // Implementation would verify current password and update to new one
-      // For now, just return success
+      const userId = req.session.userId!;
+
+      // Validar entrada
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Senha atual e nova senha são obrigatórias" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "A nova senha deve ter pelo menos 6 caracteres" });
+      }
+
+      // Buscar usuário atual
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      // Verificar senha atual
+      const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isValidPassword) {
+        return res.status(400).json({ message: "Senha atual incorreta" });
+      }
+
+      // Gerar hash da nova senha
+      const saltRounds = 10;
+      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+      // Atualizar senha no banco
+      await storage.updateUser(userId, { passwordHash: newPasswordHash });
       
       res.json({ 
-        message: "Password changed successfully"
+        message: "Senha alterada com sucesso"
       });
     } catch (error) {
       console.error("Change password error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
