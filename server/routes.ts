@@ -1817,10 +1817,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { courseId } = req.params;
       const userId = req.session.userId!;
       
-      // Get all modules for the course
-      const modules = await storage.getCourseModules(courseId);
+      // First, check if there's a final grade from instructor for this course
+      const courseGrade = await storage.getUserCourseGrades(userId, courseId);
       
-      // Get user form submissions for each module
+      if (courseGrade && courseGrade.length > 0) {
+        // Return final grade from instructor
+        const grade = courseGrade[0];
+        res.json([{
+          type: 'final_grade',
+          courseId: courseId,
+          gradeScale: Number(grade.gradeScale),
+          feedback: grade.feedback,
+          passed: grade.passed,
+          gradedAt: grade.gradedAt,
+          gradedBy: 'instructor'
+        }]);
+        return;
+      }
+      
+      // If no final grade, show module grades from form submissions
+      const modules = await storage.getCourseModules(courseId);
       const moduleGrades = [];
       
       for (const module of modules) {
@@ -1831,6 +1847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const percentage = submission.maxScore > 0 ? Math.round((submission.score / submission.maxScore) * 100) : 0;
           
           moduleGrades.push({
+            type: 'module_grade',
             moduleId: module.id,
             moduleTitle: module.title,
             score: submission.score,
@@ -1842,6 +1859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           // Module has no form or no submission
           moduleGrades.push({
+            type: 'module_grade',
             moduleId: module.id,
             moduleTitle: module.title,
             score: null,
@@ -2619,8 +2637,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/courses/:courseId/attendance/summary', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { courseId } = req.params;
-      const { userId } = req.query;
+      let { userId } = req.query;
       const { organizationId } = (req as any).session;
+      const currentUserId = req.session.userId!;
+      
+      // If no userId specified or user is beneficiary, show only their own data
+      const userRole = (req as any).session.userRole;
+      if (!userId || userRole === 'beneficiary') {
+        userId = currentUserId;
+      }
       
       const summary = await storage.getCourseAttendanceSummary(courseId, userId as string);
       res.json(summary);
