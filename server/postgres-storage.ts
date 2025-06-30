@@ -1,4 +1,4 @@
-import { eq, and, count, desc, sql, asc, gte, lte, isNotNull, isNull, inArray } from 'drizzle-orm';
+import { eq, and, or, count, desc, sql, asc, gte, lte, isNotNull, isNull, inArray, gt } from 'drizzle-orm';
 import { db } from './db';
 import bcrypt from 'bcrypt';
 import { 

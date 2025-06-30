@@ -692,22 +692,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const month = (now.getMonth() + 1).toString().padStart(2, '0'); // mês com 2 dígitos
     const yearMonth = year + month; // aamm
     
-    // Buscar todos os beneficiários da organização para encontrar o próximo número sequencial
-    const existingBeneficiaries = await storage.getBeneficiaries(organizationId);
+    // Try generating sequential numbers until we find one that doesn't exist
+    let nextSequential = 1;
+    let attempts = 0;
+    const maxAttempts = 9999; // Maximum sequential number with 4 digits
     
-    // Filtrar apenas os códigos que seguem o padrão B + aamm + nnnn
-    const existingCodes = existingBeneficiaries
-      .map(b => b.registrationNumber)
-      .filter(code => code && code.match(/^B\d{6}$/)) // B + 6 dígitos
-      .filter(code => code.substring(1, 5) === yearMonth) // mesmo aamm
-      .map(code => parseInt(code.substring(5), 10)) // extrair nnnn
-      .filter(num => !isNaN(num)); // apenas números válidos
+    while (attempts < maxAttempts) {
+      const sequentialString = nextSequential.toString().padStart(4, '0');
+      const candidateNumber = `B${yearMonth}${sequentialString}`;
+      
+      // Check if this registration number already exists
+      const existingBeneficiaries = await storage.getBeneficiaries(organizationId);
+      const exists = existingBeneficiaries.some(b => b.registrationNumber === candidateNumber);
+      
+      if (!exists) {
+        return candidateNumber;
+      }
+      
+      nextSequential++;
+      attempts++;
+    }
     
-    // Encontrar o próximo número sequencial
-    const nextSequential = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 1;
-    const sequentialString = nextSequential.toString().padStart(4, '0'); // nnnn com 4 dígitos
-    
-    return `B${yearMonth}${sequentialString}`;
+    // Fallback: use timestamp if we can't find a sequential number
+    const timestamp = Date.now().toString().slice(-4);
+    return `B${yearMonth}${timestamp}`;
   }
 
   // Endpoint to generate registration number
@@ -1416,7 +1424,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/courses/:id", requireAuth, async (req, res) => {
     try {
-      const course = await storage.updateCourse(req.params.id, req.session.organizationId!, req.body);
+      // Process and validate incoming data
+      const updateData = { ...req.body };
+      
+      // Convert duration from string format to number if needed
+      if (updateData.duration && typeof updateData.duration === 'string') {
+        // Extract number from strings like "0 horas", "25 minutos", etc.
+        const durationMatch = updateData.duration.match(/\d+/);
+        updateData.duration = durationMatch ? parseInt(durationMatch[0], 10) : 0;
+      }
+      
+      // Ensure passScore is a number
+      if (updateData.passScore && typeof updateData.passScore === 'string') {
+        updateData.passScore = parseInt(updateData.passScore, 10);
+      }
+      
+      const course = await storage.updateCourse(req.params.id, req.session.organizationId!, updateData);
       if (!course) {
         return res.status(404).json({ message: "Curso não encontrado" });
       }
