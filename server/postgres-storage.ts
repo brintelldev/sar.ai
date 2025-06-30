@@ -1063,13 +1063,47 @@ export class PostgresStorage implements IStorage {
         return { eligible: false, reason: "Certificado já emitido para este curso" };
       }
 
-      // 3. Obter todos os módulos do curso
+      const passScore = course.passScore || 70;
+
+      // 3. CURSOS PRESENCIAIS: Verificar nota final lançada pelo instrutor
+      if (course.courseType === 'in_person' || course.courseType === 'presencial') {
+        const finalGrades = await this.getUserCourseGrades(userId, courseId);
+        const finalGrade = finalGrades.find(grade => grade.type === 'final_grade');
+        
+        if (!finalGrade) {
+          return { 
+            eligible: false, 
+            reason: "Aguardando avaliação final do instrutor" 
+          };
+        }
+
+        if (!finalGrade.passed) {
+          return { 
+            eligible: false, 
+            reason: `Nota insuficiente: ${Number(finalGrade.gradeScale).toFixed(1)} (mínimo: ${passScore/10})` 
+          };
+        }
+
+        // Curso presencial elegível para certificação
+        return { 
+          eligible: true, 
+          courseCompletion: {
+            courseTitle: course.title,
+            courseType: course.courseType,
+            finalGrade: Number(finalGrade.gradeScale),
+            passed: finalGrade.passed,
+            gradedAt: finalGrade.gradedAt,
+            feedback: finalGrade.feedback
+          }
+        };
+      }
+
+      // 4. CURSOS ONLINE: Lógica original baseada em módulos e formulários
       const courseModules = await this.getCourseModules(courseId);
       if (courseModules.length === 0) {
         return { eligible: false, reason: "Curso não possui módulos" };
       }
 
-      // 4. Verificar se todos os módulos com formulários foram respondidos
       const moduleIds = courseModules.map(m => m.id);
       const submissions = await db
         .select()
@@ -1109,7 +1143,6 @@ export class PostgresStorage implements IStorage {
       const totalMaxScore = submissions.reduce((sum, sub) => sum + (sub.maxScore || 0), 0);
       const overallPercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
 
-      const passScore = course.passScore || 70;
       if (overallPercentage < passScore) {
         return { 
           eligible: false, 
@@ -1117,11 +1150,12 @@ export class PostgresStorage implements IStorage {
         };
       }
 
-      // 8. Curso elegível para certificação
+      // 8. Curso online elegível para certificação
       return { 
         eligible: true, 
         courseCompletion: {
           courseTitle: course.title,
+          courseType: 'online',
           completedModules: modulesWithForms.length,
           totalModules: courseModules.length,
           overallScore: totalScore,
