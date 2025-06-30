@@ -1905,7 +1905,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/courses/:courseId/certificate/issue', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { courseId } = req.params;
-      const { userId, currentOrganization } = req.session as SessionData;
+      const { userId, organizationId } = req.session as SessionData;
+      
+      // Buscar dados da organização
+      const organization = await storage.getOrganization(organizationId!);
+      if (!organization) {
+        return res.status(404).json({ message: "Organização não encontrada" });
+      }
       
       // Verificar elegibilidade primeiro
       const eligibility = await storage.isCourseEligibleForCertificate(userId, courseId);
@@ -1924,7 +1930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Gerar certificado
-      const certificateNumber = `CERT-${currentOrganization.slug.toUpperCase()}-${Date.now()}`;
+      const certificateNumber = `CERT-${organization.slug.toUpperCase()}-${Date.now()}`;
       const verificationCode = `${certificateNumber}-${Math.random().toString(36).substring(2, 15)}`;
       
       const certificate = await storage.createCertificate({
@@ -1936,8 +1942,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validUntil: null, // Certificado sem data de validade
         metadata: {
           courseCompletion: eligibility.courseCompletion,
-          organizationName: currentOrganization.name,
-          issuedBy: currentOrganization.id
+          organizationName: organization.name,
+          issuedBy: organization.id
         }
       });
 
