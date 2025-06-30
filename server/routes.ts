@@ -455,17 +455,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/organizations/update", requireAuth, requireOrganization, async (req, res) => {
     try {
-      const organizationData = req.body;
-      // Implementation would update organization details
-      // For now, just return success
+      const { name, cnpj, email, phone, address } = req.body;
+      const organizationId = req.session.organizationId!;
+      
+      // Verificar se o usuário tem permissão de admin
+      const userRole = req.session.userRole;
+      if (userRole !== 'admin' && userRole !== 'manager') {
+        return res.status(403).json({ 
+          message: "Apenas administradores podem editar as configurações da organização" 
+        });
+      }
+      
+      // Atualizar dados da organização
+      const updates: Partial<Organization> = {};
+      if (name !== undefined) updates.name = name;
+      if (cnpj !== undefined) updates.cnpj = cnpj;
+      if (email !== undefined) updates.email = email;
+      if (phone !== undefined) updates.phone = phone;
+      if (address !== undefined) updates.address = address;
+      
+      const updatedOrganization = await storage.updateOrganization(organizationId, updates);
+      
+      if (!updatedOrganization) {
+        return res.status(404).json({ message: "Organização não encontrada" });
+      }
       
       res.json({ 
-        message: "Organization updated successfully",
-        organization: organizationData
+        message: "Informações da organização atualizadas com sucesso",
+        organization: updatedOrganization
       });
     } catch (error) {
       console.error("Update organization error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 

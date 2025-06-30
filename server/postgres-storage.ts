@@ -184,6 +184,19 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | undefined> {
+    const result = await db
+      .update(organizations)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(organizations.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
   async getUserOrganizations(userId: string): Promise<Organization[]> {
     const result = await db
       .select()

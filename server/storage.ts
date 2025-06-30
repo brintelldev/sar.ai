@@ -35,6 +35,7 @@ export interface IStorage {
   getOrganization(id: string): Promise<Organization | undefined>;
   getOrganizationBySlug(slug: string): Promise<Organization | undefined>;
   createOrganization(org: InsertOrganization): Promise<Organization>;
+  updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | undefined>;
   getUserOrganizations(userId: string): Promise<Organization[]>;
 
   // User roles

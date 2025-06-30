@@ -64,6 +64,27 @@ export default function Settings() {
     confirmPassword: ''
   });
 
+  const [organizationForm, setOrganizationForm] = useState({
+    name: currentOrganization?.name || '',
+    cnpj: currentOrganization?.cnpj || '',
+    email: currentOrganization?.email || '',
+    phone: currentOrganization?.phone || '',
+    address: currentOrganization?.address || ''
+  });
+
+  // Atualizar formulário quando dados da organização mudarem
+  useEffect(() => {
+    if (currentOrganization) {
+      setOrganizationForm({
+        name: currentOrganization.name || '',
+        cnpj: currentOrganization.cnpj || '',
+        email: currentOrganization.email || '',
+        phone: currentOrganization.phone || '',
+        address: currentOrganization.address || ''
+      });
+    }
+  }, [currentOrganization]);
+
   const updateAccountMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log('Enviando dados:', data);
@@ -210,11 +231,16 @@ export default function Settings() {
   };
 
   const handleSaveOrganization = () => {
-    // Implementation for organization settings
-    toast({
-      title: "Info",
-      description: "Funcionalidade de organização será implementada em breve",
-    });
+    if (!isAdmin) {
+      toast({
+        title: "Erro",
+        description: "Apenas administradores podem editar as configurações da organização",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateOrganizationMutation.mutate(organizationForm);
   };
 
   return (
@@ -453,14 +479,16 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label>Nome da Organização</Label>
                     <Input 
-                      defaultValue={currentOrganization?.name || ''} 
+                      value={organizationForm.name}
+                      onChange={(e) => setOrganizationForm({...organizationForm, name: e.target.value})}
                       disabled={!isAdmin}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>CNPJ</Label>
                     <Input 
-                      defaultValue={currentOrganization?.cnpj || ''} 
+                      value={organizationForm.cnpj}
+                      onChange={(e) => setOrganizationForm({...organizationForm, cnpj: e.target.value})}
                       disabled={!isAdmin}
                     />
                   </div>
@@ -469,13 +497,16 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label>Email Institucional</Label>
                     <Input 
-                      defaultValue={currentOrganization?.email || ''} 
+                      value={organizationForm.email}
+                      onChange={(e) => setOrganizationForm({...organizationForm, email: e.target.value})}
                       disabled={!isAdmin}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Telefone</Label>
                     <Input 
+                      value={organizationForm.phone}
+                      onChange={(e) => setOrganizationForm({...organizationForm, phone: e.target.value})}
                       placeholder="(11) 3333-3333" 
                       disabled={!isAdmin}
                     />
@@ -484,6 +515,8 @@ export default function Settings() {
                 <div className="space-y-2">
                   <Label>Endereço</Label>
                   <Input 
+                    value={organizationForm.address}
+                    onChange={(e) => setOrganizationForm({...organizationForm, address: e.target.value})}
                     placeholder="Rua, Número, Bairro, Cidade - UF, CEP" 
                     disabled={!isAdmin}
                   />
