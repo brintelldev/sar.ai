@@ -1954,7 +1954,13 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
-  async getCourseAttendanceSummary(courseId: string): Promise<any[]> {
+  async getCourseAttendanceSummary(courseId: string, userId?: string): Promise<any[]> {
+    const conditions = [eq(courseAttendance.courseId, courseId)];
+    
+    if (userId) {
+      conditions.push(eq(courseAttendance.userId, userId));
+    }
+
     const result = await db
       .select({
         sessionDate: courseAttendance.sessionDate,
@@ -1967,7 +1973,7 @@ export class PostgresStorage implements IStorage {
         createdAt: sql<string>`MIN(${courseAttendance.createdAt})`
       })
       .from(courseAttendance)
-      .where(eq(courseAttendance.courseId, courseId))
+      .where(and(...conditions))
       .groupBy(courseAttendance.sessionDate, courseAttendance.sessionTitle)
       .orderBy(desc(courseAttendance.sessionDate));
 

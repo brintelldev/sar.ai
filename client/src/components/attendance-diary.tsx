@@ -80,6 +80,7 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
     notes: string;
   }>>({});
   const [showNewSession, setShowNewSession] = useState(false);
+  const [selectedStudentFilter, setSelectedStudentFilter] = useState<string>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

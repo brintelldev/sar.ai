@@ -383,7 +383,7 @@ export class MemStorage implements IStorage {
   // Attendance methods
   async getCourseAttendance(courseId: string, date: string): Promise<any[]> { return []; }
   async markAttendance(attendance: any): Promise<any> { throw new Error("Not implemented in MemStorage"); }
-  async getCourseAttendanceSummary(courseId: string): Promise<any[]> { return []; }
+  async getCourseAttendanceSummary(courseId: string, userId?: string): Promise<any[]> { return []; }
 }
 
 // Export a configured storage instance
