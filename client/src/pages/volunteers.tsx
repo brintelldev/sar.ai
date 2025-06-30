@@ -1003,6 +1003,88 @@ export default function Volunteers() {
                   )}
                 </div>
 
+                {/* Disponibilidade */}
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold">Disponibilidade</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {availabilityOptions.map((period) => (
+                      <div key={period.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`edit-${period.id}`}
+                          checked={selectedVolunteer.availability?.includes(period.id) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAvailability = selectedVolunteer.availability || [];
+                            if (checked) {
+                              setSelectedVolunteer({
+                                ...selectedVolunteer,
+                                availability: [...currentAvailability, period.id]
+                              });
+                            } else {
+                              setSelectedVolunteer({
+                                ...selectedVolunteer,
+                                availability: currentAvailability.filter((a: string) => a !== period.id)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`edit-${period.id}`} className="text-sm cursor-pointer">{period.label}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contato de Emergência */}
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold">Contato de Emergência</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="edit-emergency-name">Nome</Label>
+                      <Input
+                        id="edit-emergency-name"
+                        value={selectedVolunteer.emergencyContact?.name || ''}
+                        onChange={(e) => setSelectedVolunteer({
+                          ...selectedVolunteer,
+                          emergencyContact: {
+                            ...selectedVolunteer.emergencyContact,
+                            name: e.target.value
+                          }
+                        })}
+                        placeholder="Nome do contato"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-emergency-relationship">Parentesco</Label>
+                      <Input
+                        id="edit-emergency-relationship"
+                        value={selectedVolunteer.emergencyContact?.relationship || ''}
+                        onChange={(e) => setSelectedVolunteer({
+                          ...selectedVolunteer,
+                          emergencyContact: {
+                            ...selectedVolunteer.emergencyContact,
+                            relationship: e.target.value
+                          }
+                        })}
+                        placeholder="Ex: Mãe, Pai, Esposo(a)"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-emergency-phone">Telefone</Label>
+                      <Input
+                        id="edit-emergency-phone"
+                        value={selectedVolunteer.emergencyContact?.phone || ''}
+                        onChange={(e) => setSelectedVolunteer({
+                          ...selectedVolunteer,
+                          emergencyContact: {
+                            ...selectedVolunteer.emergencyContact,
+                            phone: e.target.value
+                          }
+                        })}
+                        placeholder="(11) 99999-9999"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-end space-x-4">
                   <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
                     Cancelar
