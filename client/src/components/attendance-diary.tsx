@@ -45,7 +45,7 @@ interface Student {
 
 interface AttendanceRecord {
   id: string;
-  enrollmentId: string;
+  userId: string;
   sessionDate: string;
   sessionTitle: string;
   attendanceStatus: 'present' | 'absent' | 'late' | 'excused';

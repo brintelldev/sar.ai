@@ -442,7 +442,8 @@ export const courseEnrollments = pgTable("course_enrollments", {
 // Course Attendance (frequência para cursos presenciais)
 export const courseAttendance = pgTable("course_attendance", {
   id: uuid("id").primaryKey().defaultRandom(),
-  enrollmentId: uuid("enrollment_id").references(() => courseEnrollments.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  courseId: uuid("course_id").references(() => courses.id).notNull(),
   sessionDate: date("session_date").notNull(),
   sessionTitle: text("session_title"),
   attendanceStatus: text("attendance_status").notNull(), // 'present', 'absent', 'late', 'excused'

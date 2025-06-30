@@ -2621,7 +2621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const record of attendanceRecords) {
         await storage.markAttendance({
           courseId,
-          enrollmentId: record.enrollmentId,
+          userId: record.userId,
           sessionDate,
           sessionTitle,
           attendanceStatus: record.attendanceStatus,
