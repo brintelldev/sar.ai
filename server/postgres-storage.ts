@@ -786,10 +786,18 @@ export class PostgresStorage implements IStorage {
       // 9. Deletar avaliações
       await db.execute(sql`DELETE FROM course_assessments WHERE course_id = ${id}`);
 
-      // 10. Deletar módulos
+      // 10. Deletar notas dos usuários nos módulos do curso
+      await db.execute(sql`
+        DELETE FROM user_grades 
+        WHERE module_id IN (
+          SELECT id FROM course_modules WHERE course_id = ${id}
+        )
+      `);
+
+      // 11. Deletar módulos
       await db.execute(sql`DELETE FROM course_modules WHERE course_id = ${id}`);
 
-      // 11. Finalmente deletar o curso
+      // 12. Finalmente deletar o curso
       await db.execute(sql`
         DELETE FROM courses WHERE id = ${id} AND organization_id = ${organizationId}
       `);
