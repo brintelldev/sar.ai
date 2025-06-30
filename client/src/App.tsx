@@ -108,65 +108,83 @@ function Router() {
       </Route>
       <Route path="/donors">
         <ProtectedRoute>
-          <AdminGuard>
-            <Donors />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <Donors />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/beneficiaries">
         <ProtectedRoute>
-          <AdminGuard>
-            <Beneficiaries />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <Beneficiaries />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/volunteers">
         <ProtectedRoute>
-          <AdminGuard>
-            <Volunteers />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <Volunteers />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/users">
         <ProtectedRoute>
-          <AdminGuard>
-            <Users />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <Users />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/donations">
         <ProtectedRoute>
-          <AdminGuard>
-            <Donations />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <Donations />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/accounts-receivable">
         <ProtectedRoute>
-          <AdminGuard>
-            <AccountsReceivable />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <AccountsReceivable />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/accounts-payable">
         <ProtectedRoute>
-          <AdminGuard>
-            <AccountsPayable />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <AccountsPayable />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/reports">
         <ProtectedRoute>
-          <AdminGuard>
-            <FinancialReports />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <FinancialReports />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/funders">
         <ProtectedRoute>
-          <AdminGuard>
-            <Funders />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <Funders />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/profile">
@@ -181,9 +199,11 @@ function Router() {
       </Route>
       <Route path="/access-control">
         <ProtectedRoute>
-          <AdminGuard>
-            <AccessControl />
-          </AdminGuard>
+          <NonVolunteerGuard>
+            <AdminGuard>
+              <AccessControl />
+            </AdminGuard>
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/courses">
@@ -263,7 +283,9 @@ function Router() {
       </Route>
       <Route path="/whitelabel">
         <ProtectedRoute>
-          <Whitelabel />
+          <NonVolunteerGuard>
+            <Whitelabel />
+          </NonVolunteerGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/site/:subdomain">
