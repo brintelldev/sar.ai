@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Integração de templates personalizados de certificados:
+  * Sistema de PDF agora usa template personalizado criado na edição do curso
+  * Função replaceTemplateVariables substitui variáveis como {{studentName}}, {{courseTitle}}
+  * PDF gerado automaticamente com template ou design padrão se não houver template
+  * Suporte a todas as variáveis do editor: organizationName, studentCpf, courseDuration, etc.
+  * Interface de pré-visualização funcional na página de edição do curso
 - June 30, 2025. Unificação das páginas course-start e course-progress:
   * Removida página duplicada course-progress.tsx 
   * Mantida apenas /courses/:courseId/start como rota unificada

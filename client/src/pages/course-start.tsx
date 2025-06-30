@@ -185,10 +185,17 @@ export default function CourseStartPage() {
       completionDate: new Date(certificate.issuedAt).toLocaleDateString('pt-BR'),
       certificateNumber: certificate.certificateNumber,
       organizationName: orgData?.name || 'Organização',
-      courseHours: courseData?.duration || 0,
+      courseHours: Math.round((courseData?.duration || 0) / 60), // Converter minutos para horas
       overallScore: certificate.metadata?.courseCompletion?.overallPercentage,
       passScore: certificate.metadata?.courseCompletion?.passScore,
-      verificationCode: certificate.verificationCode
+      verificationCode: certificate.verificationCode,
+      customTemplate: courseData?.certificateTemplate, // Template personalizado do curso
+      studentCpf: userData?.cpf || userData?.document,
+      startDate: userProgress?.startedAt ? new Date(userProgress.startedAt).toLocaleDateString('pt-BR') : undefined,
+      instructorName: 'Equipe de Capacitação',
+      instructorTitle: 'Instrutor(a)',
+      city: 'São Paulo',
+      issueDate: new Date().toLocaleDateString('pt-BR')
     };
 
     generateCertificatePDF(certificateData);
