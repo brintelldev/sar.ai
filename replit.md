@@ -124,6 +124,14 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Sistema completo de gerenciamento e interação de notificações implementado:
+  * Funcionalidade "Limpar Todas as Notificações" com endpoint DELETE /api/notifications/clear-all
+  * Funcionalidade "Marcar Todas Como Lidas" com endpoint PATCH /api/notifications/mark-all-read
+  * Sistema de navegação inteligente ao clicar nas notificações baseado no tipo e metadata
+  * Interface aprimorada com botões de ação no dropdown de notificações
+  * Indicadores visuais para notificações não lidas (ponto azul e destaque visual)
+  * Notificações clicáveis que navegam automaticamente para a página relacionada
+  * Sistema de prevenção de propagação de eventos nos botões de ação
 - June 30, 2025. Sistema completo de notificações baseado em roles implementado e funcionando:
   * Infraestrutura completa de notificações no PostgreSQL com tabela notifications
   * API endpoints para criar, listar, marcar como lida e excluir notificações
