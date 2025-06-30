@@ -750,7 +750,15 @@ export class PostgresStorage implements IStorage {
       // Nota: A tabela user_module_form_submissions não existe no banco atual
       // Esta linha foi removida para evitar erro de "relation does not exist"
 
-      // 4. Deletar progress de módulos
+      // 4. Deletar submissões de formulários dos módulos
+      await db.execute(sql`
+        DELETE FROM user_module_form_submissions 
+        WHERE module_id IN (
+          SELECT id FROM course_modules WHERE course_id = ${id}
+        )
+      `);
+
+      // 5. Deletar progress de módulos
       await db.execute(sql`
         DELETE FROM user_module_progress 
         WHERE module_id IN (
@@ -758,7 +766,7 @@ export class PostgresStorage implements IStorage {
         )
       `);
 
-      // 5. Deletar certificados do curso
+      // 6. Deletar certificados do curso
       await db.execute(sql`DELETE FROM certificates WHERE course_id = ${id}`);
 
       // 6. Deletar registros de frequência
