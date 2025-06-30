@@ -176,11 +176,37 @@ export function NotificationsDropdown() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-4">
           <h3 className="font-semibold text-sm">Notificações</h3>
-          {unreadCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {unreadCount} nova{unreadCount !== 1 ? 's' : ''}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {unreadCount} nova{unreadCount !== 1 ? 's' : ''}
+              </span>
+            )}
+            {safeNotifications.length > 0 && (
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-1 text-xs"
+                  onClick={handleMarkAllAsRead}
+                  disabled={markAllAsReadMutation.isPending || unreadCount === 0}
+                  title="Marcar todas como lida"
+                >
+                  <Check className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-1 text-xs text-destructive hover:text-destructive"
+                  onClick={handleClearAll}
+                  disabled={clearAllMutation.isPending}
+                  title="Limpar todas"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
         <DropdownMenuSeparator />
         
@@ -207,30 +233,43 @@ export function NotificationsDropdown() {
               {safeNotifications.map((notification: Notification) => (
                 <div
                   key={notification.id}
-                  className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors"
+                  className={`flex items-start gap-3 p-3 transition-colors cursor-pointer hover:bg-muted/50 ${
+                    !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="text-lg flex-shrink-0 mt-0.5">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium line-clamp-1">
+                    <p className={`text-sm line-clamp-1 ${
+                      !notification.isRead ? 'font-semibold' : 'font-medium'
+                    }`}>
                       {notification.title}
                     </p>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                      {notification.description}
+                      {notification.message}
                     </p>
                     <div className="flex items-center justify-between mt-1">
                       <p className="text-xs text-muted-foreground">
                         {formatRelativeTime(new Date(notification.createdAt))}
                       </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto p-1 text-xs"
-                        onClick={() => handleMarkAsRead(notification.id)}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {!notification.isRead && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1 text-xs opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAsRead(notification.id);
+                          }}
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
