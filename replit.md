@@ -124,6 +124,13 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Sistema completo de certificados para cursos presenciais implementado:
+  * Alunos com nota aprovada em cursos presenciais podem emitir certificados automaticamente
+  * Lógica de elegibilidade atualizada para verificar notas finais lançadas pelo instrutor
+  * Sistema reconhece cursos "in_person" e verifica nota final (passed: true) em vez de progresso de módulos
+  * Endpoint de emissão corrigido para usar verificação de elegibilidade apropriada
+  * Certificados emitidos incluem dados corretos: número, código de verificação, metadata do curso presencial
+  * Testado com sucesso: usuária Simone Santos (nota 10.0) conseguiu emitir certificado
 - June 30, 2025. Correção crítica da sincronização entre inscrições admin e visualização do aluno:
   * Implementada sincronização bidirecional completa entre user_course_roles e user_course_progress
   * Quando admin atribui aluno ao curso, sistema cria automaticamente registro de progresso

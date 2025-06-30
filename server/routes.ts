@@ -1504,10 +1504,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { courseId } = req.params;
       const userId = req.session.userId!;
       
-      // Check if course is completed
-      const progress = await storage.getUserCourseProgress(userId, courseId);
-      if (!progress || progress.status !== "completed") {
-        return res.status(400).json({ message: "Curso deve estar completo para gerar certificado" });
+      // Verificar elegibilidade usando o método apropriado
+      const eligibility = await storage.isCourseEligibleForCertificate(userId, courseId);
+      if (!eligibility.eligible) {
+        return res.status(400).json({ message: eligibility.reason });
       }
       
       // Check if course allows certificates
@@ -1525,10 +1525,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validationCode: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
       });
       
-      // Update progress to mark certificate as generated
-      await storage.updateUserCourseProgress(userId, courseId, {
-        certificateGenerated: true
-      });
+      // Update progress to mark certificate as generated (apenas para cursos online)
+      if (course.courseType === 'online') {
+        await storage.updateUserCourseProgress(userId, courseId, {
+          certificateGenerated: true
+        });
+      }
       
       res.json(certificate);
     } catch (error) {
