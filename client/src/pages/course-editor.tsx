@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { MainLayout } from "@/components/layout/main-layout";
-import { GradesDiary } from "@/components/grades-diary";
-import { AttendanceDiary } from "@/components/attendance-diary";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -559,49 +558,7 @@ ___________________________
             </Card>
           </TabsContent>
 
-          {/* Grades Diary Tab - Only for in-person courses */}
-          {course?.courseType === 'in_person' && (
-            <TabsContent value="grades" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-6 w-6" />
-                    <div>
-                      <CardTitle>Diário de Notas</CardTitle>
-                      <CardDescription>
-                        Gerencie as notas dos alunos matriculados no curso presencial
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <GradesDiary courseId={courseId!} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
 
-          {/* Attendance Diary Tab - Only for in-person courses */}
-          {course?.courseType === 'in_person' && (
-            <TabsContent value="attendance" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-6 w-6" />
-                    <div>
-                      <CardTitle>Diário de Presença</CardTitle>
-                      <CardDescription>
-                        Controle a presença dos alunos nas aulas presenciais
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <AttendanceDiary courseId={courseId!} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
         </Tabs>
       </div>
     </MainLayout>
