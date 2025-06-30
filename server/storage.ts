@@ -118,6 +118,7 @@ export interface IStorage {
   updateUserCourseRole(userId: string, courseId: string, updates: any): Promise<any>;
   removeUserFromCourse(userId: string, courseId: string): Promise<boolean>;
   getCourseEnrollments(courseId: string): Promise<any[]>;
+  syncCourseEnrollments(courseId: string): Promise<void>;
   getCourseStudents(courseId: string): Promise<any[]>;
   getCourseInstructors(courseId: string): Promise<any[]>;
   getUserCourses(userId: string): Promise<any[]>;
@@ -359,6 +360,14 @@ export class MemStorage implements IStorage {
   async getUserCourseProgressList(userId: string): Promise<UserCourseProgress[]> { return []; }
   async getUserCourses(userId: string): Promise<any[]> { return []; }
   async getUserCourseRoles(userId: string): Promise<any[]> { return []; }
+  
+  // Course Role Management  
+  async getUserCourseRole(userId: string, courseId: string): Promise<any> { return undefined; }
+  async assignUserCourseRole(roleData: any): Promise<any> { throw new Error("Not implemented in MemStorage"); }
+  async updateUserCourseRole(userId: string, courseId: string, updates: any): Promise<any> { return undefined; }
+  async removeUserFromCourse(userId: string, courseId: string): Promise<boolean> { return false; }
+  async getCourseEnrollments(courseId: string): Promise<any[]> { return []; }
+  async syncCourseEnrollments(courseId: string): Promise<void> { /* No-op in MemStorage */ }
 
   async getCourseAssessments(courseId: string): Promise<CourseAssessment[]> { return []; }
   async createCourseAssessment(assessment: InsertCourseAssessment): Promise<CourseAssessment> { throw new Error("Not implemented in MemStorage"); }

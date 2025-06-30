@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Correção crítica da sincronização entre inscrições admin e visualização do aluno:
+  * Implementada sincronização bidirecional completa entre user_course_roles e user_course_progress
+  * Quando admin atribui aluno ao curso, sistema cria automaticamente registro de progresso
+  * Usuários cadastrados por administradores agora veem cursos corretamente como inscritos
+  * Função syncCourseEnrollments() executa em ambas as direções na verificação de inscrições
+  * Bug crítico de visibilidade resolvido: alunos atribuídos veem "Meus Cursos" corretamente
 - June 30, 2025. Interface de aluno atualizada com resumo de notas e frequência para cursos presenciais:
   * Seções "Minhas Notas" e "Minha Frequência" adicionadas para beneficiários
   * Exibição de notas finais com feedback do instrutor
