@@ -345,35 +345,57 @@ export class PostgresStorage implements IStorage {
   }
 
   async createBeneficiary(beneficiary: InsertBeneficiary): Promise<Beneficiary> {
-    // Create user account if email is provided
+    // Create user account if email is provided and userId is not set
     let userId = beneficiary.userId;
     
     if (beneficiary.email && !userId) {
       try {
-        // Generate temporary password (first 4 chars of name + last 4 chars of registration number)
-        const tempPassword = beneficiary.name.substring(0, 4).toLowerCase() + 
-                           beneficiary.registrationNumber.slice(-4);
+        // Check if user already exists with this email
+        const existingUser = await this.getUserByEmail(beneficiary.email);
         
-        // Create user account
-        const newUser = await this.createUser({
-          email: beneficiary.email,
-          passwordHash: await bcrypt.hash(tempPassword, 10),
-          name: beneficiary.name,
-          phone: beneficiary.contactInfo || undefined,
-          position: 'Beneficiária'
-        });
+        if (existingUser) {
+          // Link existing user to this beneficiary
+          userId = existingUser.id;
+          
+          // Create user role as beneficiary if not exists
+          const existingRole = await this.getUserRole(existingUser.id, beneficiary.organizationId);
+          if (!existingRole) {
+            await this.createUserRole({
+              userId: existingUser.id,
+              organizationId: beneficiary.organizationId,
+              role: 'beneficiary',
+              grantedBy: null // system-generated
+            });
+          }
+          
+          console.log(`✅ Vinculada beneficiária à conta existente: ${beneficiary.email}`);
+        } else {
+          // Generate temporary password (first 4 chars of name + last 4 chars of registration number)
+          const namePrefix = beneficiary.name.substring(0, 4).toLowerCase().replace(/\s/g, '');
+          const numberSuffix = beneficiary.registrationNumber.slice(-4);
+          const tempPassword = namePrefix + numberSuffix;
+          
+          // Create new user account
+          const newUser = await this.createUser({
+            email: beneficiary.email,
+            passwordHash: await bcrypt.hash(tempPassword, 10),
+            name: beneficiary.name,
+            phone: beneficiary.contactInfo || undefined,
+            position: 'Beneficiária'
+          });
 
-        // Create user role as beneficiary
-        await this.createUserRole({
-          userId: newUser.id,
-          organizationId: beneficiary.organizationId,
-          role: 'beneficiary',
-          grantedBy: null // system-generated
-        });
+          // Create user role as beneficiary
+          await this.createUserRole({
+            userId: newUser.id,
+            organizationId: beneficiary.organizationId,
+            role: 'beneficiary',
+            grantedBy: null // system-generated
+          });
 
-        userId = newUser.id;
-        
-        console.log(`✅ Conta criada para beneficiária: ${beneficiary.email} | Senha temporária: ${tempPassword}`);
+          userId = newUser.id;
+          
+          console.log(`✅ Conta criada para beneficiária: ${beneficiary.email} | Senha temporária: ${tempPassword}`);
+        }
       } catch (error) {
         console.error('❌ Erro ao criar conta para beneficiária:', error);
         // Continue without user account if creation fails
@@ -481,7 +503,67 @@ export class PostgresStorage implements IStorage {
   }
 
   async createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer> {
-    const result = await db.insert(volunteers).values(volunteer).returning();
+    // Create user account if email is provided and userId is not set
+    let userId = volunteer.userId;
+    
+    if (volunteer.email && !userId) {
+      try {
+        // Check if user already exists with this email
+        const existingUser = await this.getUserByEmail(volunteer.email);
+        
+        if (existingUser) {
+          // Link existing user to this volunteer
+          userId = existingUser.id;
+          
+          // Create user role as volunteer if not exists
+          const existingRole = await this.getUserRole(existingUser.id, volunteer.organizationId);
+          if (!existingRole) {
+            await this.createUserRole({
+              userId: existingUser.id,
+              organizationId: volunteer.organizationId,
+              role: 'volunteer',
+              grantedBy: null // system-generated
+            });
+          }
+          
+          console.log(`✅ Vinculado voluntário à conta existente: ${volunteer.email}`);
+        } else {
+          // Generate temporary password (first 4 chars of name + VOL + last 3 chars of volunteer number)
+          const namePrefix = volunteer.name.substring(0, 4).toLowerCase().replace(/\s/g, '');
+          const numberSuffix = volunteer.volunteerNumber?.slice(-3) || '123';
+          const tempPassword = namePrefix + 'vol' + numberSuffix;
+          
+          // Create new user account
+          const newUser = await this.createUser({
+            email: volunteer.email,
+            passwordHash: await bcrypt.hash(tempPassword, 10),
+            name: volunteer.name,
+            phone: volunteer.phone || undefined,
+            position: 'Voluntário'
+          });
+
+          // Create user role as volunteer
+          await this.createUserRole({
+            userId: newUser.id,
+            organizationId: volunteer.organizationId,
+            role: 'volunteer',
+            grantedBy: null // system-generated
+          });
+
+          userId = newUser.id;
+          
+          console.log(`✅ Conta criada para voluntário: ${volunteer.email} | Senha temporária: ${tempPassword}`);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao criar conta para voluntário:', error);
+        // Continue without user account if creation fails
+      }
+    }
+
+    const result = await db.insert(volunteers).values({
+      ...volunteer,
+      userId
+    }).returning();
     return result[0];
   }
 
@@ -2130,5 +2212,166 @@ export class PostgresStorage implements IStorage {
       ));
     
     console.log('🗃️ PostgresStorage: Role do usuário atualizada com sucesso');
+  }
+
+  // Sync function to ensure all volunteers and beneficiaries have user accounts
+  async syncUsersForVolunteersAndBeneficiaries(organizationId: string): Promise<void> {
+    console.log('🔄 Iniciando sincronização de contas de usuário...');
+    
+    try {
+      // Sync volunteers without user accounts
+      const volunteersWithoutAccounts = await db
+        .select()
+        .from(volunteers)
+        .where(and(
+          eq(volunteers.organizationId, organizationId),
+          isNotNull(volunteers.email),
+          isNull(volunteers.userId)
+        ));
+
+      console.log(`📊 Encontrados ${volunteersWithoutAccounts.length} voluntários sem conta de usuário`);
+
+      for (const volunteer of volunteersWithoutAccounts) {
+        if (volunteer.email) {
+          try {
+            // Check if user already exists with this email
+            const existingUser = await this.getUserByEmail(volunteer.email);
+            
+            if (existingUser) {
+              // Link existing user to this volunteer
+              await db
+                .update(volunteers)
+                .set({ userId: existingUser.id })
+                .where(eq(volunteers.id, volunteer.id));
+              
+              // Create user role as volunteer if not exists
+              const existingRole = await this.getUserRole(existingUser.id, organizationId);
+              if (!existingRole) {
+                await this.createUserRole({
+                  userId: existingUser.id,
+                  organizationId: organizationId,
+                  role: 'volunteer',
+                  grantedBy: null
+                });
+              }
+              
+              console.log(`✅ Vinculado voluntário ${volunteer.name} à conta existente: ${volunteer.email}`);
+            } else {
+              // Generate temporary password for volunteer
+              const namePrefix = volunteer.name.substring(0, 4).toLowerCase().replace(/\s/g, '');
+              const numberSuffix = volunteer.volunteerNumber?.slice(-3) || '123';
+              const tempPassword = namePrefix + 'vol' + numberSuffix;
+              
+              // Create new user account
+              const newUser = await this.createUser({
+                email: volunteer.email,
+                passwordHash: await bcrypt.hash(tempPassword, 10),
+                name: volunteer.name,
+                phone: volunteer.phone || undefined,
+                position: 'Voluntário'
+              });
+
+              // Link user to volunteer
+              await db
+                .update(volunteers)
+                .set({ userId: newUser.id })
+                .where(eq(volunteers.id, volunteer.id));
+
+              // Create user role as volunteer
+              await this.createUserRole({
+                userId: newUser.id,
+                organizationId: organizationId,
+                role: 'volunteer',
+                grantedBy: null
+              });
+
+              console.log(`✅ Conta criada para voluntário ${volunteer.name}: ${volunteer.email} | Senha: ${tempPassword}`);
+            }
+          } catch (error) {
+            console.error(`❌ Erro ao criar conta para voluntário ${volunteer.name}:`, error);
+          }
+        }
+      }
+
+      // Sync beneficiaries without user accounts
+      const beneficiariesWithoutAccounts = await db
+        .select()
+        .from(beneficiaries)
+        .where(and(
+          eq(beneficiaries.organizationId, organizationId),
+          isNotNull(beneficiaries.email),
+          isNull(beneficiaries.userId)
+        ));
+
+      console.log(`📊 Encontrados ${beneficiariesWithoutAccounts.length} beneficiários sem conta de usuário`);
+
+      for (const beneficiary of beneficiariesWithoutAccounts) {
+        if (beneficiary.email) {
+          try {
+            // Check if user already exists with this email
+            const existingUser = await this.getUserByEmail(beneficiary.email);
+            
+            if (existingUser) {
+              // Link existing user to this beneficiary
+              await db
+                .update(beneficiaries)
+                .set({ userId: existingUser.id })
+                .where(eq(beneficiaries.id, beneficiary.id));
+              
+              // Create user role as beneficiary if not exists
+              const existingRole = await this.getUserRole(existingUser.id, organizationId);
+              if (!existingRole) {
+                await this.createUserRole({
+                  userId: existingUser.id,
+                  organizationId: organizationId,
+                  role: 'beneficiary',
+                  grantedBy: null
+                });
+              }
+              
+              console.log(`✅ Vinculada beneficiária ${beneficiary.name} à conta existente: ${beneficiary.email}`);
+            } else {
+              // Generate temporary password for beneficiary
+              const namePrefix = beneficiary.name.substring(0, 4).toLowerCase().replace(/\s/g, '');
+              const numberSuffix = beneficiary.registrationNumber.slice(-4);
+              const tempPassword = namePrefix + numberSuffix;
+              
+              // Create new user account
+              const newUser = await this.createUser({
+                email: beneficiary.email,
+                passwordHash: await bcrypt.hash(tempPassword, 10),
+                name: beneficiary.name,
+                phone: beneficiary.contactInfo || undefined,
+                position: 'Beneficiária'
+              });
+
+              // Link user to beneficiary
+              await db
+                .update(beneficiaries)
+                .set({ userId: newUser.id })
+                .where(eq(beneficiaries.id, beneficiary.id));
+
+              // Create user role as beneficiary
+              await this.createUserRole({
+                userId: newUser.id,
+                organizationId: organizationId,
+                role: 'beneficiary',
+                grantedBy: null
+              });
+
+              console.log(`✅ Conta criada para beneficiária ${beneficiary.name}: ${beneficiary.email} | Senha: ${tempPassword}`);
+            }
+          } catch (error) {
+            console.error(`❌ Erro ao criar conta para beneficiária ${beneficiary.name}:`, error);
+          }
+        }
+      }
+
+      console.log('✅ Sincronização de contas concluída!');
+      
+    } catch (error) {
+      console.error('❌ Erro durante sincronização de contas:', error);
+      throw error;
+    }
   }
 }

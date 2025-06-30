@@ -204,6 +204,9 @@ export interface IStorage {
   markAttendance(attendance: any): Promise<any>;
   getCourseAttendanceSummary(courseId: string): Promise<any[]>;
   getUserAttendanceRecords(userId: string, courseId: string): Promise<any[]>;
+
+  // User Account Sync
+  syncUsersForVolunteersAndBeneficiaries(organizationId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
