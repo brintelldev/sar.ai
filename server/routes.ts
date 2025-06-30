@@ -1855,16 +1855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/courses/:courseId/students', requireAuth, requireOrganization, async (req, res) => {
-    try {
-      const { courseId } = req.params;
-      const students = await storage.getCourseStudents(courseId);
-      res.json(students);
-    } catch (error) {
-      console.error("Get course students error:", error);
-      res.status(500).json({ message: "Erro ao buscar alunos do curso" });
-    }
-  });
+
 
   app.get('/api/courses/:courseId/instructors', requireAuth, requireOrganization, async (req, res) => {
     try {
@@ -2535,6 +2526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the existing method to get course students with user data
       const courseStudents = await storage.getCourseStudents(courseId);
+      console.log('🎓 Raw course students:', JSON.stringify(courseStudents, null, 2));
       
       // Format the response to match what the frontend expects
       const students = courseStudents.map((enrollment: any) => ({
@@ -2544,6 +2536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         registrationNumber: enrollment.user.registrationNumber || 'N/A'
       }));
       
+      console.log('🎓 Formatted students:', JSON.stringify(students, null, 2));
       res.json(students);
     } catch (error) {
       console.error('Get course students error:', error);
