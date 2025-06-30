@@ -124,6 +124,11 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Controle de permissões na aba Organização das configurações:
+  * Campos de edição da organização agora disponíveis apenas para administradores (admin e manager)
+  * Usuários não-administradores veem campos desabilitados com aviso informativo
+  * Botões "Gerenciar Plano" e "Salvar Alterações" também restritos por permissão
+  * Interface clara sobre limitações de acesso baseadas no role do usuário
 - June 30, 2025. Interface de configurações simplificada:
   * Removidos campos "Autenticação de Dois Fatores" e "Sessões Ativas" da aba Segurança
   * Aba de segurança agora contém apenas funcionalidade de alteração de senha

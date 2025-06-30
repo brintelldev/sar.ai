@@ -494,13 +494,26 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground mb-3">
                     Plano atual: <Badge className="capitalize">{currentOrganization?.subscriptionPlan}</Badge>
                   </p>
-                  <Button variant="outline" size="sm">Gerenciar Plano</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={!isAdmin}
+                  >
+                    Gerenciar Plano
+                  </Button>
                 </div>
+                {!isAdmin && (
+                  <div className="bg-muted/50 p-4 rounded-lg border">
+                    <p className="text-sm text-muted-foreground text-center">
+                      ⚠️ Apenas administradores podem editar as configurações da organização
+                    </p>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-end">
                   <Button 
                     onClick={handleSaveOrganization}
-                    disabled={updateOrganizationMutation.isPending}
+                    disabled={updateOrganizationMutation.isPending || !isAdmin}
                   >
                     {updateOrganizationMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
