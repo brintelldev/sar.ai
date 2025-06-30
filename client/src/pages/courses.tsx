@@ -127,12 +127,22 @@ export default function Courses() {
 
   const formatCourseType = (type: string | undefined) => {
     if (!type) return 'Online';
-    return formatCourseType(type);
+    switch(type.toLowerCase()) {
+      case 'online': return 'Online';
+      case 'presencial': return 'Presencial';
+      case 'hibrido': return 'Híbrido';
+      default: return 'Online';
+    }
   };
 
   const formatLevel = (level: string | undefined) => {
     if (!level) return 'Básico';
-    return formatLevel(level);
+    switch(level.toLowerCase()) {
+      case 'basico': return 'Básico';
+      case 'intermediario': return 'Intermediário';
+      case 'avancado': return 'Avançado';
+      default: return 'Básico';
+    }
   };
 
   // Separate enrolled and available courses
