@@ -278,8 +278,39 @@ export default function CourseStartPage() {
 
   // Baixar certificado existente
   const downloadCertificate = () => {
-    if (userCertificate && course) {
+    console.log('Download certificate clicked!', { userCertificate, course });
+    
+    if (!userCertificate) {
+      toast({
+        title: "Erro",
+        description: "Certificado não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!course) {
+      toast({
+        title: "Erro",
+        description: "Dados do curso não encontrados.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
       generateCertificatePDFFromData(userCertificate, course);
+      toast({
+        title: "Certificado baixado!",
+        description: "O PDF do certificado foi gerado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error generating certificate PDF:', error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o certificado. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 

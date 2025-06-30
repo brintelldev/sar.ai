@@ -54,6 +54,13 @@ export default function Courses() {
     queryFn: () => apiRequest('/api/courses/enrollments', 'GET'),
   });
 
+  // Fetch user certificates
+  const { data: userCertificates = [] } = useQuery({
+    queryKey: ['/api/users', user?.id, 'certificates'],
+    queryFn: () => apiRequest(`/api/users/${user?.id}/certificates`, 'GET'),
+    enabled: !!user?.id,
+  });
+
   // Enroll mutation
   const enrollMutation = useMutation({
     mutationFn: async (courseId: string) => {
