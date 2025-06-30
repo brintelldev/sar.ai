@@ -1704,7 +1704,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getCourseStudents(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {
+  async getCourseStudents(courseId: string): Promise<Array<UserCourseRole & { user: User & { registrationNumber?: string } }>> {
     const students = await db
       .select({
         id: userCourseRoles.id,
@@ -1723,10 +1723,14 @@ export class PostgresStorage implements IStorage {
           phone: users.phone,
           position: users.position,
           createdAt: users.createdAt
+        },
+        beneficiary: {
+          registrationNumber: beneficiaries.registrationNumber
         }
       })
       .from(userCourseRoles)
       .innerJoin(users, eq(userCourseRoles.userId, users.id))
+      .leftJoin(beneficiaries, eq(users.id, beneficiaries.userId))
       .where(and(
         eq(userCourseRoles.courseId, courseId),
         eq(userCourseRoles.role, 'student'),
@@ -1734,7 +1738,16 @@ export class PostgresStorage implements IStorage {
       ))
       .orderBy(userCourseRoles.assignedAt);
 
-    return students as Array<UserCourseRole & { user: User }>;
+    // Add registrationNumber to user object
+    const formattedStudents = students.map(student => ({
+      ...student,
+      user: {
+        ...student.user,
+        registrationNumber: student.beneficiary?.registrationNumber || 'N/A'
+      }
+    }));
+
+    return formattedStudents as Array<UserCourseRole & { user: User & { registrationNumber: string } }>;
   }
 
   async getCourseInstructors(courseId: string): Promise<Array<UserCourseRole & { user: User }>> {

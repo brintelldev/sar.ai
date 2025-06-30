@@ -2532,33 +2532,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/courses/:courseId/students', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { courseId } = req.params;
-      const { organizationId } = (req as any).session;
       
-      // Get enrolled students from course_enrollments and user_course_roles
-      const enrollments = await storage.getCourseEnrollments(courseId);
-      const courseRoles = await storage.getUserCourseRoles(courseId);
+      // Use the existing method to get course students with user data
+      const courseStudents = await storage.getCourseStudents(courseId);
       
-      // Get all student IDs from both sources
-      const studentIds = new Set([
-        ...enrollments.map((e: any) => e.userId),
-        ...courseRoles.filter((r: any) => r.role === 'student').map((r: any) => r.userId)
-      ]);
-      
-      // Get user details for all students
-      const students = [];
-      for (const userId of studentIds) {
-        const user = await storage.getUser(userId);
-        if (user && user.organizationId === organizationId) {
-          // Get beneficiary data for registration number
-          const beneficiary = await storage.getBeneficiaryByUserId(userId);
-          students.push({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            registrationNumber: beneficiary?.registrationNumber || 'N/A'
-          });
-        }
-      }
+      // Format the response to match what the frontend expects
+      const students = courseStudents.map((enrollment: any) => ({
+        id: enrollment.user.id,
+        name: enrollment.user.name,
+        email: enrollment.user.email,
+        registrationNumber: enrollment.user.registrationNumber || 'N/A'
+      }));
       
       res.json(students);
     } catch (error) {
