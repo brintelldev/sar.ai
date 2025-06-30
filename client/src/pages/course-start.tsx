@@ -95,6 +95,12 @@ export default function CourseStartPage() {
   const [completedModules, setCompletedModules] = useState<string[]>([]);
   const [showContent, setShowContent] = useState(false);
 
+  // Get user data from auth context
+  const { data: authData } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: () => apiRequest('/api/auth/me')
+  });
+
   // Get course details
   const { data: course, isLoading: courseLoading } = useQuery<Course>({
     queryKey: ['/api/courses', courseId],
@@ -168,7 +174,10 @@ export default function CourseStartPage() {
   });
 
   // Função para gerar PDF do certificado
-  const generateCertificatePDFFromData = (certificate: any, courseData: any, userData: any, orgData: any) => {
+  const generateCertificatePDFFromData = (certificate: any, courseData: any) => {
+    const userData = authData?.user;
+    const orgData = authData?.currentOrganization;
+    
     const certificateData: CertificateData = {
       userName: userData?.name || 'Usuário',
       courseName: courseData?.title || 'Curso',
@@ -196,10 +205,7 @@ export default function CourseStartPage() {
       
       // Gerar automaticamente o PDF do certificado
       if (data.certificate && course) {
-        // Obter dados do usuário da sessão
-        const userData = { name: "Usuário" }; // Será substituído por dados reais
-        const orgData = { name: "Organização" }; // Será substituído por dados reais
-        generateCertificatePDFFromData(data.certificate, course, userData, orgData);
+        generateCertificatePDFFromData(data.certificate, course);
       }
       
       refetchEligibility();
@@ -218,9 +224,7 @@ export default function CourseStartPage() {
   // Baixar certificado existente
   const downloadCertificate = () => {
     if (userCertificate && course) {
-      const userData = { name: "Usuário" }; // Será substituído por dados reais  
-      const orgData = { name: "Organização" }; // Será substituído por dados reais
-      generateCertificatePDFFromData(userCertificate, course, userData, orgData);
+      generateCertificatePDFFromData(userCertificate, course);
     }
   };
 
