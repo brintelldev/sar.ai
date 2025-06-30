@@ -217,6 +217,11 @@ export default function CourseStartPage() {
     const userData = authData?.user;
     const orgData = authData?.currentOrganization;
     
+    console.log('🎓 Gerando certificado com template personalizado:', {
+      courseTemplate: courseData?.certificateTemplate,
+      hasTemplate: !!(courseData?.certificateTemplate && courseData?.certificateTemplate.trim())
+    });
+    
     // Para cursos presenciais, usar dados da metadata do certificado
     const isPresentialCourse = courseData?.courseType === 'in_person' || courseData?.courseType === 'presencial';
     const finalGrade = certificate.metadata?.courseCompletion?.finalGrade;
