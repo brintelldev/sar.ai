@@ -152,6 +152,11 @@ export default function Courses() {
     }
   };
 
+  // Função para verificar se um curso tem certificado disponível
+  const hasCertificate = (courseId: string) => {
+    return userCertificates.some((cert: any) => cert.courseId === courseId);
+  };
+
   // Separate enrolled and available courses
   const enrolledCourses = filteredCourses.filter((course: Course) => course.isEnrolled);
   const availableCourses = filteredCourses.filter((course: Course) => !course.isEnrolled);
@@ -299,7 +304,14 @@ export default function Courses() {
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                          <Badge variant="secondary" className="ml-2">Inscrito</Badge>
+                          <div className="flex gap-2 ml-2">
+                            <Badge variant="secondary">Inscrito</Badge>
+                            {hasCertificate(course.id) && (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                📜 Certificado
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-600 line-clamp-2">{course.description}</p>
                       </CardHeader>
