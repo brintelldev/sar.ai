@@ -48,6 +48,15 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Componente para páginas de administração de cursos - inclui voluntários
+export function CourseAdminGuard({ children }: { children: React.ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['admin', 'manager', 'volunteer']} fallbackPath="/courses">
+      {children}
+    </RoleGuard>
+  );
+}
+
 // Componente para páginas apenas de beneficiários
 export function BeneficiaryGuard({ children }: { children: React.ReactNode }) {
   return (

@@ -38,7 +38,13 @@ const beneficiaryNavigation = [
   { name: "Projetos", href: "/projects", icon: FolderOpen },
 ];
 
-// Navegação padrão para ONGs (admin, manager, volunteer)
+// Navegação para voluntários - acesso a Capacitação (com credenciais admin) e Projetos
+const volunteerNavigation = [
+  { name: "Capacitação", href: "/admin/courses", icon: BookOpen },
+  { name: "Projetos", href: "/projects", icon: FolderOpen },
+];
+
+// Navegação padrão para ONGs (admin, manager)
 const standardNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Projetos", href: "/projects", icon: FolderOpen },
@@ -75,16 +81,19 @@ export function Sidebar() {
   // Determinar navegação baseada no tipo de usuário - IMEDIATAMENTE
   const isSuperAdmin = currentOrganization?.slug === 'super-admin';
   const isBeneficiary = userRole === 'beneficiary';
+  const isVolunteer = userRole === 'volunteer';
   
-  console.log('Sidebar debug:', { userRole, isBeneficiary }); // Debug log
+  console.log('Sidebar debug:', { userRole, isBeneficiary, isVolunteer }); // Debug log
   
   let navigation;
   if (isSuperAdmin) {
     navigation = superAdminNavigation;
   } else if (isBeneficiary) {
     navigation = beneficiaryNavigation; // APENAS cursos e projetos
+  } else if (isVolunteer) {
+    navigation = volunteerNavigation; // Capacitação (admin) e Projetos
   } else {
-    navigation = standardNavigation;
+    navigation = standardNavigation; // Admin e Manager - acesso completo
   }
 
   return (
