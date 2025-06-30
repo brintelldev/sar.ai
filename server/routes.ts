@@ -2783,6 +2783,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Account Sync endpoint for admin use
+  app.post("/api/users/sync", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const organizationId = req.session.organizationId!;
+      
+      // Only allow admin or manager to execute sync
+      const userRole = req.session.userRole;
+      if (!userRole || !['admin', 'manager'].includes(userRole)) {
+        return res.status(403).json({ message: "Acesso negado. Apenas administradores podem executar sincronização." });
+      }
+      
+      console.log('🔄 Executando sincronização de contas de usuário para organização:', organizationId);
+      
+      await storage.syncUsersForVolunteersAndBeneficiaries(organizationId);
+      
+      res.json({ 
+        message: "Sincronização de contas de usuário concluída com sucesso!",
+        success: true 
+      });
+    } catch (error) {
+      console.error("Sync users error:", error);
+      res.status(500).json({ message: "Erro durante sincronização de contas" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

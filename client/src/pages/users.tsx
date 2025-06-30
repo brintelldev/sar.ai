@@ -139,6 +139,36 @@ export default function UsersPage() {
     },
   });
 
+  const syncUsersMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/users/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro durante sincronização");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sincronização concluída",
+        description: data.message || "Contas de usuário sincronizadas com sucesso!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro na sincronização",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleResetPassword = () => {
     if (!selectedUser || !newPassword) return;
     
@@ -232,9 +262,26 @@ export default function UsersPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <UsersIcon className="h-4 w-4" />
-          <span>{filteredUsers.length} de {users.length} usuários</span>
+        <div className="flex items-center space-x-4">
+          <Button
+            onClick={() => syncUsersMutation.mutate()}
+            disabled={syncUsersMutation.isPending}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            {syncUsersMutation.isPending ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            ) : (
+              <UserCheck className="h-4 w-4" />
+            )}
+            <span>
+              {syncUsersMutation.isPending ? "Sincronizando..." : "Sincronizar Contas"}
+            </span>
+          </Button>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <UsersIcon className="h-4 w-4" />
+            <span>{filteredUsers.length} de {users.length} usuários</span>
+          </div>
         </div>
       </div>
 
