@@ -61,16 +61,7 @@ function BeneficiaryProjectRedirect() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, currentOrganization, organizations, userRole } = useAuth();
-
-  // Debug logging
-  console.log('ProtectedRoute debug:', { 
-    isAuthenticated, 
-    isLoading, 
-    currentOrganization, 
-    organizationsCount: organizations?.length,
-    userRole 
-  });
+  const { isAuthenticated, isLoading, organizations } = useAuth();
 
   if (isLoading) {
     return (

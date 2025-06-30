@@ -1,37 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { login, register, logout, getCurrentUser, switchOrganization } from '@/lib/auth';
 import type { AuthState } from '@/lib/auth';
-import { useState, useEffect } from 'react';
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  const [sessionChecked, setSessionChecked] = useState(false);
-  const [authState, setAuthState] = useState<AuthState | null>(null);
-
-  // Check authentication status only once
-  useEffect(() => {
-    if (!sessionChecked) {
-      getCurrentUser()
-        .then((data) => {
-          setAuthState(data);
-          setSessionChecked(true);
-        })
-        .catch(() => {
-          setAuthState(null);
-          setSessionChecked(true);
-        });
-    }
-  }, [sessionChecked]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: getCurrentUser,
     retry: false,
-    staleTime: 5000, // 5 seconds
+    staleTime: 10000, // 10 seconds
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchInterval: false,
-    enabled: sessionChecked && authState !== null, // Enable when session is checked and user is logged in
   });
 
   const loginMutation = useMutation({
@@ -39,7 +20,6 @@ export function useAuth() {
       login(email, password),
     onSuccess: (data) => {
       queryClient.setQueryData(['/api/auth/me'], data);
-      // Enable the auth query after successful login
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
   });
@@ -84,17 +64,14 @@ export function useAuth() {
     },
   });
 
-  // Use React Query data if available, otherwise use local state
-  const currentData = data || authState;
-
   return {
-    user: currentData?.user || null,
-    organizations: currentData?.organizations || [],
-    currentOrganization: currentData?.currentOrganization || null,
-    userRole: currentData?.userRole || null,
-    isLoading: !sessionChecked || isLoading,
-    isAuthenticated: !!currentData?.user,
-    error: sessionChecked && !currentData ? new Error('Not authenticated') : null,
+    user: data?.user || null,
+    organizations: data?.organizations || [],
+    currentOrganization: data?.currentOrganization || null,
+    userRole: data?.userRole || null,
+    isLoading,
+    isAuthenticated: !!data?.user,
+    error: error ? new Error('Not authenticated') : null,
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
