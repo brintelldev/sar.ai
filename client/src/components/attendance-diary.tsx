@@ -55,6 +55,17 @@ interface AttendanceRecord {
   markedAt: string;
 }
 
+interface AttendanceSummary {
+  sessionDate: string;
+  sessionTitle: string;
+  totalStudents: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  excusedCount: number;
+  createdAt: string;
+}
+
 interface AttendanceDiaryProps {
   courseId: string;
 }
@@ -86,6 +97,13 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
     enabled: !!courseId && !!selectedDate
   });
 
+  // Buscar resumo de todas as aulas
+  const { data: attendanceSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['/api/courses', courseId, 'attendance', 'summary'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/attendance/summary`),
+    enabled: !!courseId
+  });
+
   // Mutation para salvar presença
   const saveAttendanceMutation = useMutation({
     mutationFn: (attendanceData: any) => 
@@ -97,6 +115,9 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
       });
       queryClient.invalidateQueries({ 
         queryKey: ['/api/courses', courseId, 'attendance', format(selectedDate, 'yyyy-MM-dd')] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/courses', courseId, 'attendance', 'summary'] 
       });
       setAttendanceData({});
       setShowNewSession(false);
@@ -473,6 +494,77 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Attendance Summary Table */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Resumo das Aulas Cadastradas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {summaryLoading ? (
+            <div className="text-center py-8">Carregando resumo...</div>
+          ) : attendanceSummary && attendanceSummary.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Título da Aula</TableHead>
+                  <TableHead>Total de Alunos</TableHead>
+                  <TableHead>Presentes</TableHead>
+                  <TableHead>Ausentes</TableHead>
+                  <TableHead>Atrasados</TableHead>
+                  <TableHead>Justificados</TableHead>
+                  <TableHead>% Presença</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {attendanceSummary.map((summary: AttendanceSummary) => {
+                  const presencePercentage = summary.totalStudents > 0 
+                    ? Math.round((summary.presentCount / summary.totalStudents) * 100)
+                    : 0;
+                  
+                  return (
+                    <TableRow key={`${summary.sessionDate}-${summary.sessionTitle}`}>
+                      <TableCell className="font-medium">
+                        {format(new Date(summary.sessionDate), "dd/MM/yyyy")}
+                      </TableCell>
+                      <TableCell>{summary.sessionTitle}</TableCell>
+                      <TableCell>{summary.totalStudents}</TableCell>
+                      <TableCell>
+                        <Badge variant="default">{summary.presentCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="destructive">{summary.absentCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{summary.lateCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{summary.excusedCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={presencePercentage >= 80 ? 'default' : 
+                                   presencePercentage >= 60 ? 'secondary' : 'destructive'}
+                        >
+                          {presencePercentage}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              Nenhuma aula foi cadastrada ainda
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
