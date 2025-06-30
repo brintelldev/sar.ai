@@ -2614,9 +2614,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/courses/:courseId/attendance/summary', requireAuth, requireOrganization, async (req, res) => {
     try {
       const { courseId } = req.params;
+      const { userId } = req.query;
       const { organizationId } = (req as any).session;
       
-      const summary = await storage.getCourseAttendanceSummary(courseId);
+      const summary = await storage.getCourseAttendanceSummary(courseId, userId as string);
       res.json(summary);
     } catch (error) {
       console.error('Get course attendance summary error:', error);

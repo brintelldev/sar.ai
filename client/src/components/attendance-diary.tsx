@@ -100,8 +100,13 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
 
   // Buscar resumo de todas as aulas
   const { data: attendanceSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['/api/courses', courseId, 'attendance', 'summary'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/attendance/summary`),
+    queryKey: ['/api/courses', courseId, 'attendance', 'summary', selectedStudentFilter],
+    queryFn: () => {
+      const url = selectedStudentFilter === 'all' 
+        ? `/api/courses/${courseId}/attendance/summary`
+        : `/api/courses/${courseId}/attendance/summary?userId=${selectedStudentFilter}`;
+      return apiRequest(url);
+    },
     enabled: !!courseId
   });
 
@@ -503,6 +508,27 @@ export function AttendanceDiary({ courseId }: AttendanceDiaryProps) {
             <Users className="h-5 w-5" />
             Resumo das Aulas Cadastradas
           </CardTitle>
+          <div className="flex items-center gap-2 mt-4">
+            <label htmlFor="student-filter" className="text-sm font-medium">
+              Filtrar por aluno:
+            </label>
+            <Select 
+              value={selectedStudentFilter} 
+              onValueChange={setSelectedStudentFilter}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Selecionar aluno" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os alunos</SelectItem>
+                {students && students.map((student: Student) => (
+                  <SelectItem key={student.id} value={student.id}>
+                    {student.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {summaryLoading ? (

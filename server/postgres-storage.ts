@@ -1955,28 +1955,46 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCourseAttendanceSummary(courseId: string, userId?: string): Promise<any[]> {
-    const conditions = [eq(courseAttendance.courseId, courseId)];
-    
     if (userId) {
-      conditions.push(eq(courseAttendance.userId, userId));
+      // Query for specific user - shows only their attendance record for each session
+      const result = await db
+        .select({
+          sessionDate: courseAttendance.sessionDate,
+          sessionTitle: courseAttendance.sessionTitle,
+          totalStudents: sql<number>`1`, // Only the selected student
+          presentCount: sql<number>`CASE WHEN ${courseAttendance.attendanceStatus} = 'present' THEN 1 ELSE 0 END`,
+          absentCount: sql<number>`CASE WHEN ${courseAttendance.attendanceStatus} = 'absent' THEN 1 ELSE 0 END`,
+          lateCount: sql<number>`CASE WHEN ${courseAttendance.attendanceStatus} = 'late' THEN 1 ELSE 0 END`,
+          excusedCount: sql<number>`CASE WHEN ${courseAttendance.attendanceStatus} = 'excused' THEN 1 ELSE 0 END`,
+          createdAt: courseAttendance.createdAt
+        })
+        .from(courseAttendance)
+        .where(and(
+          eq(courseAttendance.courseId, courseId),
+          eq(courseAttendance.userId, userId)
+        ))
+        .orderBy(desc(courseAttendance.sessionDate));
+
+      return result;
+    } else {
+      // Query for all students - aggregated data
+      const result = await db
+        .select({
+          sessionDate: courseAttendance.sessionDate,
+          sessionTitle: courseAttendance.sessionTitle,
+          totalStudents: sql<number>`COUNT(DISTINCT ${courseAttendance.userId})`,
+          presentCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'present' THEN 1 END)`,
+          absentCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'absent' THEN 1 END)`,
+          lateCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'late' THEN 1 END)`,
+          excusedCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'excused' THEN 1 END)`,
+          createdAt: sql<string>`MIN(${courseAttendance.createdAt})`
+        })
+        .from(courseAttendance)
+        .where(eq(courseAttendance.courseId, courseId))
+        .groupBy(courseAttendance.sessionDate, courseAttendance.sessionTitle)
+        .orderBy(desc(courseAttendance.sessionDate));
+
+      return result;
     }
-
-    const result = await db
-      .select({
-        sessionDate: courseAttendance.sessionDate,
-        sessionTitle: courseAttendance.sessionTitle,
-        totalStudents: sql<number>`COUNT(DISTINCT ${courseAttendance.userId})`,
-        presentCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'present' THEN 1 END)`,
-        absentCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'absent' THEN 1 END)`,
-        lateCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'late' THEN 1 END)`,
-        excusedCount: sql<number>`COUNT(CASE WHEN ${courseAttendance.attendanceStatus} = 'excused' THEN 1 END)`,
-        createdAt: sql<string>`MIN(${courseAttendance.createdAt})`
-      })
-      .from(courseAttendance)
-      .where(and(...conditions))
-      .groupBy(courseAttendance.sessionDate, courseAttendance.sessionTitle)
-      .orderBy(desc(courseAttendance.sessionDate));
-
-    return result;
   }
 }
