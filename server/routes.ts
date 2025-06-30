@@ -19,19 +19,27 @@ declare module 'express-session' {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Session middleware
+  // Session middleware with more robust configuration
   app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'your-secret-key-development-mode',
     resave: false,
     saveUninitialized: false,
     cookie: { 
       secure: false, // Set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
+    },
+    name: 'sessionId' // Explicit session name
   }));
 
   // Auth middleware
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log('RequireAuth check:', { 
+      sessionId: req.sessionID,
+      userId: req.session.userId,
+      session: req.session
+    });
     if (!req.session.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -133,6 +141,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (organizations.length > 0) {
         req.session.organizationId = organizations[0].id;
       }
+
+      // Debug session logging
+      console.log('Setting session:', { userId: user.id, organizationId: organizations[0]?.id });
+      console.log('Session after setting:', req.session);
 
       // Get user role in the organization
       let userRole = null;
