@@ -235,12 +235,16 @@ function Router() {
       </Route>
       <Route path="/course-admin/:id">
         <ProtectedRoute>
-          <CourseEditor />
+          <CourseAdminGuard>
+            <CourseEditor />
+          </CourseAdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/admin/courses/:courseId/modules">
         <ProtectedRoute>
-          <ModuleEditor />
+          <CourseAdminGuard>
+            <ModuleEditor />
+          </CourseAdminGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/courses/:courseId/modules/:moduleId/form">

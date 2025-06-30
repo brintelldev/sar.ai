@@ -124,6 +124,12 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- June 30, 2025. Níveis de acesso para voluntários ajustados conforme solicitado:
+  * Voluntários agora têm acesso aos links "Capacitação" e "Projetos" no menu
+  * Na área de Capacitação, voluntários possuem credenciais de administrador
+  * Criado CourseAdminGuard para permitir acesso de admin/manager/volunteer nas rotas de cursos
+  * Sistema de navegação específico para voluntários com menu reduzido
+  * Rotas de administração de cursos agora permitem acesso para voluntários
 - June 30, 2025. Sistema completo de certificados para cursos presenciais implementado:
   * Alunos com nota aprovada em cursos presenciais podem emitir certificados automaticamente
   * Lógica de elegibilidade atualizada para verificar notas finais lançadas pelo instrutor
