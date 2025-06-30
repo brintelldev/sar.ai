@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, Search, Filter, Users as UsersIcon, Key, AlertTriangle } from "lucide-react";
+import { UserCheck, Search, Filter, Users as UsersIcon, Key, AlertTriangle, UserCog } from "lucide-react";
 
 interface User {
   id: string;
@@ -46,10 +46,12 @@ const getRoleBadgeVariant = (role: string) => {
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [newUserRole, setNewUserRole] = useState<string>("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -103,6 +105,40 @@ export default function UsersPage() {
     },
   });
 
+  const changeUserRoleMutation = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+      const response = await fetch(`/api/users/${userId}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao alterar tipo de usuário");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Tipo alterado",
+        description: "O tipo de usuário foi alterado com sucesso.",
+      });
+      setIsRoleDialogOpen(false);
+      setSelectedUser(null);
+      setNewUserRole("");
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleResetPassword = () => {
     if (!selectedUser || !newPassword) return;
     
@@ -127,13 +163,28 @@ export default function UsersPage() {
     setIsDialogOpen(true);
   };
 
+  const openRoleDialog = (user: User) => {
+    setSelectedUser(user);
+    setNewUserRole(user.userRole);
+    setIsRoleDialogOpen(true);
+  };
+
+  const handleChangeRole = () => {
+    if (!selectedUser || !newUserRole) return;
+
+    changeUserRoleMutation.mutate({
+      userId: selectedUser.id,
+      newRole: newUserRole,
+    });
+  };
+
   // Filter users based on search term and role
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesRole = selectedRole === "all" || user.userRole === selectedRole;
+    const matchesRole = roleFilter === "all" || user.userRole === roleFilter;
     
     return matchesSearch && matchesRole;
   });
@@ -212,7 +263,7 @@ export default function UsersPage() {
 
             {/* Role Filter */}
             <div className="w-full md:w-48">
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tipo de usuário" />
                 </SelectTrigger>
