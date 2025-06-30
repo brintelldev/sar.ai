@@ -14,11 +14,13 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Users, UserPlus, UserMinus, GraduationCap, BookOpen } from "lucide-react";
+import { ArrowLeft, Users, UserPlus, UserMinus, GraduationCap, BookOpen, ClipboardList, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
+import { GradesDiary } from "@/components/grades-diary";
+import { AttendanceDiary } from "@/components/attendance-diary";
 
 interface User {
   id: string;
@@ -438,11 +440,19 @@ export function CourseManage() {
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="students">Alunos ({students.length})</TabsTrigger>
             <TabsTrigger value="instructors">Instrutores ({instructors.length})</TabsTrigger>
             <TabsTrigger value="assistants">Assistentes ({assistants.length})</TabsTrigger>
             <TabsTrigger value="all">Todos ({enrollments?.length || 0})</TabsTrigger>
+            <TabsTrigger value="grades">
+              <FileText className="h-4 w-4 mr-1" />
+              Notas
+            </TabsTrigger>
+            <TabsTrigger value="attendance">
+              <ClipboardList className="h-4 w-4 mr-1" />
+              Frequência
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="students" className="space-y-4">
@@ -650,6 +660,40 @@ export function CourseManage() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="grades" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Diário de Notas
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Gerencie as notas dos alunos inscritos no curso
+                </p>
+              </CardHeader>
+              <CardContent>
+                <GradesDiary courseId={courseId!} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="attendance" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5" />
+                  Diário de Frequência
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Controle a frequência dos alunos nas aulas presenciais
+                </p>
+              </CardHeader>
+              <CardContent>
+                <AttendanceDiary courseId={courseId!} />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
