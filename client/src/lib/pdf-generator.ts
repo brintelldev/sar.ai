@@ -18,6 +18,9 @@ export interface CertificateData {
   instructorTitle?: string;
   city?: string;
   issueDate?: string;
+  finalGrade?: number;
+  courseType?: string;
+  instructorFeedback?: string;
 }
 
 // Função para substituir variáveis no template

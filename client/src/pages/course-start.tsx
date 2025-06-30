@@ -216,6 +216,11 @@ export default function CourseStartPage() {
     const userData = authData?.user;
     const orgData = authData?.currentOrganization;
     
+    // Para cursos presenciais, usar dados da metadata do certificado
+    const isPresentialCourse = courseData?.courseType === 'in_person' || courseData?.courseType === 'presencial';
+    const finalGrade = certificate.metadata?.courseCompletion?.finalGrade;
+    const courseCompletion = certificate.metadata?.courseCompletion;
+    
     const certificateData: CertificateData = {
       userName: userData?.name || 'Usuário',
       courseName: courseData?.title || 'Curso',
@@ -224,8 +229,9 @@ export default function CourseStartPage() {
       certificateNumber: certificate.certificateNumber,
       organizationName: orgData?.name || 'Organização',
       courseHours: Math.round((courseData?.duration || 0) / 60), // Converter minutos para horas
-      overallScore: certificate.metadata?.courseCompletion?.overallPercentage,
-      passScore: certificate.metadata?.courseCompletion?.passScore,
+      // Para cursos presenciais, usar nota final; para online, usar porcentagem
+      overallScore: isPresentialCourse ? finalGrade : certificate.metadata?.courseCompletion?.overallPercentage,
+      passScore: isPresentialCourse ? 7.0 : certificate.metadata?.courseCompletion?.passScore,
       verificationCode: certificate.verificationCode,
       customTemplate: courseData?.certificateTemplate, // Template personalizado do curso
       studentCpf: userData?.cpf || userData?.document,
@@ -233,7 +239,11 @@ export default function CourseStartPage() {
       instructorName: 'Equipe de Capacitação',
       instructorTitle: 'Instrutor(a)',
       city: 'São Paulo',
-      issueDate: new Date().toLocaleDateString('pt-BR')
+      issueDate: new Date().toLocaleDateString('pt-BR'),
+      // Informações específicas para cursos presenciais
+      finalGrade: isPresentialCourse ? finalGrade : undefined,
+      courseType: courseData?.courseType,
+      instructorFeedback: courseCompletion?.feedback
     };
 
     generateCertificatePDF(certificateData);
