@@ -2526,7 +2526,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the existing method to get course students with user data
       const courseStudents = await storage.getCourseStudents(courseId);
-      console.log('🎓 Raw course students:', JSON.stringify(courseStudents, null, 2));
       
       // Format the response to match what the frontend expects
       const students = courseStudents.map((enrollment: any) => ({
@@ -2536,7 +2535,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         registrationNumber: enrollment.user.registrationNumber || 'N/A'
       }));
       
-      console.log('🎓 Formatted students:', JSON.stringify(students, null, 2));
       res.json(students);
     } catch (error) {
       console.error('Get course students error:', error);
