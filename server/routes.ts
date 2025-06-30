@@ -969,8 +969,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/courses/admin", requireAuth, requireOrganization, async (req, res) => {
     try {
       console.log("Getting courses for admin organization:", req.session.organizationId);
-      const courses = await storage.getCourses(req.session.organizationId!);
-      console.log("Found admin courses:", courses.length);
+      const userRole = req.session.userRole;
+      const userId = req.session.userId!;
+      
+      let courses;
+      
+      // Para voluntários, filtrar apenas cursos onde eles são instrutores
+      if (userRole === 'volunteer') {
+        console.log("Filtering courses for volunteer:", userId);
+        const allCourses = await storage.getCourses(req.session.organizationId!);
+        
+        // Buscar cursos onde o voluntário tem role de instructor
+        const volunteerCourseRoles = await storage.getUserCourseRoles(userId);
+        const instructorCourseIds = volunteerCourseRoles
+          .filter((role: any) => role.role === 'instructor')
+          .map((role: any) => role.courseId);
+        
+        // Filtrar apenas os cursos onde é instrutor
+        courses = allCourses.filter(course => instructorCourseIds.includes(course.id));
+        console.log(`Found ${courses.length} courses for volunteer instructor from ${instructorCourseIds.length} assignments`);
+      } else {
+        // Para admin/manager, mostrar todos os cursos
+        courses = await storage.getCourses(req.session.organizationId!);
+        console.log("Found admin courses:", courses.length);
+      }
       
       // Add enrollment counts and completion rates for admin view
       const coursesWithStats = courses.map(course => ({

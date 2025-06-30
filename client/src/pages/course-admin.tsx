@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +57,8 @@ export function CourseAdmin() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
+  const isVolunteer = userRole === 'volunteer';
 
   const openActionModal = (course: Course, action: 'delete' | 'deactivate' | 'activate') => {
     setSelectedCourse(course);
@@ -155,17 +158,25 @@ export function CourseAdmin() {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Administração de Cursos</h1>
-            <p className="text-gray-600 mt-1">Gerencie os cursos da capacitação tecnológica</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isVolunteer ? "Meus Cursos como Instrutor" : "Administração de Cursos"}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {isVolunteer 
+                ? "Gerencie os cursos onde você é instrutor"
+                : "Gerencie os cursos da capacitação tecnológica"
+              }
+            </p>
           </div>
           
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Curso
-              </Button>
-            </DialogTrigger>
+          {!isVolunteer && (
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Curso
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Criar Novo Curso</DialogTitle>
@@ -274,6 +285,7 @@ export function CourseAdmin() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
 
         {/* Statistics Cards */}
@@ -338,24 +350,41 @@ export function CourseAdmin() {
         {/* Courses List */}
         <Card>
           <CardHeader>
-            <CardTitle>Cursos Criados</CardTitle>
+            <CardTitle>
+              {isVolunteer ? "Meus Cursos como Instrutor" : "Cursos Criados"}
+            </CardTitle>
             <CardDescription>
-              Gerencie, edite e publique seus cursos
+              {isVolunteer 
+                ? "Cursos onde você foi atribuído como instrutor"
+                : "Gerencie, edite e publique seus cursos"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
             {coursesList.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum curso criado</h3>
-                <p className="text-gray-600 mb-4">Comece criando seu primeiro curso de capacitação.</p>
-                <Button 
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Criar Primeiro Curso
-                </Button>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {isVolunteer 
+                    ? "Nenhum curso atribuído" 
+                    : "Nenhum curso criado"
+                  }
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {isVolunteer 
+                    ? "Você ainda não foi atribuído como instrutor em nenhum curso. Entre em contato com um administrador para ser atribuído a cursos."
+                    : "Comece criando seu primeiro curso de capacitação."
+                  }
+                </p>
+                {!isVolunteer && (
+                  <Button 
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Primeiro Curso
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
