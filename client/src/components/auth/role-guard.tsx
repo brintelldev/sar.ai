@@ -22,9 +22,9 @@ export function RoleGuard({ allowedRoles, children, fallbackPath = "/" }: RoleGu
 
   // Se não tem role ou role não é permitido, redirecionar
   if (!userRole || !allowedRoles.includes(userRole)) {
-    // Para beneficiários, redirecionar para cursos
-    if (userRole === 'beneficiary') {
-      setLocation('/courses');
+    // Para beneficiários e voluntários, redirecionar para cursos
+    if (userRole === 'beneficiary' || userRole === 'volunteer') {
+      setLocation('/course-admin');
     } else {
       setLocation(fallbackPath);
     }
@@ -70,6 +70,15 @@ export function BeneficiaryGuard({ children }: { children: React.ReactNode }) {
 export function SuperAdminGuard({ children }: { children: React.ReactNode }) {
   return (
     <RoleGuard allowedRoles={['super_admin']} fallbackPath="/">
+      {children}
+    </RoleGuard>
+  );
+}
+
+// Componente para páginas que voluntários NÃO podem acessar
+export function NonVolunteerGuard({ children }: { children: React.ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['admin', 'manager', 'beneficiary']} fallbackPath="/course-admin">
       {children}
     </RoleGuard>
   );

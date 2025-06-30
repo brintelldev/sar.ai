@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSimpleAuth as useAuth } from "@/hooks/use-simple-auth";
-import { AdminGuard, BeneficiaryGuard, SuperAdminGuard, CourseAdminGuard } from "@/components/auth/role-guard";
+import { AdminGuard, BeneficiaryGuard, SuperAdminGuard, CourseAdminGuard, NonVolunteerGuard } from "@/components/auth/role-guard";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -41,11 +41,15 @@ import CourseManagement from "@/pages/course-management";
 import BeneficiaryProjects from "@/pages/beneficiary-projects";
 import AccessControl from "@/pages/access-control";
 
-function BeneficiaryHomeRedirect() {
+function HomeRedirect() {
   const { userRole } = useAuth();
   
   if (userRole === 'beneficiary') {
     return <Courses />;
+  }
+  
+  if (userRole === 'volunteer') {
+    return <CourseAdmin />;
   }
   
   return <Dashboard />;
@@ -93,8 +97,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/">
         <ProtectedRoute>
-          {/* Beneficiaries see course enrollments, others see dashboard */}
-          <BeneficiaryHomeRedirect />
+          {/* Beneficiaries see courses, volunteers see course admin, others see dashboard */}
+          <HomeRedirect />
         </ProtectedRoute>
       </Route>
       <Route path="/projects">
