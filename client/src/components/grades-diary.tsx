@@ -202,7 +202,6 @@ export function GradesDiary({ courseId }: GradesDiaryProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Aluno</TableHead>
-                <TableHead>Matrícula</TableHead>
                 <TableHead>Nota</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Comentários</TableHead>
@@ -217,7 +216,6 @@ export function GradesDiary({ courseId }: GradesDiaryProps) {
                 return (
                   <TableRow key={student.id}>
                     <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell>{student.registrationNumber}</TableCell>
                     <TableCell>
                       {isEditing ? (
                         <Input
