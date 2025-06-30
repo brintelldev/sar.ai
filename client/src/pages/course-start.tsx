@@ -174,7 +174,7 @@ export default function CourseStartPage() {
   // Get user's grades for in-person courses
   const { data: userGrades } = useQuery<Grade[]>({
     queryKey: ['/api/courses', courseId, 'module-grades'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/module-grades?userId=${authData?.user?.id}`),
+    queryFn: () => apiRequest(`/api/courses/${courseId}/module-grades`),
     enabled: !!courseId && !!authData?.user?.id && course?.courseType === 'in_person'
   });
 
@@ -829,13 +829,16 @@ export default function CourseStartPage() {
               <CardContent>
                 {userGrades && userGrades.length > 0 ? (
                   <div className="space-y-4">
-                    {userGrades.map((grade) => (
-                      <div key={grade.id} className="border rounded-lg p-4">
+                    {userGrades.map((grade, index) => (
+                      <div key={index} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">Nota Final do Curso</h4>
+                            <h4 className="font-medium">
+                              {grade.type === 'final_grade' ? 'Nota Final do Curso' : grade.moduleTitle || 'Módulo'}
+                            </h4>
                             <p className="text-sm text-muted-foreground">
-                              Avaliada em {new Date(grade.gradedAt).toLocaleDateString('pt-BR')}
+                              {grade.type === 'final_grade' ? 'Avaliada pelo instrutor em' : 'Avaliação do módulo em'} {' '}
+                              {new Date(grade.gradedAt || grade.submittedAt).toLocaleDateString('pt-BR')}
                             </p>
                             {grade.feedback && (
                               <p className="text-sm mt-2 text-gray-600">
@@ -845,7 +848,10 @@ export default function CourseStartPage() {
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold">
-                              {Number(grade.gradeScale).toFixed(1)}
+                              {grade.type === 'final_grade' 
+                                ? Number(grade.gradeScale).toFixed(1)
+                                : grade.percentage ? `${grade.percentage}%` : '-'
+                              }
                             </div>
                             <Badge variant={grade.passed ? "default" : "destructive"}>
                               {grade.passed ? "Aprovado" : "Reprovado"}
@@ -860,7 +866,11 @@ export default function CourseStartPage() {
                       <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
                           <div className="text-lg font-semibold">
-                            {userGrades.length > 0 ? Number(userGrades[0].gradeScale).toFixed(1) : '-'}
+                            {userGrades.length > 0 ? (
+                              userGrades[0].type === 'final_grade' 
+                                ? Number(userGrades[0].gradeScale).toFixed(1)
+                                : userGrades[0].percentage ? `${userGrades[0].percentage}%` : '-'
+                            ) : '-'}
                           </div>
                           <div className="text-sm text-muted-foreground">Nota Final</div>
                         </div>
