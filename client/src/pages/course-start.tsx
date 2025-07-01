@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, 
+  ArrowRight,
   Clock, 
   BookOpen, 
   Award, 
