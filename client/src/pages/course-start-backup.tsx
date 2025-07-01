@@ -713,8 +713,8 @@ export default function CourseStartPage() {
           </CardHeader>
         </Card>
 
-        {/* Show modules only for online courses */}
-        {course?.courseType !== 'in_person' ? (
+        {/* Only show modules for non-in-person courses */}
+        {course?.courseType !== 'in_person' && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Module Navigation */}
             <Card className="lg:col-span-1">
@@ -868,7 +868,7 @@ export default function CourseStartPage() {
               </Card>
             )}
           </div>
-        ) : null}
+        )}
 
         {/* Student Performance Section for In-Person Courses */}
         {course?.courseType === 'in_person' && authData?.user && (
