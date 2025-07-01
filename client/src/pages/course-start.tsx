@@ -129,6 +129,221 @@ export default function CourseStartPage() {
     return `${hours}h`;
   };
 
+  // Função para renderizar blocos de conteúdo
+  const renderContentBlock = (block: ContentBlock) => {
+    switch (block.type) {
+      case 'text':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose dark:prose-invert max-w-none">
+                {block.content.split('\n').map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'image':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Image className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <img 
+                src={block.url} 
+                alt={block.title}
+                className="max-w-full h-auto rounded-lg shadow-sm"
+              />
+              {block.content && (
+                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 'video':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Video className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-video">
+                <iframe
+                  src={block.url}
+                  className="w-full h-full rounded-lg"
+                  allowFullScreen
+                  title={block.title}
+                />
+              </div>
+              {block.content && (
+                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 'pdf':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-3">{block.content}</p>
+                <Button asChild>
+                  <a href={block.url} target="_blank" rel="noopener noreferrer">
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar PDF
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'form':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4">
+                {block.formFields?.map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    
+                    {field.type === 'text' && (
+                      <input
+                        type="text"
+                        className="w-full p-2 border border-border rounded-md"
+                        placeholder="Digite sua resposta..."
+                      />
+                    )}
+                    
+                    {field.type === 'textarea' && (
+                      <textarea
+                        className="w-full p-2 border border-border rounded-md"
+                        rows={4}
+                        placeholder="Digite sua resposta..."
+                      />
+                    )}
+                    
+                    {field.type === 'radio' && field.options && (
+                      <div className="space-y-2">
+                        {field.options.map((option, optionIndex) => (
+                          <label key={optionIndex} className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name={field.id}
+                              value={option}
+                              className="text-primary"
+                            />
+                            <span className="text-sm">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {field.type === 'select' && field.options && (
+                      <select className="w-full p-2 border border-border rounded-md">
+                        <option value="">Selecione uma opção...</option>
+                        {field.options.map((option, optionIndex) => (
+                          <option key={optionIndex} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    
+                    {field.type === 'checkbox' && field.options && (
+                      <div className="space-y-2">
+                        {field.options.map((option, optionIndex) => (
+                          <label key={optionIndex} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              value={option}
+                              className="text-primary"
+                            />
+                            <span className="text-sm">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="pt-4">
+                  <Button type="submit" className="w-full">
+                    Enviar Respostas
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        );
+
+      case 'embed':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ExternalLink className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div 
+                className="w-full"
+                dangerouslySetInnerHTML={{ __html: block.embedCode || '' }}
+              />
+              {block.content && (
+                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle>{block.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{block.content}</p>
+            </CardContent>
+          </Card>
+        );
+    }
+  };
+
   // Get user data from auth context
   const { data: authData } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -436,15 +651,7 @@ export default function CourseStartPage() {
                   <div className="space-y-4">
                     {currentModule.content?.blocks?.map((block) => (
                       <div key={block.id}>
-                        {/* Renderizar blocos de conteúdo aqui */}
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>{block.title}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p>{block.content}</p>
-                          </CardContent>
-                        </Card>
+                        {renderContentBlock(block)}
                       </div>
                     ))}
                   </div>
