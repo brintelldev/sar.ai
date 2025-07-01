@@ -120,6 +120,12 @@ export default function CourseStartPage() {
   const [completedModules, setCompletedModules] = useState<string[]>([]);
   const [showContent, setShowContent] = useState(false);
 
+  // Função para converter minutos em horas
+  const formatDurationInHours = (minutes: number): string => {
+    const hours = Math.round(minutes / 60 * 10) / 10; // Arredonda para 1 casa decimal
+    return `${hours}h`;
+  };
+
   // Get user data from auth context
   const { data: authData } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -745,7 +751,7 @@ export default function CourseStartPage() {
                             </div>
                             <div className="text-xs opacity-75 flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {module.duration} min
+                              {formatDurationInHours(module.duration)}
                             </div>
                           </div>
                         </div>
@@ -793,7 +799,7 @@ export default function CourseStartPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        <span className="text-sm">{currentModule.duration} min</span>
+                        <span className="text-sm">{formatDurationInHours(currentModule.duration)}</span>
                       </div>
                     </div>
                   </CardHeader>
