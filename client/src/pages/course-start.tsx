@@ -111,10 +111,13 @@ interface AttendanceRecord {
 export default function CourseStartPage() {
   const { courseId } = useParams();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [completedModules, setCompletedModules] = useState<string[]>([]);
   const [showContent, setShowContent] = useState(false);
+  const [formResponses, setFormResponses] = useState<Record<string, Record<string, any>>>({});
+  const [submissionResults, setSubmissionResults] = useState<Record<string, any>>({});
 
   // Função para converter minutos em horas
   const formatDurationInHours = (minutes: number): string => {
@@ -163,8 +166,89 @@ export default function CourseStartPage() {
     enabled: !!courseId && course?.courseType === 'in_person'
   });
 
+  // Get existing form submissions for current module
+  const { data: existingSubmissions } = useQuery({
+    queryKey: ['/api/modules', currentModule?.id, 'form-submission'],
+    queryFn: () => apiRequest(`/api/modules/${currentModule?.id}/form-submission`),
+    enabled: !!currentModule?.id,
+    onSuccess: (data) => {
+      if (data && currentModule?.id) {
+        setSubmissionResults(prev => ({ ...prev, [currentModule.id]: data }));
+      }
+    }
+  });
+
   const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
   const currentModule = sortedModules[currentModuleIndex];
+
+  // Form submission mutation
+  const submitFormMutation = useMutation({
+    mutationFn: async (data: { moduleId: string; responses: Record<string, any> }) => {
+      return apiRequest(`/api/modules/${data.moduleId}/form-submission`, 'POST', { responses: data.responses });
+    },
+    onSuccess: (data, variables) => {
+      const { moduleId } = variables;
+      setSubmissionResults(prev => ({ ...prev, [moduleId]: data }));
+      
+      // Invalidate caches
+      queryClient.invalidateQueries({ queryKey: ['/api/modules', moduleId, 'form-submission'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/module-grades`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/progress`] });
+      
+      const percentage = data.percentage || 0;
+      const status = data.passed ? "Aprovado" : "Reprovado";
+      
+      toast({
+        title: `${status}! ${percentage}%`,
+        description: `Você obteve ${data.score}/${data.maxScore} pontos (${data.correctAnswers}/${data.totalQuestions} respostas corretas).`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao enviar formulário",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handle form input changes
+  const handleFormInputChange = (moduleId: string, fieldId: string, value: any) => {
+    setFormResponses(prev => ({
+      ...prev,
+      [moduleId]: {
+        ...prev[moduleId],
+        [fieldId]: value
+      }
+    }));
+  };
+
+  // Handle form submission
+  const handleFormSubmit = async (moduleId: string, formFields: FormField[]) => {
+    const moduleResponses = formResponses[moduleId] || {};
+    
+    // Validate required fields
+    let hasErrors = false;
+    for (const field of formFields) {
+      if (field.required && !moduleResponses[field.id]) {
+        toast({
+          title: "Campo obrigatório",
+          description: `O campo "${field.label}" é obrigatório.`,
+          variant: "destructive",
+        });
+        hasErrors = true;
+        break;
+      }
+    }
+
+    if (!hasErrors) {
+      try {
+        await submitFormMutation.mutateAsync({ moduleId, responses: moduleResponses });
+      } catch (error) {
+        console.error('Form submission error:', error);
+      }
+    }
+  };
 
   // Função para renderizar blocos de conteúdo
   const renderContentBlock = (block: ContentBlock) => {
@@ -189,6 +273,10 @@ export default function CourseStartPage() {
         );
 
       case 'form':
+        const moduleId = currentModule?.id || '';
+        const moduleResponses = formResponses[moduleId] || {};
+        const submissionResult = submissionResults[moduleId];
+        
         return (
           <Card className="mb-4">
             <CardHeader>
@@ -198,38 +286,143 @@ export default function CourseStartPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
-                {block.formFields?.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    
-                    {field.type === 'radio' && field.options && (
-                      <div className="space-y-2">
-                        {field.options.map((option, optionIndex) => (
-                          <label key={optionIndex} className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              name={field.id}
-                              value={option}
-                              className="text-primary"
-                            />
-                            <span className="text-sm">{option}</span>
-                          </label>
-                        ))}
+              {submissionResult ? (
+                // Show results if form has been submitted
+                <div className="space-y-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-green-800 mb-2">Formulário Enviado com Sucesso!</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Pontuação:</span>
+                        <span className="font-medium ml-2">{submissionResult.score}/{submissionResult.maxScore}</span>
                       </div>
-                    )}
+                      <div>
+                        <span className="text-gray-600">Percentual:</span>
+                        <span className="font-medium ml-2">{submissionResult.percentage}%</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Respostas Corretas:</span>
+                        <span className="font-medium ml-2">{submissionResult.correctAnswers}/{submissionResult.totalQuestions}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Status:</span>
+                        <span className={`font-medium ml-2 ${submissionResult.passed ? 'text-green-600' : 'text-red-600'}`}>
+                          {submissionResult.passed ? 'Aprovado' : 'Reprovado'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                ))}
-                
-                <div className="pt-4">
-                  <Button type="submit" className="w-full">
-                    Enviar Respostas
-                  </Button>
                 </div>
-              </form>
+              ) : (
+                // Show form if not submitted yet
+                <form 
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (block.formFields && moduleId) {
+                      handleFormSubmit(moduleId, block.formFields);
+                    }
+                  }}
+                >
+                  {block.formFields?.map((field) => (
+                    <div key={field.id} className="space-y-2">
+                      <label className="text-sm font-medium">
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                      </label>
+                      
+                      {field.type === 'text' && (
+                        <input
+                          type="text"
+                          className="w-full p-2 border border-border rounded-md"
+                          placeholder="Digite sua resposta..."
+                          value={moduleResponses[field.id] || ''}
+                          onChange={(e) => handleFormInputChange(moduleId, field.id, e.target.value)}
+                        />
+                      )}
+                      
+                      {field.type === 'textarea' && (
+                        <textarea
+                          className="w-full p-2 border border-border rounded-md"
+                          rows={4}
+                          placeholder="Digite sua resposta..."
+                          value={moduleResponses[field.id] || ''}
+                          onChange={(e) => handleFormInputChange(moduleId, field.id, e.target.value)}
+                        />
+                      )}
+                      
+                      {field.type === 'radio' && field.options && (
+                        <div className="space-y-2">
+                          {field.options.map((option, optionIndex) => (
+                            <label key={optionIndex} className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                name={field.id}
+                                value={option}
+                                checked={moduleResponses[field.id] === option}
+                                onChange={(e) => handleFormInputChange(moduleId, field.id, e.target.value)}
+                                className="text-primary"
+                              />
+                              <span className="text-sm">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {field.type === 'select' && field.options && (
+                        <select 
+                          className="w-full p-2 border border-border rounded-md"
+                          value={moduleResponses[field.id] || ''}
+                          onChange={(e) => handleFormInputChange(moduleId, field.id, e.target.value)}
+                        >
+                          <option value="">Selecione uma opção...</option>
+                          {field.options.map((option, optionIndex) => (
+                            <option key={optionIndex} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      
+                      {field.type === 'checkbox' && field.options && (
+                        <div className="space-y-2">
+                          {field.options.map((option, optionIndex) => (
+                            <label key={optionIndex} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                value={option}
+                                checked={(moduleResponses[field.id] || []).includes(option)}
+                                onChange={(e) => {
+                                  const currentValues = moduleResponses[field.id] || [];
+                                  let newValues;
+                                  if (e.target.checked) {
+                                    newValues = [...currentValues, option];
+                                  } else {
+                                    newValues = currentValues.filter((v: string) => v !== option);
+                                  }
+                                  handleFormInputChange(moduleId, field.id, newValues);
+                                }}
+                                className="text-primary"
+                              />
+                              <span className="text-sm">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  <div className="pt-4">
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={submitFormMutation.isPending}
+                    >
+                      {submitFormMutation.isPending ? 'Enviando...' : 'Enviar Respostas'}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
         );
