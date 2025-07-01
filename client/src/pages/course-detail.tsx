@@ -33,7 +33,7 @@ interface Course {
   coverImage: string | null;
   status: string;
   requirements: string | null;
-  learningObjectives: string | null;
+  learningObjectives: string[] | string | null;
   tags: string[] | null;
   passScore: number;
   certificateEnabled: boolean;
@@ -306,20 +306,20 @@ export default function CourseDetailPage() {
                       {/* Course Info */}
                       <div className="space-y-3 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Duração:</span>
-                          <span className="font-medium">{formatDuration(course.duration)}</span>
+                          <span className="text-muted-foreground">Duração:</span>
+                          <span className="font-medium text-foreground">{formatDuration(course.duration)}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Módulos:</span>
-                          <span className="font-medium">{modules?.length || 0}</span>
+                          <span className="text-muted-foreground">Módulos:</span>
+                          <span className="font-medium text-foreground">{modules?.length || 0}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Nota Mínima:</span>
-                          <span className="font-medium">{course.passScore}%</span>
+                          <span className="text-muted-foreground">Nota Mínima:</span>
+                          <span className="font-medium text-foreground">{course.passScore}%</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Certificado:</span>
-                          <span className="font-medium">
+                          <span className="text-muted-foreground">Certificado:</span>
+                          <span className="font-medium text-foreground">
                             {course.certificateEnabled ? 'Sim' : 'Não'}
                           </span>
                         </div>
@@ -395,12 +395,26 @@ export default function CourseDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="prose prose-sm max-w-none">
-                      {(Array.isArray(course.learningObjectives) ? course.learningObjectives : []).map((objective, index) => (
-                        <div key={index} className="flex items-start space-x-2 mb-2">
-                          <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          <span>{objective}</span>
-                        </div>
-                      ))}
+                      {(() => {
+                        // Handle both string and array formats
+                        let objectives: string[] = [];
+                        
+                        if (typeof course.learningObjectives === 'string') {
+                          // Split by newlines if it's a string
+                          objectives = course.learningObjectives.split('\n').filter(obj => obj.trim());
+                        } else if (Array.isArray(course.learningObjectives)) {
+                          objectives = course.learningObjectives;
+                        } else if (course.learningObjectives) {
+                          objectives = [String(course.learningObjectives)];
+                        }
+                        
+                        return objectives.map((objective: string, index: number) => (
+                          <div key={index} className="flex items-start space-x-2 mb-2">
+                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span className="text-foreground">{objective}</span>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
@@ -419,7 +433,7 @@ export default function CourseDetailPage() {
                     {modules?.map((module, index) => (
                       <div 
                         key={module.id} 
-                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors cursor-pointer"
                         onClick={() => navigate(`/courses/${courseId}/start`)}
                       >
                         <div className="flex items-center justify-between">
@@ -428,13 +442,13 @@ export default function CourseDetailPage() {
                               {index + 1}
                             </div>
                             <div>
-                              <h3 className="font-medium text-gray-900">{module.title}</h3>
+                              <h3 className="font-medium text-foreground">{module.title}</h3>
                               {module.description && (
-                                <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{module.description}</p>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                             {module.duration && (
                               <span className="flex items-center space-x-1">
                                 <Clock className="w-3 h-3" />
