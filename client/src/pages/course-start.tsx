@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   ArrowLeft, 
-  ArrowRight, 
-  ArrowUp, 
   Clock, 
   BookOpen, 
   Award, 
@@ -22,16 +19,12 @@ import {
   Video,
   Download,
   ExternalLink,
-  Users,
   GraduationCap,
   Calendar,
-  Star,
   BarChart3
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { generateCertificatePDF, CertificateData } from "@/lib/pdf-generator";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface CourseModule {
   id: string;
@@ -117,7 +110,6 @@ interface AttendanceRecord {
 export default function CourseStartPage() {
   const { courseId } = useParams();
   const [, navigate] = useLocation();
-  const { toast } = useToast();
   
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [completedModules, setCompletedModules] = useState<string[]>([]);
@@ -127,221 +119,6 @@ export default function CourseStartPage() {
   const formatDurationInHours = (minutes: number): string => {
     const hours = Math.round(minutes / 60 * 10) / 10;
     return `${hours}h`;
-  };
-
-  // Função para renderizar blocos de conteúdo
-  const renderContentBlock = (block: ContentBlock) => {
-    switch (block.type) {
-      case 'text':
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose dark:prose-invert max-w-none">
-                {block.content.split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-
-      case 'image':
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <img 
-                src={block.url} 
-                alt={block.title}
-                className="max-w-full h-auto rounded-lg shadow-sm"
-              />
-              {block.content && (
-                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-
-      case 'video':
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Video className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video">
-                <iframe
-                  src={block.url}
-                  className="w-full h-full rounded-lg"
-                  allowFullScreen
-                  title={block.title}
-                />
-              </div>
-              {block.content && (
-                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-
-      case 'pdf':
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Download className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-3">{block.content}</p>
-                <Button asChild>
-                  <a href={block.url} target="_blank" rel="noopener noreferrer">
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar PDF
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        );
-
-      case 'form':
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                {block.formFields?.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    
-                    {field.type === 'text' && (
-                      <input
-                        type="text"
-                        className="w-full p-2 border border-border rounded-md"
-                        placeholder="Digite sua resposta..."
-                      />
-                    )}
-                    
-                    {field.type === 'textarea' && (
-                      <textarea
-                        className="w-full p-2 border border-border rounded-md"
-                        rows={4}
-                        placeholder="Digite sua resposta..."
-                      />
-                    )}
-                    
-                    {field.type === 'radio' && field.options && (
-                      <div className="space-y-2">
-                        {field.options.map((option, optionIndex) => (
-                          <label key={optionIndex} className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              name={field.id}
-                              value={option}
-                              className="text-primary"
-                            />
-                            <span className="text-sm">{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {field.type === 'select' && field.options && (
-                      <select className="w-full p-2 border border-border rounded-md">
-                        <option value="">Selecione uma opção...</option>
-                        {field.options.map((option, optionIndex) => (
-                          <option key={optionIndex} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    
-                    {field.type === 'checkbox' && field.options && (
-                      <div className="space-y-2">
-                        {field.options.map((option, optionIndex) => (
-                          <label key={optionIndex} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              value={option}
-                              className="text-primary"
-                            />
-                            <span className="text-sm">{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                <div className="pt-4">
-                  <Button type="submit" className="w-full">
-                    Enviar Respostas
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        );
-
-      case 'embed':
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ExternalLink className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div 
-                className="w-full"
-                dangerouslySetInnerHTML={{ __html: block.embedCode || '' }}
-              />
-              {block.content && (
-                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-
-      default:
-        return (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle>{block.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{block.content}</p>
-            </CardContent>
-          </Card>
-        );
-    }
   };
 
   // Get user data from auth context
@@ -371,20 +148,6 @@ export default function CourseStartPage() {
     enabled: !!courseId
   });
 
-  // Get user certificate
-  const { data: userCertificate } = useQuery({
-    queryKey: ['/api/courses', courseId, 'certificate'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/certificate`),
-    enabled: !!courseId
-  });
-
-  // Get certificate eligibility
-  const { data: certificateEligibility } = useQuery({
-    queryKey: ['/api/courses', courseId, 'certificate', 'eligibility'],
-    queryFn: () => apiRequest(`/api/courses/${courseId}/certificate/eligibility`),
-    enabled: !!courseId
-  });
-
   // Get user grades for in-person courses
   const { data: userGrades } = useQuery<Grade[]>({
     queryKey: ['/api/courses', courseId, 'module-grades'],
@@ -401,6 +164,88 @@ export default function CourseStartPage() {
 
   const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
   const currentModule = sortedModules[currentModuleIndex];
+
+  // Função para renderizar blocos de conteúdo
+  const renderContentBlock = (block: ContentBlock) => {
+    switch (block.type) {
+      case 'text':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose dark:prose-invert max-w-none">
+                {block.content.split('\n').map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'form':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4">
+                {block.formFields?.map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    
+                    {field.type === 'radio' && field.options && (
+                      <div className="space-y-2">
+                        {field.options.map((option, optionIndex) => (
+                          <label key={optionIndex} className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name={field.id}
+                              value={option}
+                              className="text-primary"
+                            />
+                            <span className="text-sm">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="pt-4">
+                  <Button type="submit" className="w-full">
+                    Enviar Respostas
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle>{block.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{block.content}</p>
+            </CardContent>
+          </Card>
+        );
+    }
+  };
 
   if (courseLoading || modulesLoading) {
     return (
