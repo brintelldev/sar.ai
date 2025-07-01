@@ -297,13 +297,13 @@ export default function Projects() {
       const budget = parseFloat(project.budget) || 0;
       switch (budgetFilter) {
         case 'low':
-          matchesBudget = budget < 10000;
+          matchesBudget = budget <= 10000;
           break;
         case 'medium':
-          matchesBudget = budget >= 10000 && budget < 50000;
+          matchesBudget = budget > 10000 && budget <= 50000;
           break;
         case 'high':
-          matchesBudget = budget >= 50000;
+          matchesBudget = budget > 50000;
           break;
       }
     }
@@ -659,7 +659,7 @@ export default function Projects() {
                   <SelectContent>
                     <SelectItem value="all">Todos os Orçamentos</SelectItem>
                     <SelectItem value="low">Até R$ 10.000</SelectItem>
-                    <SelectItem value="medium">R$ 10.000 - R$ 50.000</SelectItem>
+                    <SelectItem value="medium">R$ 10.001 - R$ 50.000</SelectItem>
                     <SelectItem value="high">Acima de R$ 50.000</SelectItem>
                   </SelectContent>
                 </Select>
