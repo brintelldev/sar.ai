@@ -629,11 +629,11 @@ export default function Projects() {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="bg-gray-50 p-4 rounded-lg mb-6 space-y-4">
+          <div className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg mb-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Status Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <label className="text-sm font-medium text-foreground">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
                     <SelectValue />
@@ -651,7 +651,7 @@ export default function Projects() {
 
               {/* Budget Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Orçamento</label>
+                <label className="text-sm font-medium text-foreground">Orçamento</label>
                 <Select value={budgetFilter} onValueChange={setBudgetFilter}>
                   <SelectTrigger>
                     <SelectValue />
@@ -667,7 +667,7 @@ export default function Projects() {
 
               {/* Date Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Período</label>
+                <label className="text-sm font-medium text-foreground">Período</label>
                 <Select value={dateFilter} onValueChange={setDateFilter}>
                   <SelectTrigger>
                     <SelectValue />
@@ -1166,7 +1166,7 @@ export default function Projects() {
                         <div className="space-y-3">
                           {/* Existing milestones */}
                           {milestonesList.map((milestone, index) => (
-                            <div key={milestone.id || index} className="flex items-center space-x-3 p-3 border rounded-lg bg-gray-50">
+                            <div key={milestone.id || index} className="flex items-center space-x-3 p-3 border rounded-lg bg-muted/30 dark:bg-muted/10">
                               <Checkbox
                                 checked={milestone.completed || false}
                                 onCheckedChange={(checked) => {
@@ -1197,7 +1197,7 @@ export default function Projects() {
                                   setMilestonesList(newMilestones);
                                   field.onChange(JSON.stringify(newMilestones));
                                 }}
-                                className="text-gray-400 hover:text-destructive p-1"
+                                className="text-muted-foreground hover:text-destructive p-1"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -1218,7 +1218,7 @@ export default function Projects() {
                               setMilestonesList(newMilestones);
                               field.onChange(JSON.stringify(newMilestones));
                             }}
-                            className="w-fit flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                            className="w-fit flex items-center space-x-2 text-muted-foreground hover:text-foreground"
                           >
                             <Plus className="h-4 w-4" />
                             <span>Adicionar Marco</span>
