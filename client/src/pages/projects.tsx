@@ -1224,7 +1224,7 @@ export default function Projects() {
                             <span>Adicionar Marco</span>
                           </Button>
                           
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className="text-sm text-muted-foreground mt-2">
                             Principais entregas e pontos de controle do projeto
                           </p>
                         </div>
