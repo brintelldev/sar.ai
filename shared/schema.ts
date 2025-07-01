@@ -945,3 +945,21 @@ export type InsertPermissionTemplate = z.infer<typeof insertPermissionTemplateSc
 
 export type AccessControlSettings = typeof accessControlSettings.$inferSelect;
 export type InsertAccessControlSettings = z.infer<typeof insertAccessControlSettingsSchema>;
+
+// Password reset tokens table
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
+});
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;

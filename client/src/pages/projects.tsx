@@ -141,7 +141,20 @@ export default function Projects() {
         description: "O novo projeto foi adicionado ao sistema.",
       });
       setIsDialogOpen(false);
-      createForm.reset();
+      // Reset form to default values
+      createForm.reset({
+        name: '',
+        description: '',
+        status: 'planning',
+        startDate: '',
+        endDate: '',
+        budget: '',
+        spentAmount: '0',
+        goals: '',
+        milestones: '[]',
+      });
+      // Reset milestones list
+      setMilestonesList([]);
     } catch (error) {
       console.error('Error creating project:', error);
       toast({
@@ -351,7 +364,24 @@ export default function Projects() {
               Gerencie todos os projetos da sua organização
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (open) {
+              // Reset form when opening the dialog
+              createForm.reset({
+                name: '',
+                description: '',
+                status: 'planning',
+                startDate: '',
+                endDate: '',
+                budget: '',
+                spentAmount: '0',
+                goals: '',
+                milestones: '[]',
+              });
+              setMilestonesList([]);
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
