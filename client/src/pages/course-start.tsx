@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
@@ -166,49 +166,27 @@ export default function CourseStartPage() {
     enabled: !!courseId && course?.courseType === 'in_person'
   });
 
+  const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
+  const currentModule = sortedModules[currentModuleIndex];
+
   // Get existing form submissions for current module
   const { data: existingSubmissions } = useQuery({
     queryKey: ['/api/modules', currentModule?.id, 'form-submission'],
     queryFn: () => apiRequest(`/api/modules/${currentModule?.id}/form-submission`),
-    enabled: !!currentModule?.id,
-    onSuccess: (data) => {
-      if (data && currentModule?.id) {
-        setSubmissionResults(prev => ({ ...prev, [currentModule.id]: data }));
-      }
-    }
+    enabled: !!currentModule?.id
   });
 
-  const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
-  const currentModule = sortedModules[currentModuleIndex];
+  // Update submission results when data changes
+  useEffect(() => {
+    if (existingSubmissions && currentModule?.id) {
+      setSubmissionResults(prev => ({ ...prev, [currentModule.id]: existingSubmissions }));
+    }
+  }, [existingSubmissions, currentModule?.id]);
 
   // Form submission mutation
   const submitFormMutation = useMutation({
     mutationFn: async (data: { moduleId: string; responses: Record<string, any> }) => {
       return apiRequest(`/api/modules/${data.moduleId}/form-submission`, 'POST', { responses: data.responses });
-    },
-    onSuccess: (data, variables) => {
-      const { moduleId } = variables;
-      setSubmissionResults(prev => ({ ...prev, [moduleId]: data }));
-      
-      // Invalidate caches
-      queryClient.invalidateQueries({ queryKey: ['/api/modules', moduleId, 'form-submission'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/module-grades`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/progress`] });
-      
-      const percentage = data.percentage || 0;
-      const status = data.passed ? "Aprovado" : "Reprovado";
-      
-      toast({
-        title: `${status}! ${percentage}%`,
-        description: `Você obteve ${data.score}/${data.maxScore} pontos (${data.correctAnswers}/${data.totalQuestions} respostas corretas).`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao enviar formulário",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive",
-      });
     }
   });
 
@@ -243,9 +221,30 @@ export default function CourseStartPage() {
 
     if (!hasErrors) {
       try {
-        await submitFormMutation.mutateAsync({ moduleId, responses: moduleResponses });
+        const data = await submitFormMutation.mutateAsync({ moduleId, responses: moduleResponses });
+        
+        // Handle success
+        setSubmissionResults(prev => ({ ...prev, [moduleId]: data }));
+        
+        // Invalidate caches
+        queryClient.invalidateQueries({ queryKey: ['/api/modules', moduleId, 'form-submission'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/module-grades`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/courses/${courseId}/progress`] });
+        
+        const percentage = data.percentage || 0;
+        const status = data.passed ? "Aprovado" : "Reprovado";
+        
+        toast({
+          title: `${status}! ${percentage}%`,
+          description: `Você obteve ${data.score}/${data.maxScore} pontos (${data.correctAnswers}/${data.totalQuestions} respostas corretas).`,
+        });
       } catch (error) {
         console.error('Form submission error:', error);
+        toast({
+          title: "Erro ao enviar formulário",
+          description: "Tente novamente em alguns instantes.",
+          variant: "destructive",
+        });
       }
     }
   };
