@@ -28,6 +28,9 @@ const insertAccountReceivableSchema = z.object({
 export default function AccountsReceivable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,7 +59,39 @@ export default function AccountsReceivable() {
     }
   });
 
+  const updateAccountMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => 
+      apiRequest(`/api/accounts-receivable/${id}`, 'PATCH', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/accounts-receivable'] });
+      toast({
+        title: "Conta atualizada",
+        description: "As alterações foram salvas com sucesso.",
+      });
+      setIsEditDialogOpen(false);
+      editForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar conta",
+        description: "Ocorreu um erro ao salvar. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const form = useForm({
+    resolver: zodResolver(insertAccountReceivableSchema),
+    defaultValues: {
+      description: '',
+      amount: '',
+      dueDate: '',
+      status: 'pending',
+      invoiceNumber: '',
+    }
+  });
+
+  const editForm = useForm({
     resolver: zodResolver(insertAccountReceivableSchema),
     defaultValues: {
       description: '',
@@ -69,6 +104,31 @@ export default function AccountsReceivable() {
 
   const onSubmit = async (data: any) => {
     await createAccountMutation.mutateAsync(data);
+  };
+
+  const onEditSubmit = async (data: any) => {
+    if (!selectedAccount) return;
+    await updateAccountMutation.mutateAsync({
+      id: selectedAccount.id,
+      data: data
+    });
+  };
+
+  const handleViewAccount = (account: any) => {
+    setSelectedAccount(account);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditAccount = (account: any) => {
+    setSelectedAccount(account);
+    editForm.reset({
+      description: account.description || '',
+      amount: account.amount || '',
+      dueDate: account.dueDate || '',
+      status: account.status || 'pending',
+      invoiceNumber: account.invoiceNumber || '',
+    });
+    setIsEditDialogOpen(true);
   };
 
   const getStatusVariant = (status: string) => {
@@ -392,10 +452,18 @@ export default function AccountsReceivable() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewAccount(account)}
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEditAccount(account)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                           </div>
@@ -408,6 +476,179 @@ export default function AccountsReceivable() {
             )}
           </CardContent>
         </Card>
+
+        {/* View Account Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Detalhes da Conta a Receber</DialogTitle>
+              <DialogDescription>
+                Informações completas sobre a conta selecionada.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedAccount && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                    <p className="text-sm">{selectedAccount.description}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Valor</label>
+                    <p className="text-sm font-semibold">{formatCurrency(parseFloat(selectedAccount.amount))}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Data de Vencimento</label>
+                    <p className="text-sm">{formatDate(selectedAccount.dueDate)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <Badge variant={getStatusVariant(selectedAccount.status)}>
+                      {getStatusLabel(selectedAccount.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Número da Fatura</label>
+                    <p className="text-sm">{selectedAccount.invoiceNumber || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Data de Criação</label>
+                    <p className="text-sm">{formatDate(selectedAccount.createdAt)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsViewDialogOpen(false)}
+              >
+                Fechar
+              </Button>
+              <Button 
+                onClick={() => {
+                  setIsViewDialogOpen(false);
+                  handleEditAccount(selectedAccount);
+                }}
+              >
+                Editar Conta
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Account Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Conta a Receber</DialogTitle>
+              <DialogDescription>
+                Altere as informações da conta selecionada.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Descrição da conta a receber" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor (R$)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" step="0.01" placeholder="0,00" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Vencimento</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pending">Pendente</SelectItem>
+                            <SelectItem value="received">Recebido</SelectItem>
+                            <SelectItem value="overdue">Vencido</SelectItem>
+                            <SelectItem value="cancelled">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="invoiceNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número da Fatura</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Número da fatura (opcional)" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsEditDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={updateAccountMutation.isPending}>
+                    {updateAccountMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

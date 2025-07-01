@@ -1009,6 +1009,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/accounts-receivable/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const organizationId = req.session.organizationId!;
+      
+      // Verify the account belongs to the organization
+      const existingAccount = await storage.getAccountReceivable(id);
+      if (!existingAccount || existingAccount.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      
+      const updatedAccount = await storage.updateAccountReceivable(id, req.body);
+      res.json(updatedAccount);
+    } catch (error) {
+      console.error("Update account receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Accounts Payable routes
   app.get("/api/accounts-payable", requireAuth, requireOrganization, async (req, res) => {
     try {
