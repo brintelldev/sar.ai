@@ -17,7 +17,7 @@ import {
   Target,
   Calendar,
   Star,
-  Download,
+
   Share2,
   User
 } from "lucide-react";
@@ -287,15 +287,11 @@ export default function CourseDetailPage() {
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="flex-1"
+                              className="w-full"
                               onClick={() => navigate(`/courses/${courseId}/manage`)}
                             >
                               <User className="w-4 h-4 mr-1" />
                               Gerenciar
-                            </Button>
-                            <Button variant="outline" size="sm" className="flex-1">
-                              <Download className="w-4 h-4 mr-1" />
-                              Material
                             </Button>
                           </div>
                         )}
@@ -506,30 +502,7 @@ export default function CourseDetailPage() {
               )}
 
               {/* Course Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Informações do Curso</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Criado em:</span>
-                    <span className="font-medium text-foreground">
-                      {new Date(course.createdAt).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Inscritos:</span>
-                    <span className="font-medium text-foreground">{course.enrolledCount}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Award className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Taxa de conclusão:</span>
-                    <span className="font-medium text-foreground">{course.completionRate}%</span>
-                  </div>
-                </CardContent>
-              </Card>
+
             </div>
           </div>
         </div>
