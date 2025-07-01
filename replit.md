@@ -124,6 +124,11 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- July 01, 2025. Remoção de usuários indesejados do banco de dados:
+  * Removidos usuários com emails: daniel.juswiak@brintell.com, danieljuswiak@hotmail.com, danieljuswiak.eng@gmail.com
+  * Limpeza em cascata: removidos 4 registros de user_roles e 2 registros de beneficiaries
+  * Operação concluída com sucesso sem afetar integridade do banco
+  * Sistema de constraints de chave estrangeira respeitado durante a remoção
 - July 01, 2025. Sistema automático de criação de contas para beneficiárias implementado:
   * Novos beneficiários com email automaticamente recebem conta de usuário
   * Verificação para evitar duplicação de emails na organização
