@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { generateCertificatePDF, CertificateData } from "@/lib/pdf-generator";
 
 interface CourseModule {
   id: string;
@@ -201,6 +202,49 @@ export default function CourseStartPage() {
     }
   });
 
+  // Function to generate certificate PDF with template
+  const generateCertificatePDFFromData = (certificate: any, courseData: any) => {
+    const userData = authData?.user;
+    const orgData = authData?.currentOrganization;
+    
+    console.log('🎓 Gerando certificado com template personalizado:', {
+      courseTemplate: courseData?.certificateTemplate,
+      hasTemplate: !!(courseData?.certificateTemplate && courseData?.certificateTemplate.trim())
+    });
+    
+    // Para cursos presenciais, usar dados da metadata do certificado
+    const isPresentialCourse = courseData?.courseType === 'in_person' || courseData?.courseType === 'presencial';
+    const finalGrade = certificate.metadata?.courseCompletion?.finalGrade;
+    const courseCompletion = certificate.metadata?.courseCompletion;
+    
+    const certificateData: CertificateData = {
+      userName: userData?.name || 'Usuário',
+      courseName: courseData?.title || 'Curso',
+      courseCategory: courseData?.category || 'Geral',
+      completionDate: new Date(certificate.issuedAt).toLocaleDateString('pt-BR'),
+      certificateNumber: certificate.certificateNumber,
+      organizationName: orgData?.name || 'Organização',
+      courseHours: Math.round((courseData?.duration || 0) / 60), // Converter minutos para horas
+      // Para cursos presenciais, usar nota final; para online, usar porcentagem
+      overallScore: isPresentialCourse ? finalGrade : certificate.metadata?.courseCompletion?.overallPercentage,
+      passScore: isPresentialCourse ? 7.0 : certificate.metadata?.courseCompletion?.passScore,
+      verificationCode: certificate.verificationCode,
+      customTemplate: courseData?.certificateTemplate, // Template personalizado do curso
+      studentCpf: userData?.cpf || userData?.document,
+      startDate: userProgress?.startedAt ? new Date(userProgress.startedAt).toLocaleDateString('pt-BR') : undefined,
+      instructorName: 'Equipe de Capacitação',
+      instructorTitle: 'Instrutor(a)',
+      city: 'São Paulo',
+      issueDate: new Date().toLocaleDateString('pt-BR'),
+      // Informações específicas para cursos presenciais
+      finalGrade: isPresentialCourse ? finalGrade : undefined,
+      courseType: courseData?.courseType,
+      instructorFeedback: courseCompletion?.feedback
+    };
+
+    generateCertificatePDF(certificateData);
+  };
+
   // Certificate issuance mutation
   const issueCertificate = useMutation({
     mutationFn: () => apiRequest(`/api/courses/${courseId}/certificate/issue`, 'POST'),
@@ -209,6 +253,11 @@ export default function CourseStartPage() {
         title: "Certificado Emitido!",
         description: "Parabéns! Seu certificado foi gerado com sucesso.",
       });
+      
+      // Gerar automaticamente o PDF do certificado
+      if (data.certificate && course) {
+        generateCertificatePDFFromData(data.certificate, course);
+      }
       
       refetchEligibility();
       refetchCertificate();
@@ -717,7 +766,11 @@ export default function CourseStartPage() {
                     </p>
                   </div>
                   <Button 
-                    onClick={() => window.open(`/api/courses/${courseId}/certificate/download`, '_blank')}
+                    onClick={() => {
+                      if (userCertificate && course) {
+                        generateCertificatePDFFromData(userCertificate, course);
+                      }
+                    }}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Download className="h-4 w-4 mr-2" />
