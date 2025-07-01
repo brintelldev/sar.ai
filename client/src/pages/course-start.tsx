@@ -79,13 +79,16 @@ interface FormField {
   label: string;
   options?: string[];
   required?: boolean;
-  placeholder?: string;
+  correctAnswer?: string;
+  explanation?: string;
 }
 
 interface UserProgress {
+  id: string;
+  userId: string;
   courseId: string;
-  progress: number;
   status: string;
+  progress: number;
   completedModules: string[];
   startedAt: Date | null;
   completedAt: Date | null;
@@ -153,395 +156,45 @@ export default function CourseStartPage() {
     enabled: !!courseId
   });
 
+  // Get user certificate
+  const { data: userCertificate } = useQuery({
+    queryKey: ['/api/courses', courseId, 'certificate'],
+    queryFn: () => apiRequest(`/api/courses/${courseId}/certificate`),
+    enabled: !!courseId
+  });
+
   // Get certificate eligibility
-  const { data: certificateEligibility, refetch: refetchEligibility } = useQuery({
+  const { data: certificateEligibility } = useQuery({
     queryKey: ['/api/courses', courseId, 'certificate', 'eligibility'],
     queryFn: () => apiRequest(`/api/courses/${courseId}/certificate/eligibility`),
     enabled: !!courseId
   });
 
-  // Get user's existing certificate for this course
-  const { data: userCertificate, refetch: refetchCertificate } = useQuery({
-    queryKey: ['/api/courses', courseId, 'certificate'],
-    queryFn: async () => {
-      try {
-        // Esta chamada pode falhar se não houver certificado, então tratamos como opcional
-        const response = await fetch(`/api/courses/${courseId}/certificate`);
-        if (response.ok) {
-          return response.json();
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    },
-    enabled: !!courseId
-  });
-
-  // Get user's grades for in-person courses
+  // Get user grades for in-person courses
   const { data: userGrades } = useQuery<Grade[]>({
     queryKey: ['/api/courses', courseId, 'module-grades'],
     queryFn: () => apiRequest(`/api/courses/${courseId}/module-grades`),
-    enabled: !!courseId && !!authData?.user?.id && course?.courseType === 'in_person'
+    enabled: !!courseId && course?.courseType === 'in_person'
   });
 
-  // Get user's attendance for in-person courses  
+  // Get user attendance for in-person courses
   const { data: userAttendance } = useQuery<AttendanceRecord[]>({
     queryKey: ['/api/courses', courseId, 'attendance', 'records'],
     queryFn: () => apiRequest(`/api/courses/${courseId}/attendance/records`),
-    enabled: !!courseId && !!authData?.user?.id && course?.courseType === 'in_person'
+    enabled: !!courseId && course?.courseType === 'in_person'
   });
 
-  const currentModule = modules?.[currentModuleIndex];
   const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
-
-  useEffect(() => {
-    if (userProgress?.completedModules) {
-      setCompletedModules(Array.isArray(userProgress.completedModules) ? userProgress.completedModules : []);
-    }
-  }, [userProgress]);
-
-  const markModuleComplete = useMutation({
-    mutationFn: (moduleId: string) => 
-      apiRequest(`/api/courses/${courseId}/modules/${moduleId}/complete`, 'POST'),
-    onSuccess: () => {
-      if (currentModule) {
-        setCompletedModules(prev => [...prev, currentModule.id]);
-        toast({
-          title: "Módulo Concluído",
-          description: "Parabéns! Você completou este módulo.",
-        });
-        queryClient.invalidateQueries({ queryKey: ['/api/courses', courseId, 'progress'] });
-        // Verificar elegibilidade do certificado após completar módulo
-        refetchEligibility();
-      }
-    }
-  });
-
-  // Função para gerar PDF do certificado
-  const generateCertificatePDFFromData = (certificate: any, courseData: any) => {
-    const userData = authData?.user;
-    const orgData = authData?.currentOrganization;
-    
-    console.log('🎓 Gerando certificado com template personalizado:', {
-      courseTemplate: courseData?.certificateTemplate,
-      hasTemplate: !!(courseData?.certificateTemplate && courseData?.certificateTemplate.trim())
-    });
-    
-    // Para cursos presenciais, usar dados da metadata do certificado
-    const isPresentialCourse = courseData?.courseType === 'in_person' || courseData?.courseType === 'presencial';
-    const finalGrade = certificate.metadata?.courseCompletion?.finalGrade;
-    const courseCompletion = certificate.metadata?.courseCompletion;
-    
-    const certificateData: CertificateData = {
-      userName: userData?.name || 'Usuário',
-      courseName: courseData?.title || 'Curso',
-      courseCategory: courseData?.category || 'Geral',
-      completionDate: new Date(certificate.issuedAt).toLocaleDateString('pt-BR'),
-      certificateNumber: certificate.certificateNumber,
-      organizationName: orgData?.name || 'Organização',
-      courseHours: Math.round((courseData?.duration || 0) / 60), // Converter minutos para horas
-      // Para cursos presenciais, usar nota final; para online, usar porcentagem
-      overallScore: isPresentialCourse ? finalGrade : certificate.metadata?.courseCompletion?.overallPercentage,
-      passScore: isPresentialCourse ? 7.0 : certificate.metadata?.courseCompletion?.passScore,
-      verificationCode: certificate.verificationCode,
-      customTemplate: courseData?.certificateTemplate, // Template personalizado do curso
-      studentCpf: userData?.cpf || userData?.document,
-      startDate: userProgress?.startedAt ? new Date(userProgress.startedAt).toLocaleDateString('pt-BR') : undefined,
-      instructorName: 'Equipe de Capacitação',
-      instructorTitle: 'Instrutor(a)',
-      city: 'São Paulo',
-      issueDate: new Date().toLocaleDateString('pt-BR'),
-      // Informações específicas para cursos presenciais
-      finalGrade: isPresentialCourse ? finalGrade : undefined,
-      courseType: courseData?.courseType,
-      instructorFeedback: courseCompletion?.feedback
-    };
-
-    generateCertificatePDF(certificateData);
-  };
-
-  // Emitir certificado
-  const issueCertificate = useMutation({
-    mutationFn: () => apiRequest(`/api/courses/${courseId}/certificate/issue`, 'POST'),
-    onSuccess: (data) => {
-      toast({
-        title: "Certificado Emitido!",
-        description: "Parabéns! Seu certificado foi gerado com sucesso.",
-      });
-      
-      // Gerar automaticamente o PDF do certificado
-      if (data.certificate && course) {
-        generateCertificatePDFFromData(data.certificate, course);
-      }
-      
-      refetchEligibility();
-      refetchCertificate();
-      queryClient.invalidateQueries({ queryKey: ['/api/users', 'certificates'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao emitir certificado",
-        description: error.message || "Não foi possível gerar o certificado.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Baixar certificado existente
-  const downloadCertificate = () => {
-    console.log('Download certificate clicked!', { userCertificate, course });
-    
-    if (!userCertificate) {
-      toast({
-        title: "Erro",
-        description: "Certificado não encontrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!course) {
-      toast({
-        title: "Erro",
-        description: "Dados do curso não encontrados.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      generateCertificatePDFFromData(userCertificate, course);
-      toast({
-        title: "Certificado baixado!",
-        description: "O PDF do certificado foi gerado com sucesso.",
-      });
-    } catch (error) {
-      console.error('Error generating certificate PDF:', error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: "Ocorreu um erro ao gerar o certificado. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const renderContentBlock = (block: ContentBlock) => {
-    switch (block.type) {
-      case 'text':
-        return (
-          <Card key={block.id} className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose dark:prose-invert max-w-none">
-                {block.content.split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-
-      case 'image':
-        return (
-          <Card key={block.id} className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <img 
-                src={block.url} 
-                alt={block.title}
-                className="max-w-full h-auto rounded-lg shadow-sm"
-              />
-              {block.content && (
-                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-
-      case 'video':
-        return (
-          <Card key={block.id} className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Video className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video">
-                <iframe
-                  src={block.url}
-                  className="w-full h-full rounded-lg"
-                  allowFullScreen
-                  title={block.title}
-                />
-              </div>
-              {block.content && (
-                <p className="mt-2 text-sm text-muted-foreground">{block.content}</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-
-      case 'pdf':
-        return (
-          <Card key={block.id} className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Download className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">{block.content}</p>
-              <Button asChild>
-                <a href={block.url} target="_blank" rel="noopener noreferrer">
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar PDF
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-        );
-
-      case 'embed':
-        return (
-          <Card key={block.id} className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ExternalLink className="h-5 w-5" />
-                {block.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {block.content && <p className="mb-4">{block.content}</p>}
-              <div 
-                className="w-full"
-                dangerouslySetInnerHTML={{ __html: block.embedCode || '' }}
-              />
-            </CardContent>
-          </Card>
-        );
-
-      case 'form':
-        return (
-          <Card key={block.id} className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {block.title || 'Exercício'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {block.content && (
-                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-l-4 border-blue-500">
-                  <div className="prose dark:prose-invert max-w-none">
-                    {block.content.split('\n').map((line, i) => (
-                      <p key={i} className="mb-2 last:mb-0">{line}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {block.formFields && block.formFields.length > 0 ? (
-                <div className="space-y-6">
-                  <div className="text-sm text-muted-foreground">
-                    <strong>Instruções:</strong> Este é um exercício interativo. Responda todas as questões e clique em "Acessar Exercício" para ir para a página de envio completa.
-                  </div>
-                  
-                  {/* Preview das questões */}
-                  <div className="space-y-4">
-                    {block.formFields.slice(0, 3).map((field, index) => (
-                      <div key={field.id} className="p-4 border rounded-lg bg-muted/30">
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-medium">
-                            <span className="mr-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs">
-                              {index + 1}
-                            </span>
-                            {field.label}
-                            {field.required && <span className="text-red-500 ml-1">*</span>}
-                          </label>
-                          {field.points && (
-                            <Badge variant="secondary" className="text-xs">
-                              {field.points} pts
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="text-xs text-muted-foreground mb-2">
-                          Tipo: {field.type === 'text' ? 'Texto Curto' : 
-                                field.type === 'textarea' ? 'Texto Longo' : 
-                                field.type === 'radio' ? 'Múltipla Escolha' : 
-                                field.type === 'select' ? 'Seleção' : 'Checkbox'}
-                        </div>
-                        
-                        {field.type === 'radio' && field.options && (
-                          <div className="text-sm text-muted-foreground">
-                            Opções: {field.options.join(', ')}
-                          </div>
-                        )}
-                        
-                        {field.type === 'select' && field.options && (
-                          <div className="text-sm text-muted-foreground">
-                            {field.options.length} opções disponíveis
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {block.formFields.length > 3 && (
-                      <div className="text-center text-sm text-muted-foreground p-4 border rounded-lg bg-muted/20">
-                        + {block.formFields.length - 3} questões adicionais
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="text-sm text-muted-foreground">
-                      <strong>{block.formFields.length}</strong> questões • 
-                      <strong> {block.formFields.reduce((total, field) => total + (field.points || 0), 0)}</strong> pontos totais
-                    </div>
-                    
-                    <Button 
-                      onClick={() => navigate(`/courses/${courseId}/modules/${currentModule.id}/form`)}
-                      className="flex items-center gap-2"
-                    >
-                      <Users className="h-4 w-4" />
-                      Acessar Exercício
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Este exercício ainda não possui questões configuradas.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-
-      default:
-        return null;
-    }
-  };
+  const currentModule = sortedModules[currentModuleIndex];
 
   if (courseLoading || modulesLoading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Carregando curso...</div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Carregando curso...</p>
+          </div>
         </div>
       </MainLayout>
     );
@@ -550,19 +203,18 @@ export default function CourseStartPage() {
   if (!course) {
     return (
       <MainLayout>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">Curso não encontrado</h2>
-          <Button onClick={() => navigate('/courses')}>
-            Voltar aos Cursos
-          </Button>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-2">Curso não encontrado</h2>
+            <p className="text-muted-foreground mb-4">O curso solicitado não existe ou foi removido.</p>
+            <Button onClick={() => navigate('/courses')}>
+              Voltar aos Cursos
+            </Button>
+          </div>
         </div>
       </MainLayout>
     );
   }
-
-  const progressPercentage = sortedModules.length > 0 
-    ? (completedModules.length / sortedModules.length) * 100 
-    : 0;
 
   return (
     <MainLayout>
@@ -581,70 +233,67 @@ export default function CourseStartPage() {
         {/* Course Header */}
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="space-y-4 flex-1">
-                <div>
-                  <CardTitle className="text-2xl mb-2">{course.title}</CardTitle>
-                  <p className="text-muted-foreground">{course.description}</p>
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+              <div className="flex-1 space-y-4">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">{course.category}</Badge>
+                    <Badge variant="outline">{course.level}</Badge>
+                    <Badge variant="outline">
+                      {course.courseType === 'in_person' ? 'Presencial' : 'Online'}
+                    </Badge>
+                  </div>
+                  <h1 className="text-3xl font-bold tracking-tight">{course.title}</h1>
+                  <p className="text-lg text-muted-foreground">{course.description}</p>
                 </div>
-                
-                <div className="flex items-center gap-4 text-sm">
-                  <Badge variant="secondary">{course.category}</Badge>
-                  <Badge variant="outline">{course.level}</Badge>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {course.duration} min
+
+                {/* Progress Section */}
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4" />
+                      <span>{formatDurationInHours(course.duration)}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="w-4 h-4" />
+                      <span>{sortedModules.length} módulos</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Award className="w-4 h-4" />
+                      <span>Certificado disponível</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="h-4 w-4" />
-                    {sortedModules.length} módulos
-                  </div>
-                  {course.certificateEnabled && (
-                    <div className="flex items-center gap-1">
-                      <Award className="h-4 w-4" />
-                      Certificado
+
+                  {userProgress && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progresso do Curso</span>
+                        <span>{Math.round(userProgress.progress)}%</span>
+                      </div>
+                      <Progress value={userProgress.progress} className="h-2" />
                     </div>
                   )}
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Progresso do Curso</span>
-                    <span>{Math.round(progressPercentage)}%</span>
-                  </div>
-                  <Progress value={progressPercentage} className="h-2" />
-                </div>
-
-                {/* Certificate Section */}
-                {course.certificateEnabled && (
-                  <div className="border-t pt-4">
-                    {userCertificate ? (
-                      // Certificado já emitido - mostrar botão de download
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-blue-600 flex items-center gap-2">
-                            <Award className="h-5 w-5" />
-                            Certificado Emitido
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Certificado emitido em {new Date(userCertificate.issuedAt).toLocaleDateString('pt-BR')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Nº: {userCertificate.certificateNumber}
-                          </p>
+                  {/* Certificate Section */}
+                  {course.certificateEnabled && (
+                    <div className="border-t pt-4">
+                      {userCertificate ? (
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-blue-600 flex items-center gap-2">
+                              <Award className="h-5 w-5" />
+                              Certificado Emitido
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Certificado emitido em {new Date(userCertificate.issuedAt).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                          <Button className="bg-blue-600 hover:bg-blue-700">
+                            <Download className="h-4 w-4 mr-2" />
+                            Baixar Certificado
+                          </Button>
                         </div>
-                        <Button 
-                          onClick={downloadCertificate}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Baixar Certificado
-                        </Button>
-                      </div>
-                    ) : certificateEligibility ? (
-                      // Verificar elegibilidade
-                      certificateEligibility.eligible ? (
-                        // Elegível para emitir certificado
+                      ) : certificateEligibility?.eligible ? (
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                           <div className="flex-1">
                             <h3 className="font-semibold text-green-600 flex items-center gap-2">
@@ -655,17 +304,12 @@ export default function CourseStartPage() {
                               Parabéns! Você completou todos os requisitos para receber o certificado.
                             </p>
                           </div>
-                          <Button 
-                            onClick={() => issueCertificate.mutate()}
-                            disabled={issueCertificate.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            {issueCertificate.isPending ? "Gerando..." : "Emitir Certificado"}
+                          <Button className="bg-green-600 hover:bg-green-700">
+                            Emitir Certificado
                             <Award className="h-4 w-4 ml-2" />
                           </Button>
                         </div>
                       ) : (
-                        // Não elegível ainda
                         <div className="flex items-start gap-3">
                           <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div>
@@ -673,33 +317,14 @@ export default function CourseStartPage() {
                               Certificado Indisponível
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              {certificateEligibility.reason}
+                              {certificateEligibility?.reason || 'Complete o curso para receber o certificado.'}
                             </p>
-                            {certificateEligibility.courseCompletion && (
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                Progresso: {certificateEligibility.courseCompletion.overallPercentage}% 
-                                (mínimo: {certificateEligibility.courseCompletion.passScore}%)
-                              </div>
-                            )}
                           </div>
                         </div>
-                      )
-                    ) : (
-                      // Carregando elegibilidade
-                      <div className="flex items-center gap-3">
-                        <Award className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <h3 className="font-semibold text-muted-foreground">
-                            Verificando Certificado...
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Analisando seu progresso no curso.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               {course.coverImage && (
@@ -714,7 +339,7 @@ export default function CourseStartPage() {
         </Card>
 
         {/* Show modules only for online courses */}
-        {course?.courseType !== 'in_person' ? (
+        {course.courseType !== 'in_person' ? (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Module Navigation */}
             <Card className="lg:col-span-1">
@@ -787,91 +412,60 @@ export default function CourseStartPage() {
                   </CardContent>
                 </Card>
               ) : currentModule ? (
-              <div className="space-y-6">
-                {/* Module Header */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          <Badge variant="outline">Módulo {currentModule.orderIndex}</Badge>
-                          {currentModule.title}
-                        </CardTitle>
-                        <p className="text-muted-foreground mt-2">{currentModule.description}</p>
+                <div className="space-y-6">
+                  {/* Module Header */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Badge variant="outline">Módulo {currentModule.orderIndex}</Badge>
+                            {currentModule.title}
+                          </CardTitle>
+                          <p className="text-muted-foreground mt-2">{currentModule.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span className="text-sm">{formatDurationInHours(currentModule.duration)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm">{formatDurationInHours(currentModule.duration)}</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
+                    </CardHeader>
+                  </Card>
 
-                {/* Module Content */}
-                <div className="space-y-4">
-                  {currentModule.content?.blocks?.map(renderContentBlock)}
+                  {/* Module Content Blocks */}
+                  <div className="space-y-4">
+                    {currentModule.content?.blocks?.map((block) => (
+                      <div key={block.id}>
+                        {/* Renderizar blocos de conteúdo aqui */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>{block.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p>{block.content}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-
-                {/* Module Navigation */}
+              ) : (
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentModuleIndex(Math.max(0, currentModuleIndex - 1))}
-                        disabled={currentModuleIndex === 0}
-                      >
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Módulo Anterior
-                      </Button>
-
-                      <div className="flex gap-2">
-                        {!completedModules.includes(currentModule.id) && (
-                          <Button
-                            onClick={() => markModuleComplete.mutate(currentModule.id)}
-                            disabled={markModuleComplete.isPending}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Marcar como Concluído
-                          </Button>
-                        )}
-                        
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowContent(false)}
-                        >
-                          <ArrowUp className="h-4 w-4 mr-2" />
-                          Voltar ao Início
-                        </Button>
-                      </div>
-
-                      <Button
-                        onClick={() => setCurrentModuleIndex(Math.min(sortedModules.length - 1, currentModuleIndex + 1))}
-                        disabled={currentModuleIndex >= sortedModules.length - 1}
-                      >
-                        Próximo Módulo
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Nenhum Módulo Encontrado</h3>
+                    <p className="text-muted-foreground">
+                      Este curso ainda não possui módulos criados.
+                    </p>
                   </CardContent>
                 </Card>
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Nenhum Módulo Encontrado</h3>
-                  <p className="text-muted-foreground">
-                    Este curso ainda não possui módulos criados.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+              )}
+            </div>
           </div>
         ) : null}
 
         {/* Student Performance Section for In-Person Courses */}
-        {course?.courseType === 'in_person' && authData?.user && (
+        {course.courseType === 'in_person' && authData?.user && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Grades Summary */}
             <Card>
@@ -888,12 +482,9 @@ export default function CourseStartPage() {
                       <div key={index} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">
-                              {grade.type === 'final_grade' ? 'Nota Final do Curso' : grade.moduleTitle || 'Módulo'}
-                            </h4>
+                            <h4 className="font-medium">Nota Final do Curso</h4>
                             <p className="text-sm text-muted-foreground">
-                              {grade.type === 'final_grade' ? 'Avaliada pelo instrutor em' : 'Avaliação do módulo em'} {' '}
-                              {new Date(grade.gradedAt || grade.submittedAt).toLocaleDateString('pt-BR')}
+                              Avaliada pelo instrutor em {new Date(grade.gradedAt).toLocaleDateString('pt-BR')}
                             </p>
                             {grade.feedback && (
                               <p className="text-sm mt-2 text-gray-600">
@@ -902,49 +493,24 @@ export default function CourseStartPage() {
                             )}
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl font-bold">
-                              {grade.type === 'final_grade' 
-                                ? Number(grade.gradeScale).toFixed(1)
-                                : grade.percentage ? `${grade.percentage}%` : '-'
-                              }
+                            <div className="text-2xl font-bold text-primary">
+                              {grade.gradeScale}
                             </div>
-                            <Badge variant={grade.passed ? "default" : "destructive"}>
-                              {grade.passed ? "Aprovado" : "Reprovado"}
-                            </Badge>
+                            <div className="text-sm text-muted-foreground">
+                              {grade.passed ? (
+                                <span className="text-green-600 font-medium">Aprovado</span>
+                              ) : (
+                                <span className="text-red-600 font-medium">Reprovado</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     ))}
-                    
-                    {/* Overall Statistics */}
-                    <div className="border-t pt-4">
-                      <div className="grid grid-cols-2 gap-4 text-center">
-                        <div>
-                          <div className="text-lg font-semibold">
-                            {userGrades.length > 0 ? (
-                              userGrades[0].type === 'final_grade' 
-                                ? Number(userGrades[0].gradeScale).toFixed(1)
-                                : userGrades[0].percentage ? `${userGrades[0].percentage}%` : '-'
-                            ) : '-'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Nota Final</div>
-                        </div>
-                        <div>
-                          <div className="text-lg font-semibold">
-                            {userGrades.length > 0 && userGrades[0].passed ? (
-                              <span className="text-green-600">✓</span>
-                            ) : (
-                              <span className="text-red-600">✗</span>
-                            )}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Status</div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Star className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-muted-foreground">
                       Ainda não há notas lançadas para você neste curso.
                     </p>
@@ -1008,14 +574,6 @@ export default function CourseStartPage() {
                           </div>
                           <div className="text-xs text-muted-foreground">Faltas</div>
                         </div>
-                      </div>
-                      <div className="mt-4 text-center">
-                        <div className="text-lg font-semibold">
-                          {userAttendance.length > 0 ? 
-                            Math.round((userAttendance.filter(r => r.attendanceStatus === 'present').length / userAttendance.length) * 100) 
-                            : 0}%
-                        </div>
-                        <div className="text-sm text-muted-foreground">Taxa de Presença</div>
                       </div>
                     </div>
                   </div>
