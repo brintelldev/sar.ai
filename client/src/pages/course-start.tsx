@@ -125,7 +125,7 @@ export default function CourseStartPage() {
 
   // Função para converter minutos em horas
   const formatDurationInHours = (minutes: number): string => {
-    const hours = Math.round(minutes / 60 * 10) / 10; // Arredonda para 1 casa decimal
+    const hours = Math.round(minutes / 60 * 10) / 10;
     return `${hours}h`;
   };
 
@@ -488,57 +488,6 @@ export default function CourseStartPage() {
                       <Progress value={userProgress.progress} className="h-2" />
                     </div>
                   )}
-
-                  {/* Certificate Section */}
-                  {course.certificateEnabled && (
-                    <div className="border-t pt-4">
-                      {userCertificate ? (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-blue-600 flex items-center gap-2">
-                              <Award className="h-5 w-5" />
-                              Certificado Emitido
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Certificado emitido em {new Date(userCertificate.issuedAt).toLocaleDateString('pt-BR')}
-                            </p>
-                          </div>
-                          <Button className="bg-blue-600 hover:bg-blue-700">
-                            <Download className="h-4 w-4 mr-2" />
-                            Baixar Certificado
-                          </Button>
-                        </div>
-                      ) : certificateEligibility?.eligible ? (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-green-600 flex items-center gap-2">
-                              <Award className="h-5 w-5" />
-                              Certificado Disponível!
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Parabéns! Você completou todos os requisitos para receber o certificado.
-                            </p>
-                          </div>
-                          <Button className="bg-green-600 hover:bg-green-700">
-                            Emitir Certificado
-                            <Award className="h-4 w-4 ml-2" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-start gap-3">
-                          <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
-                          <div>
-                            <h3 className="font-semibold text-muted-foreground">
-                              Certificado Indisponível
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {certificateEligibility?.reason || 'Complete o curso para receber o certificado.'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
               
@@ -554,7 +503,7 @@ export default function CourseStartPage() {
         </Card>
 
         {/* Show modules only for online courses */}
-        {course.courseType !== 'in_person' ? (
+        {course.courseType !== 'in_person' && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Module Navigation */}
             <Card className="lg:col-span-1">
@@ -669,7 +618,7 @@ export default function CourseStartPage() {
               )}
             </div>
           </div>
-        ) : null}
+        )}
 
         {/* Student Performance Section for In-Person Courses */}
         {course.courseType === 'in_person' && authData?.user && (
