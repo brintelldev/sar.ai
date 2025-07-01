@@ -124,6 +124,20 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- July 01, 2025. Sistema automático de criação de contas para beneficiárias implementado:
+  * Novos beneficiários com email automaticamente recebem conta de usuário
+  * Verificação para evitar duplicação de emails na organização
+  * Senha temporária gerada automaticamente (usuário pode alterar depois)
+  * Role 'beneficiary' atribuído automaticamente à conta criada
+  * Notificações atualizadas para indicar quando conta foi criada
+  * Interface frontend atualizada com feedback sobre criação de conta
+  * Sistema robusto com tratamento de erros para não falhar cadastro principal
+- July 01, 2025. Correção do sistema de formulários nos módulos de cursos:
+  * Erro "currentModule before initialization" corrigido completamente
+  * Callbacks onSuccess deprecados do TanStack Query v5 removidos
+  * Sistema de envio de formulários funcionando corretamente
+  * Validação de campos obrigatórios e feedback visual implementados
+  * Integração com API existente de submissões de módulos funcional
 - June 30, 2025. Sistema completo de gerenciamento e interação de notificações implementado:
   * Funcionalidade "Limpar Todas as Notificações" com endpoint DELETE /api/notifications/clear-all
   * Funcionalidade "Marcar Todas Como Lidas" com endpoint PATCH /api/notifications/mark-all-read

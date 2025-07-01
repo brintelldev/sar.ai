@@ -202,10 +202,18 @@ export default function Beneficiaries() {
 
   const onSubmit = async (data: any) => {
     try {
-      await createBeneficiaryMutation.mutateAsync(data);
-      const message = data.email 
-        ? 'Pessoa cadastrada com sucesso. Uma conta de acesso aos cursos foi criada automaticamente.'
-        : 'Pessoa cadastrada com sucesso. Para acessar cursos, adicione um email posteriormente.';
+      const result = await createBeneficiaryMutation.mutateAsync(data);
+      
+      let message = 'Pessoa cadastrada com sucesso.';
+      if (data.email) {
+        if (result.userAccountCreated) {
+          message += ' Uma conta de acesso aos cursos foi criada automaticamente.';
+        } else {
+          message += ' Email já possui conta de usuário na organização.';
+        }
+      } else {
+        message += ' Para acessar cursos, adicione um email posteriormente.';
+      }
       
       toast({
         title: 'Cadastro realizado',

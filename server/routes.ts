@@ -767,18 +767,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const beneficiary = await storage.createBeneficiary(beneficiaryData);
 
+      // Create user account if email is provided
+      let userCreated = false;
+      if (beneficiary.email && beneficiary.email.trim() !== '') {
+        try {
+          // Check if user with this email already exists
+          const existingUsers = await storage.getOrganizationUsers(organizationId);
+          const userExists = existingUsers.some(user => user.email.toLowerCase() === beneficiary.email!.toLowerCase());
+          
+          if (!userExists) {
+            // Generate a temporary password (user can change it later)
+            const tempPassword = `temp${Math.random().toString(36).substring(2, 8)}`;
+            const hashedPassword = await bcrypt.hash(tempPassword, 10);
+            
+            // Create user account
+            const userData = {
+              name: beneficiary.name,
+              email: beneficiary.email,
+              phone: beneficiary.contactInfo || '',
+              position: 'Beneficiária',
+              passwordHash: hashedPassword,
+              isGlobalAdmin: false
+            };
+            
+            const newUser = await storage.createUser(userData);
+            
+            // Assign beneficiary role to the user
+            await storage.createUserRole({
+              userId: newUser.id,
+              organizationId,
+              role: 'beneficiary',
+              isActive: true
+            });
+            
+            userCreated = true;
+            console.log(`✅ Conta de usuário criada para beneficiária: ${beneficiary.name} (${beneficiary.email})`);
+          } else {
+            console.log(`⚠️ Usuário com email ${beneficiary.email} já existe na organização`);
+          }
+        } catch (userError) {
+          console.error("Erro ao criar conta de usuário para beneficiária:", userError);
+          // Continue sem falhar o cadastro do beneficiário
+        }
+      }
+
       // Create notification for admins about new beneficiary registration
+      const notificationMessage = userCreated 
+        ? `${beneficiary.name} foi cadastrada e uma conta de acesso foi criada automaticamente`
+        : `${beneficiary.name} foi cadastrada na organização`;
+        
       await createRoleBasedNotification(
         'beneficiary_created',
         'Nova Beneficiária Cadastrada',
-        `${beneficiary.name} foi cadastrada na organização`,
+        notificationMessage,
         organizationId,
         undefined, // Send to all admins
         '/beneficiarios',
-        { beneficiaryId: beneficiary.id, beneficiaryName: beneficiary.name }
+        { 
+          beneficiaryId: beneficiary.id, 
+          beneficiaryName: beneficiary.name,
+          userCreated: userCreated
+        }
       );
       
-      res.status(201).json(beneficiary);
+      res.status(201).json({
+        ...beneficiary,
+        userAccountCreated: userCreated
+      });
     } catch (error) {
       console.error("Create beneficiary error:", error);
       res.status(500).json({ message: "Internal server error" });
