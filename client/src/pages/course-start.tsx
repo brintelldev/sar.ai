@@ -352,6 +352,124 @@ export default function CourseStartPage() {
             </CardContent>
           </Card>
         );
+      
+      case 'video':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Play className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {block.content && (
+                <div className="mb-4">
+                  <p className="text-muted-foreground">{block.content}</p>
+                </div>
+              )}
+              {block.url && (
+                <div className="aspect-video">
+                  <iframe
+                    src={block.url}
+                    className="w-full h-full rounded-lg"
+                    allowFullScreen
+                    title={block.title}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      
+      case 'image':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {block.content && (
+                <div className="mb-4">
+                  <p className="text-muted-foreground">{block.content}</p>
+                </div>
+              )}
+              {block.url && (
+                <div className="text-center">
+                  <img
+                    src={block.url}
+                    alt={block.title}
+                    className="max-w-full h-auto rounded-lg mx-auto"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 'pdf':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {block.content && (
+                <div className="mb-4">
+                  <p className="text-muted-foreground">{block.content}</p>
+                </div>
+              )}
+              {block.url && (
+                <div className="space-y-4">
+                  <div className="aspect-[3/4] border rounded-lg">
+                    <iframe
+                      src={block.url}
+                      className="w-full h-full rounded-lg"
+                      title={block.title}
+                    />
+                  </div>
+                  <Button asChild variant="outline" className="w-full">
+                    <a href={block.url} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar PDF
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 'embed':
+        return (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {block.content && (
+                <div className="mb-4">
+                  <p className="text-muted-foreground">{block.content}</p>
+                </div>
+              )}
+              {block.embedCode && (
+                <div 
+                  className="w-full"
+                  dangerouslySetInnerHTML={{ __html: block.embedCode }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        );
 
       case 'form':
         const moduleId = currentModule?.id || '';
@@ -716,6 +834,28 @@ export default function CourseStartPage() {
                     </CardHeader>
                   </Card>
 
+                  {/* Module Video (if available) */}
+                  {currentModule.videoUrl && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Play className="h-5 w-5" />
+                          Vídeo do Módulo
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="aspect-video">
+                          <iframe
+                            src={currentModule.videoUrl}
+                            className="w-full h-full rounded-lg"
+                            allowFullScreen
+                            title={`Vídeo - ${currentModule.title}`}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Module Content Blocks */}
                   <div className="space-y-4">
                     {currentModule.content?.blocks?.map((block) => (
@@ -724,6 +864,77 @@ export default function CourseStartPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Module Materials (if available) */}
+                  {currentModule.materials && Array.isArray(currentModule.materials) && currentModule.materials.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          Materiais Complementares
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {currentModule.materials.map((material: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                  <p className="font-medium">{material.title || `Material ${index + 1}`}</p>
+                                  <p className="text-sm text-muted-foreground">{material.description}</p>
+                                </div>
+                              </div>
+                              {material.url && (
+                                <Button asChild variant="outline" size="sm">
+                                  <a href={material.url} target="_blank" rel="noopener noreferrer">
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Baixar
+                                  </a>
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Module Navigation */}
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const prevIndex = Math.max(0, currentModuleIndex - 1);
+                            setCurrentModuleIndex(prevIndex);
+                          }}
+                          disabled={currentModuleIndex <= 0}
+                        >
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Módulo Anterior
+                        </Button>
+
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground">
+                            Módulo {currentModuleIndex + 1} de {sortedModules.length}
+                          </p>
+                        </div>
+
+                        <Button
+                          onClick={() => {
+                            const nextIndex = Math.min(sortedModules.length - 1, currentModuleIndex + 1);
+                            setCurrentModuleIndex(nextIndex);
+                          }}
+                          disabled={currentModuleIndex >= sortedModules.length - 1}
+                        >
+                          Próximo Módulo
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               ) : (
                 <Card>
