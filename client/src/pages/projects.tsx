@@ -936,7 +936,7 @@ export default function Projects() {
                       onUpdate={(updatedProject) => {
                         setSelectedProject(updatedProject);
                         // Update the project in the list
-                        const updatedProjects = projects?.map(p => 
+                        const updatedProjects = (projects || []).map((p: any) => 
                           p.id === updatedProject.id ? updatedProject : p
                         );
                         // You might want to trigger a mutation here to save changes

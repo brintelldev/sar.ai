@@ -632,7 +632,7 @@ export type InsertCourseAssessment = z.infer<typeof insertCourseAssessmentSchema
 
 export type UserAssessmentAttempt = typeof userAssessmentAttempts.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
-export type TrainingNotification = typeof trainingNotifications.$inferSelect;
+export type TrainingNotification = typeof notifications.$inferSelect;
 
 export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
 export type InsertCourseEnrollment = z.infer<typeof insertCourseEnrollmentSchema>;

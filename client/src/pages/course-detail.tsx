@@ -330,7 +330,7 @@ export default function CourseDetailPage() {
                         <>
                           <Separator />
                           <div className="space-y-3">
-                            <h4 className="font-medium text-gray-900 flex items-center">
+                            <h4 className="font-medium text-foreground flex items-center">
                               <Award className="w-4 h-4 mr-2 text-yellow-600" />
                               Notas por Módulo
                             </h4>
@@ -338,9 +338,9 @@ export default function CourseDetailPage() {
                               {moduleGrades.map((grade, index) => (
                                 <div 
                                   key={grade.moduleId} 
-                                  className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-xs"
+                                  className="flex items-center justify-between py-1 px-2 bg-muted/30 dark:bg-muted/10 rounded text-xs"
                                 >
-                                  <span className="text-gray-700 truncate flex-1 mr-2">
+                                  <span className="text-foreground truncate flex-1 mr-2">
                                     {index + 1}. {grade.moduleTitle}
                                   </span>
                                   <div className="flex items-center space-x-1">
@@ -477,7 +477,7 @@ export default function CourseDetailPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="prose prose-sm max-w-none text-gray-700">
+                    <div className="prose prose-sm max-w-none text-foreground">
                       {course.requirements}
                     </div>
                   </CardContent>
@@ -512,21 +512,21 @@ export default function CourseDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center space-x-2 text-sm">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Criado em:</span>
-                    <span className="font-medium">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Criado em:</span>
+                    <span className="font-medium text-foreground">
                       {new Date(course.createdAt).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
-                    <Users className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Inscritos:</span>
-                    <span className="font-medium">{course.enrolledCount}</span>
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Inscritos:</span>
+                    <span className="font-medium text-foreground">{course.enrolledCount}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
-                    <Award className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Taxa de conclusão:</span>
-                    <span className="font-medium">{course.completionRate}%</span>
+                    <Award className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Taxa de conclusão:</span>
+                    <span className="font-medium text-foreground">{course.completionRate}%</span>
                   </div>
                 </CardContent>
               </Card>
