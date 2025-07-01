@@ -95,7 +95,9 @@ export interface IStorage {
 
   // Accounts Receivable
   getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]>;
+  getAccountReceivable(id: string): Promise<AccountsReceivable | undefined>;
   createAccountReceivable(account: any): Promise<AccountsReceivable>;
+  updateAccountReceivable(id: string, updates: Partial<AccountsReceivable>): Promise<AccountsReceivable | undefined>;
 
   // Accounts Payable
   getAccountsPayable(organizationId: string): Promise<AccountsPayable[]>;
@@ -352,7 +354,9 @@ export class MemStorage implements IStorage {
   }
 
   async getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]> { return []; }
+  async getAccountReceivable(id: string): Promise<AccountsReceivable | undefined> { return undefined; }
   async createAccountReceivable(account: any): Promise<AccountsReceivable> { throw new Error("Not implemented in MemStorage"); }
+  async updateAccountReceivable(id: string, updates: Partial<AccountsReceivable>): Promise<AccountsReceivable | undefined> { throw new Error("Not implemented in MemStorage"); }
 
   async getAccountsPayable(organizationId: string): Promise<AccountsPayable[]> { return []; }
   async createAccountPayable(account: any): Promise<AccountsPayable> { throw new Error("Not implemented in MemStorage"); }

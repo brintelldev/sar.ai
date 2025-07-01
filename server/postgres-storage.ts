@@ -873,6 +873,23 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
+  async getAccountReceivable(id: string): Promise<AccountsReceivable | undefined> {
+    const [result] = await db
+      .select()
+      .from(accountsReceivable)
+      .where(eq(accountsReceivable.id, id));
+    return result;
+  }
+
+  async updateAccountReceivable(id: string, updates: Partial<AccountsReceivable>): Promise<AccountsReceivable | undefined> {
+    const [result] = await db
+      .update(accountsReceivable)
+      .set(updates)
+      .where(eq(accountsReceivable.id, id))
+      .returning();
+    return result;
+  }
+
   // Accounts Payable methods
   async getAccountsPayable(organizationId: string): Promise<AccountsPayable[]> {
     return await db
