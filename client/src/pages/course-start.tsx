@@ -713,78 +713,81 @@ export default function CourseStartPage() {
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Module Navigation */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-lg">Módulos do Curso</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[500px] pr-4">
-                <div className="space-y-2">
-                  {sortedModules.map((module, index) => {
-                    const isCompleted = completedModules.includes(module.id);
-                    const isActive = index === currentModuleIndex;
-                    
-                    return (
-                      <div
-                        key={module.id}
-                        onClick={() => {
-                          setCurrentModuleIndex(index);
-                          setShowContent(true);
-                        }}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          isActive 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-muted hover:bg-muted/80'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {isCompleted ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <Circle className="h-5 w-5" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate">
-                              {module.title}
-                            </div>
-                            <div className="text-xs opacity-75 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDurationInHours(module.duration)}
+        <div className={`grid grid-cols-1 ${course?.courseType === 'in_person' ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-6`}>
+          {/* Module Navigation - Only for non-in-person courses */}
+          {course?.courseType !== 'in_person' && (
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-lg">Módulos do Curso</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px] pr-4">
+                  <div className="space-y-2">
+                    {sortedModules.map((module, index) => {
+                      const isCompleted = completedModules.includes(module.id);
+                      const isActive = index === currentModuleIndex;
+                      
+                      return (
+                        <div
+                          key={module.id}
+                          onClick={() => {
+                            setCurrentModuleIndex(index);
+                            setShowContent(true);
+                          }}
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                            isActive 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'bg-muted hover:bg-muted/80'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {isCompleted ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Circle className="h-5 w-5" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">
+                                {module.title}
+                              </div>
+                              <div className="text-xs opacity-75 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {formatDurationInHours(module.duration)}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Module Content */}
-          <div className="lg:col-span-3">
-            {!showContent ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <Play className="h-16 w-16 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Pronto para Começar?</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Selecione um módulo na barra lateral para começar seu aprendizado
-                  </p>
-                  <Button 
-                    onClick={() => {
-                      setCurrentModuleIndex(0);
-                      setShowContent(true);
-                    }}
-                    disabled={sortedModules.length === 0}
-                  >
-                    Começar Primeiro Módulo
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : currentModule ? (
+          {/* Module Content - Only for non-in-person courses */}
+          {course?.courseType !== 'in_person' && (
+            <div className="lg:col-span-3">
+              {!showContent ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <Play className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Pronto para Começar?</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Selecione um módulo na barra lateral para começar seu aprendizado
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        setCurrentModuleIndex(0);
+                        setShowContent(true);
+                      }}
+                      disabled={sortedModules.length === 0}
+                    >
+                      Começar Primeiro Módulo
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : currentModule ? (
               <div className="space-y-6">
                 {/* Module Header */}
                 <Card>
@@ -866,6 +869,7 @@ export default function CourseStartPage() {
               </Card>
             )}
           </div>
+          )}
         </div>
 
         {/* Student Performance Section for In-Person Courses */}
