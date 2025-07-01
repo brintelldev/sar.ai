@@ -166,6 +166,17 @@ export default function CourseStartPage() {
     enabled: !!courseId && course?.courseType === 'in_person'
   });
 
+  // Certificate related queries
+  const { data: certificateEligibility, refetch: refetchEligibility } = useQuery({
+    queryKey: ['/api/courses', courseId, 'certificate', 'eligibility'],
+    enabled: !!courseId && !!authData?.user?.id && course?.certificateEnabled,
+  });
+
+  const { data: userCertificate, refetch: refetchCertificate } = useQuery({
+    queryKey: ['/api/courses', courseId, 'certificate'],
+    enabled: !!courseId && !!authData?.user?.id && course?.certificateEnabled,
+  });
+
   const sortedModules = modules?.sort((a, b) => a.orderIndex - b.orderIndex) || [];
   const currentModule = sortedModules[currentModuleIndex];
 
@@ -187,6 +198,28 @@ export default function CourseStartPage() {
   const submitFormMutation = useMutation({
     mutationFn: async (data: { moduleId: string; responses: Record<string, any> }) => {
       return apiRequest(`/api/modules/${data.moduleId}/form-submission`, 'POST', { responses: data.responses });
+    }
+  });
+
+  // Certificate issuance mutation
+  const issueCertificate = useMutation({
+    mutationFn: () => apiRequest(`/api/courses/${courseId}/certificate/issue`, 'POST'),
+    onSuccess: (data) => {
+      toast({
+        title: "Certificado Emitido!",
+        description: "Parabéns! Seu certificado foi gerado com sucesso.",
+      });
+      
+      refetchEligibility();
+      refetchCertificate();
+      queryClient.invalidateQueries({ queryKey: ['/api/users', 'certificates'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao emitir certificado",
+        description: error.message || "Não foi possível gerar o certificado.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -656,6 +689,121 @@ export default function CourseStartPage() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Certificate Section for All Course Types */}
+        {course?.certificateEnabled && authData?.user && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Certificado do Curso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {userCertificate ? (
+                // Certificado já emitido - mostrar botão de download
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-600 flex items-center gap-2">
+                      <Award className="h-5 w-5" />
+                      Certificado Emitido
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Certificado emitido em {new Date(userCertificate.issuedAt).toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Nº: {userCertificate.certificateNumber}
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => window.open(`/api/courses/${courseId}/certificate/download`, '_blank')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar Certificado
+                  </Button>
+                </div>
+              ) : certificateEligibility ? (
+                // Verificar elegibilidade
+                certificateEligibility.eligible ? (
+                  // Elegível para emitir certificado
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-green-600 flex items-center gap-2">
+                        <Award className="h-5 w-5" />
+                        Certificado Disponível!
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Parabéns! Você completou todos os requisitos para receber o certificado.
+                      </p>
+                      {certificateEligibility.courseCompletion && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          {course.courseType === 'online' ? (
+                            <>
+                              Nota: {certificateEligibility.courseCompletion.overallPercentage}% 
+                              (mínimo: {certificateEligibility.courseCompletion.passScore}%)
+                            </>
+                          ) : (
+                            <>
+                              Nota: {certificateEligibility.courseCompletion.finalGrade} 
+                              (Aprovado)
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={() => issueCertificate.mutate()}
+                      disabled={issueCertificate.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {issueCertificate.isPending ? "Gerando..." : "Emitir Certificado"}
+                      <Award className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                ) : (
+                  // Não elegível ainda
+                  <div className="flex items-start gap-3">
+                    <Award className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-semibold text-muted-foreground">
+                        Certificado Indisponível
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {certificateEligibility.reason}
+                      </p>
+                      {certificateEligibility.courseCompletion && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          {course.courseType === 'online' ? (
+                            <>
+                              Progresso: {certificateEligibility.courseCompletion.overallPercentage}% 
+                              (mínimo: {certificateEligibility.courseCompletion.passScore}%)
+                            </>
+                          ) : (
+                            'Aguardando avaliação final do instrutor'
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              ) : (
+                // Carregando elegibilidade
+                <div className="flex items-center gap-3">
+                  <Award className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <h3 className="font-semibold text-muted-foreground">
+                      Verificando Certificado...
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Analisando seu progresso no curso.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Student Performance Section for In-Person Courses */}
