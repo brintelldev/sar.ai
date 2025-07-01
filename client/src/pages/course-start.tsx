@@ -713,9 +713,10 @@ export default function CourseStartPage() {
           </CardHeader>
         </Card>
 
-        <div className={`grid grid-cols-1 ${course?.courseType === 'in_person' ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-6`}>
-          {/* Module Navigation - Only for non-in-person courses */}
-          {course?.courseType !== 'in_person' && (
+        {/* Only show modules for non-in-person courses */}
+        {course?.courseType !== 'in_person' && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Module Navigation */}
             <Card className="lg:col-span-1">
               <CardHeader>
                 <CardTitle className="text-lg">Módulos do Curso</CardTitle>
@@ -763,10 +764,8 @@ export default function CourseStartPage() {
                 </ScrollArea>
               </CardContent>
             </Card>
-          )}
 
-          {/* Module Content - Only for non-in-person courses */}
-          {course?.courseType !== 'in_person' && (
+            {/* Module Content */}
             <div className="lg:col-span-3">
               {!showContent ? (
                 <Card>
@@ -869,8 +868,7 @@ export default function CourseStartPage() {
               </Card>
             )}
           </div>
-          )}
-        </div>
+        )}
 
         {/* Student Performance Section for In-Person Courses */}
         {course?.courseType === 'in_person' && authData?.user && (
