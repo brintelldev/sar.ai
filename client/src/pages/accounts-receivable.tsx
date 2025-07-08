@@ -206,13 +206,27 @@ export default function AccountsReceivable() {
            matchesStartDate && matchesEndDate && matchesInvoice;
   }) : [];
 
-  const totalAmount = filteredAccounts.reduce((sum: number, account: any) => 
-    sum + parseFloat(account.amount || 0), 0
-  );
-
+  // Filtered accounts by status
   const pendingAccounts = filteredAccounts.filter((a: any) => a.status === 'pending');
   const overdueAccounts = filteredAccounts.filter((a: any) => a.status === 'overdue');
   const receivedAccounts = filteredAccounts.filter((a: any) => a.status === 'received');
+  
+  // Calculate amounts for each status
+  const pendingAmount = pendingAccounts.reduce((sum: number, account: any) => 
+    sum + parseFloat(account.amount || 0), 0
+  );
+  
+  const overdueAmount = overdueAccounts.reduce((sum: number, account: any) => 
+    sum + parseFloat(account.amount || 0), 0
+  );
+  
+  const receivedAmount = receivedAccounts.reduce((sum: number, account: any) => 
+    sum + parseFloat(account.amount || 0), 0
+  );
+  
+  // Total a receber = Pendentes + Vencidas
+  const totalToReceive = pendingAmount + overdueAmount;
+  const totalToReceiveCount = pendingAccounts.length + overdueAccounts.length;
 
   if (isLoading) {
     return (
@@ -362,9 +376,9 @@ export default function AccountsReceivable() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalAmount)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalToReceive)}</div>
               <p className="text-xs text-muted-foreground">
-                {filteredAccounts.length} contas registradas
+                {totalToReceiveCount} contas (pendentes + vencidas)
               </p>
             </CardContent>
           </Card>
@@ -377,7 +391,7 @@ export default function AccountsReceivable() {
             <CardContent>
               <div className="text-2xl font-bold">{pendingAccounts.length}</div>
               <p className="text-xs text-muted-foreground">
-                {formatCurrency(pendingAccounts.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0))} aguardando
+                {formatCurrency(pendingAmount)} aguardando
               </p>
             </CardContent>
           </Card>
@@ -390,7 +404,7 @@ export default function AccountsReceivable() {
             <CardContent>
               <div className="text-2xl font-bold">{overdueAccounts.length}</div>
               <p className="text-xs text-muted-foreground">
-                Requer atenção urgente
+                {formatCurrency(overdueAmount)} em atraso
               </p>
             </CardContent>
           </Card>
@@ -403,7 +417,7 @@ export default function AccountsReceivable() {
             <CardContent>
               <div className="text-2xl font-bold">{receivedAccounts.length}</div>
               <p className="text-xs text-muted-foreground">
-                {formatCurrency(receivedAccounts.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0))} recebido
+                {formatCurrency(receivedAmount)} recebido
               </p>
             </CardContent>
           </Card>
