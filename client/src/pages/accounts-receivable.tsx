@@ -8,6 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -15,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { z } from 'zod';
-import { Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Search, Filter, Eye, Edit } from 'lucide-react';
+import { Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Search, Filter, Eye, Edit, CalendarDays, X } from 'lucide-react';
 
 const insertAccountReceivableSchema = z.object({
   description: z.string().min(1, 'Descrição é obrigatória'),
@@ -32,6 +35,13 @@ export default function AccountsReceivable() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Advanced filters
+  const [amountFilter, setAmountFilter] = useState({ min: '', max: '' });
+  const [dateFilter, setDateFilter] = useState({ start: '', end: '' });
+  const [invoiceFilter, setInvoiceFilter] = useState('');
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -156,11 +166,44 @@ export default function AccountsReceivable() {
     return labels[status as keyof typeof labels] || status;
   };
 
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setAmountFilter({ min: '', max: '' });
+    setDateFilter({ start: '', end: '' });
+    setInvoiceFilter('');
+    setIsFilterOpen(false);
+  };
+
+  const hasActiveFilters = () => {
+    return searchTerm !== '' || statusFilter !== 'all' || 
+           amountFilter.min !== '' || amountFilter.max !== '' ||
+           dateFilter.start !== '' || dateFilter.end !== '' || 
+           invoiceFilter !== '';
+  };
+
   const filteredAccounts = Array.isArray(accounts) ? accounts.filter((account: any) => {
     const matchesSearch = account.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       account.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+    
     const matchesStatus = statusFilter === 'all' || account.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    // Amount filter
+    const accountAmount = parseFloat(account.amount || 0);
+    const matchesMinAmount = !amountFilter.min || accountAmount >= parseFloat(amountFilter.min);
+    const matchesMaxAmount = !amountFilter.max || accountAmount <= parseFloat(amountFilter.max);
+    
+    // Date filter
+    const accountDate = new Date(account.dueDate);
+    const matchesStartDate = !dateFilter.start || accountDate >= new Date(dateFilter.start);
+    const matchesEndDate = !dateFilter.end || accountDate <= new Date(dateFilter.end);
+    
+    // Invoice filter
+    const matchesInvoice = !invoiceFilter || 
+      account.invoiceNumber?.toLowerCase().includes(invoiceFilter.toLowerCase());
+    
+    return matchesSearch && matchesStatus && matchesMinAmount && matchesMaxAmount && 
+           matchesStartDate && matchesEndDate && matchesInvoice;
   }) : [];
 
   const totalAmount = filteredAccounts.reduce((sum: number, account: any) => 
@@ -390,11 +433,169 @@ export default function AccountsReceivable() {
                 <SelectItem value="cancelled">Canceladas</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
+            
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant={hasActiveFilters() ? "default" : "outline"} 
+                  size="icon"
+                  className={hasActiveFilters() ? "bg-primary text-primary-foreground" : ""}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Filtros Avançados</h4>
+                    {hasActiveFilters() && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <Separator />
+                  
+                  {/* Amount Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Valor (R$)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Input
+                          placeholder="Mínimo"
+                          type="number"
+                          step="0.01"
+                          value={amountFilter.min}
+                          onChange={(e) => setAmountFilter(prev => ({ ...prev, min: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="Máximo"
+                          type="number"
+                          step="0.01"
+                          value={amountFilter.max}
+                          onChange={(e) => setAmountFilter(prev => ({ ...prev, max: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Date Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" />
+                      Data de Vencimento
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Input
+                          placeholder="De"
+                          type="date"
+                          value={dateFilter.start}
+                          onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="Até"
+                          type="date"
+                          value={dateFilter.end}
+                          onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Invoice Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Número da Fatura</Label>
+                    <Input
+                      placeholder="Buscar por número da fatura..."
+                      value={invoiceFilter}
+                      onChange={(e) => setInvoiceFilter(e.target.value)}
+                    />
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{filteredAccounts.length} contas encontradas</span>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setIsFilterOpen(false)}
+                    >
+                      Aplicar Filtros
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
+        
+        {/* Active Filters Display */}
+        {hasActiveFilters() && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            <span className="text-sm text-muted-foreground">Filtros ativos:</span>
+            {searchTerm && (
+              <Badge variant="secondary" className="gap-1">
+                Busca: {searchTerm}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setSearchTerm('')}
+                />
+              </Badge>
+            )}
+            {statusFilter !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                Status: {getStatusLabel(statusFilter)}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setStatusFilter('all')}
+                />
+              </Badge>
+            )}
+            {(amountFilter.min || amountFilter.max) && (
+              <Badge variant="secondary" className="gap-1">
+                Valor: {amountFilter.min && `≥ ${formatCurrency(parseFloat(amountFilter.min))}`}
+                {amountFilter.min && amountFilter.max && ' e '}
+                {amountFilter.max && `≤ ${formatCurrency(parseFloat(amountFilter.max))}`}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setAmountFilter({ min: '', max: '' })}
+                />
+              </Badge>
+            )}
+            {(dateFilter.start || dateFilter.end) && (
+              <Badge variant="secondary" className="gap-1">
+                Data: {dateFilter.start && formatDate(dateFilter.start)}
+                {dateFilter.start && dateFilter.end && ' até '}
+                {dateFilter.end && formatDate(dateFilter.end)}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setDateFilter({ start: '', end: '' })}
+                />
+              </Badge>
+            )}
+            {invoiceFilter && (
+              <Badge variant="secondary" className="gap-1">
+                Fatura: {invoiceFilter}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setInvoiceFilter('')}
+                />
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Accounts Table */}
         <Card>
