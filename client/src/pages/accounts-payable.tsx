@@ -7,14 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useProjects } from '@/hooks/use-organization';
 import { z } from 'zod';
-import { Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Search, Filter, Eye, Edit, CreditCard } from 'lucide-react';
+import { Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Search, Filter, Eye, Edit, CreditCard, Check, ChevronDown } from 'lucide-react';
 
 const insertAccountPayableSchema = z.object({
   supplierName: z.string().min(1, 'Nome do fornecedor é obrigatório'),
@@ -23,18 +26,22 @@ const insertAccountPayableSchema = z.object({
   dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
   status: z.string().default('pending'),
   category: z.string().optional(),
+  projectId: z.string().optional(),
 });
 
 export default function AccountsPayable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [projectComboboxOpen, setProjectComboboxOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['/api/accounts-payable'],
   });
+
+  const { data: projects = [] } = useProjects();
 
   const createAccountMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/accounts-payable', 'POST', data),
@@ -65,8 +72,12 @@ export default function AccountsPayable() {
       dueDate: '',
       status: 'pending',
       category: '',
+      projectId: '',
     }
   });
+
+  const watchCategory = form.watch('category');
+  const watchProjectId = form.watch('projectId');
 
   const onSubmit = async (data: any) => {
     await createAccountMutation.mutateAsync(data);
@@ -107,6 +118,11 @@ export default function AccountsPayable() {
       'operational': 'Operacional'
     };
     return labels[category as keyof typeof labels] || category;
+  };
+
+  const getProjectName = (projectId: string) => {
+    const project = projects.find((p: any) => p.id === projectId);
+    return project?.name || 'Projeto não encontrado';
   };
 
   const filteredAccounts = Array.isArray(accounts) ? accounts.filter((account: any) => {
@@ -205,6 +221,69 @@ export default function AccountsPayable() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Campo condicional de projeto */}
+                    {watchCategory === 'project' && (
+                      <FormField
+                        control={form.control}
+                        name="projectId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Projeto</FormLabel>
+                            <Popover open={projectComboboxOpen} onOpenChange={setProjectComboboxOpen}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={projectComboboxOpen}
+                                    className="w-full justify-between"
+                                  >
+                                    {field.value
+                                      ? projects.find((project: any) => project.id === field.value)?.name
+                                      : "Selecione um projeto..."}
+                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0">
+                                <Command>
+                                  <CommandInput placeholder="Buscar projeto..." />
+                                  <CommandList>
+                                    <CommandEmpty>Nenhum projeto encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                      {projects.map((project: any) => (
+                                        <CommandItem
+                                          key={project.id}
+                                          value={project.name}
+                                          onSelect={() => {
+                                            form.setValue('projectId', project.id);
+                                            setProjectComboboxOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={`mr-2 h-4 w-4 ${
+                                              field.value === project.id ? "opacity-100" : "opacity-0"
+                                            }`}
+                                          />
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">{project.name}</span>
+                                            <span className="text-sm text-muted-foreground truncate">
+                                              {project.description}
+                                            </span>
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     <FormField
                       control={form.control}
@@ -404,6 +483,7 @@ export default function AccountsPayable() {
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Vencimento</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Categoria</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Projeto</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
@@ -430,6 +510,11 @@ export default function AccountsPayable() {
                         <td className="py-3 px-4">
                           <div className="max-w-24 truncate">
                             {account.category ? getCategoryLabel(account.category) : '-'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="max-w-32 truncate">
+                            {account.projectId ? getProjectName(account.projectId) : '-'}
                           </div>
                         </td>
                         <td className="py-3 px-4">
