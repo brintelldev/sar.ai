@@ -124,6 +124,15 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- July 08, 2025. Sistema completo de contas a pagar implementado:
+  * Diálogo de visualização com informações detalhadas
+  * Funcionalidade de edição com formulário completo
+  * Campo condicional de projeto na edição
+  * Endpoint PATCH /api/accounts-payable/:id com validação de organização
+  * Método updateAccountPayable implementado na interface IStorage
+  * Implementação PostgresStorage com query de atualização
+  * Validação de segurança multi-tenant
+  * Interface responsiva e integrada ao sistema principal
 - July 01, 2025. Remoção de usuários indesejados do banco de dados:
   * Removidos usuários com emails: daniel.juswiak@brintell.com, danieljuswiak@hotmail.com, danieljuswiak.eng@gmail.com
   * Limpeza em cascata: removidos 4 registros de user_roles e 2 registros de beneficiaries
