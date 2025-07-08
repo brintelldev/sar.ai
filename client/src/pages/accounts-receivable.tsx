@@ -1,58 +1,102 @@
-import { useState } from 'react';
-import { MainLayout } from '@/components/layout/main-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { z } from 'zod';
-import { Plus, DollarSign, Clock, CheckCircle, AlertTriangle, Search, Filter, Eye, Edit, CalendarDays, X } from 'lucide-react';
+import { useState } from "react";
+import { MainLayout } from "@/components/layout/main-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { z } from "zod";
+import {
+  Plus,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  CalendarDays,
+  X,
+} from "lucide-react";
 
 const insertAccountReceivableSchema = z.object({
-  description: z.string().min(1, 'Descrição é obrigatória'),
-  amount: z.string().min(1, 'Valor é obrigatório'),
-  dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
-  status: z.string().default('pending'),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  status: z.string().default("pending"),
   invoiceNumber: z.string().optional(),
 });
 
 export default function AccountsReceivable() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   // Advanced filters
-  const [amountFilter, setAmountFilter] = useState({ min: '', max: '' });
-  const [dateFilter, setDateFilter] = useState({ start: '', end: '' });
-  const [invoiceFilter, setInvoiceFilter] = useState('');
-  
+  const [amountFilter, setAmountFilter] = useState({ min: "", max: "" });
+  const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
+  const [invoiceFilter, setInvoiceFilter] = useState("");
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: accounts, isLoading } = useQuery({
-    queryKey: ['/api/accounts-receivable'],
+    queryKey: ["/api/accounts-receivable"],
   });
 
   const createAccountMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/accounts-receivable', 'POST', data),
+    mutationFn: (data: any) =>
+      apiRequest("/api/accounts-receivable", "POST", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/accounts-receivable'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/accounts-receivable"] });
       toast({
         title: "Conta a receber registrada",
         description: "A nova conta foi adicionada ao sistema.",
@@ -66,14 +110,14 @@ export default function AccountsReceivable() {
         description: "Ocorreu um erro ao salvar. Tente novamente.",
         variant: "destructive",
       });
-    }
+    },
   });
 
   const updateAccountMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => 
-      apiRequest(`/api/accounts-receivable/${id}`, 'PATCH', data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      apiRequest(`/api/accounts-receivable/${id}`, "PATCH", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/accounts-receivable'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/accounts-receivable"] });
       toast({
         title: "Conta atualizada",
         description: "As alterações foram salvas com sucesso.",
@@ -87,29 +131,29 @@ export default function AccountsReceivable() {
         description: "Ocorreu um erro ao salvar. Tente novamente.",
         variant: "destructive",
       });
-    }
+    },
   });
 
   const form = useForm({
     resolver: zodResolver(insertAccountReceivableSchema),
     defaultValues: {
-      description: '',
-      amount: '',
-      dueDate: '',
-      status: 'pending',
-      invoiceNumber: '',
-    }
+      description: "",
+      amount: "",
+      dueDate: "",
+      status: "pending",
+      invoiceNumber: "",
+    },
   });
 
   const editForm = useForm({
     resolver: zodResolver(insertAccountReceivableSchema),
     defaultValues: {
-      description: '',
-      amount: '',
-      dueDate: '',
-      status: 'pending',
-      invoiceNumber: '',
-    }
+      description: "",
+      amount: "",
+      dueDate: "",
+      status: "pending",
+      invoiceNumber: "",
+    },
   });
 
   const onSubmit = async (data: any) => {
@@ -120,7 +164,7 @@ export default function AccountsReceivable() {
     if (!selectedAccount) return;
     await updateAccountMutation.mutateAsync({
       id: selectedAccount.id,
-      data: data
+      data: data,
     });
   };
 
@@ -132,98 +176,134 @@ export default function AccountsReceivable() {
   const handleEditAccount = (account: any) => {
     setSelectedAccount(account);
     editForm.reset({
-      description: account.description || '',
-      amount: account.amount || '',
-      dueDate: account.dueDate || '',
-      status: account.status || 'pending',
-      invoiceNumber: account.invoiceNumber || '',
+      description: account.description || "",
+      amount: account.amount || "",
+      dueDate: account.dueDate || "",
+      status: account.status || "pending",
+      invoiceNumber: account.invoiceNumber || "",
     });
     setIsEditDialogOpen(true);
   };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'received':
-        return 'default';
-      case 'pending':
-        return 'secondary';
-      case 'overdue':
-        return 'destructive';
-      case 'cancelled':
-        return 'outline';
+      case "received":
+        return "default";
+      case "pending":
+        return "secondary";
+      case "overdue":
+        return "destructive";
+      case "cancelled":
+        return "outline";
       default:
-        return 'secondary';
+        return "secondary";
     }
   };
 
   const getStatusLabel = (status: string) => {
     const labels = {
-      'received': 'Recebido',
-      'pending': 'Pendente',
-      'overdue': 'Vencido',
-      'cancelled': 'Cancelado'
+      received: "Recebido",
+      pending: "Pendente",
+      overdue: "Vencido",
+      cancelled: "Cancelado",
     };
     return labels[status as keyof typeof labels] || status;
   };
 
   const clearAllFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setAmountFilter({ min: '', max: '' });
-    setDateFilter({ start: '', end: '' });
-    setInvoiceFilter('');
+    setSearchTerm("");
+    setStatusFilter("all");
+    setAmountFilter({ min: "", max: "" });
+    setDateFilter({ start: "", end: "" });
+    setInvoiceFilter("");
     setIsFilterOpen(false);
   };
 
   const hasActiveFilters = () => {
-    return searchTerm !== '' || statusFilter !== 'all' || 
-           amountFilter.min !== '' || amountFilter.max !== '' ||
-           dateFilter.start !== '' || dateFilter.end !== '' || 
-           invoiceFilter !== '';
+    return (
+      searchTerm !== "" ||
+      statusFilter !== "all" ||
+      amountFilter.min !== "" ||
+      amountFilter.max !== "" ||
+      dateFilter.start !== "" ||
+      dateFilter.end !== "" ||
+      invoiceFilter !== ""
+    );
   };
 
-  const filteredAccounts = Array.isArray(accounts) ? accounts.filter((account: any) => {
-    const matchesSearch = account.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      account.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || account.status === statusFilter;
-    
-    // Amount filter
-    const accountAmount = parseFloat(account.amount || 0);
-    const matchesMinAmount = !amountFilter.min || accountAmount >= parseFloat(amountFilter.min);
-    const matchesMaxAmount = !amountFilter.max || accountAmount <= parseFloat(amountFilter.max);
-    
-    // Date filter
-    const accountDate = new Date(account.dueDate);
-    const matchesStartDate = !dateFilter.start || accountDate >= new Date(dateFilter.start);
-    const matchesEndDate = !dateFilter.end || accountDate <= new Date(dateFilter.end);
-    
-    // Invoice filter
-    const matchesInvoice = !invoiceFilter || 
-      account.invoiceNumber?.toLowerCase().includes(invoiceFilter.toLowerCase());
-    
-    return matchesSearch && matchesStatus && matchesMinAmount && matchesMaxAmount && 
-           matchesStartDate && matchesEndDate && matchesInvoice;
-  }) : [];
+  const filteredAccounts = Array.isArray(accounts)
+    ? accounts.filter((account: any) => {
+        const matchesSearch =
+          account.description
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          account.invoiceNumber
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase());
+
+        const matchesStatus =
+          statusFilter === "all" || account.status === statusFilter;
+
+        // Amount filter
+        const accountAmount = parseFloat(account.amount || 0);
+        const matchesMinAmount =
+          !amountFilter.min || accountAmount >= parseFloat(amountFilter.min);
+        const matchesMaxAmount =
+          !amountFilter.max || accountAmount <= parseFloat(amountFilter.max);
+
+        // Date filter
+        const accountDate = new Date(account.dueDate);
+        const matchesStartDate =
+          !dateFilter.start || accountDate >= new Date(dateFilter.start);
+        const matchesEndDate =
+          !dateFilter.end || accountDate <= new Date(dateFilter.end);
+
+        // Invoice filter
+        const matchesInvoice =
+          !invoiceFilter ||
+          account.invoiceNumber
+            ?.toLowerCase()
+            .includes(invoiceFilter.toLowerCase());
+
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesMinAmount &&
+          matchesMaxAmount &&
+          matchesStartDate &&
+          matchesEndDate &&
+          matchesInvoice
+        );
+      })
+    : [];
 
   // Filtered accounts by status
-  const pendingAccounts = filteredAccounts.filter((a: any) => a.status === 'pending');
-  const overdueAccounts = filteredAccounts.filter((a: any) => a.status === 'overdue');
-  const receivedAccounts = filteredAccounts.filter((a: any) => a.status === 'received');
-  
+  const pendingAccounts = filteredAccounts.filter(
+    (a: any) => a.status === "pending",
+  );
+  const overdueAccounts = filteredAccounts.filter(
+    (a: any) => a.status === "overdue",
+  );
+  const receivedAccounts = filteredAccounts.filter(
+    (a: any) => a.status === "received",
+  );
+
   // Calculate amounts for each status
-  const pendingAmount = pendingAccounts.reduce((sum: number, account: any) => 
-    sum + parseFloat(account.amount || 0), 0
+  const pendingAmount = pendingAccounts.reduce(
+    (sum: number, account: any) => sum + parseFloat(account.amount || 0),
+    0,
   );
-  
-  const overdueAmount = overdueAccounts.reduce((sum: number, account: any) => 
-    sum + parseFloat(account.amount || 0), 0
+
+  const overdueAmount = overdueAccounts.reduce(
+    (sum: number, account: any) => sum + parseFloat(account.amount || 0),
+    0,
   );
-  
-  const receivedAmount = receivedAccounts.reduce((sum: number, account: any) => 
-    sum + parseFloat(account.amount || 0), 0
+
+  const receivedAmount = receivedAccounts.reduce(
+    (sum: number, account: any) => sum + parseFloat(account.amount || 0),
+    0,
   );
-  
+
   // Total a receber = Pendentes + Vencidas
   const totalToReceive = pendingAmount + overdueAmount;
   const totalToReceiveCount = pendingAccounts.length + overdueAccounts.length;
@@ -250,7 +330,9 @@ export default function AccountsReceivable() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Contas a Receber</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Contas a Receber
+            </h1>
             <p className="text-muted-foreground mt-2">
               Gerencie valores a receber de doadores e parcerias
             </p>
@@ -269,9 +351,12 @@ export default function AccountsReceivable() {
                   Adicione uma nova conta a receber no sistema.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -280,7 +365,10 @@ export default function AccountsReceivable() {
                         <FormItem className="col-span-2">
                           <FormLabel>Descrição</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Descrição da conta a receber" />
+                            <Input
+                              {...field}
+                              placeholder="Descrição da conta a receber"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -294,7 +382,12 @@ export default function AccountsReceivable() {
                         <FormItem>
                           <FormLabel>Valor (R$)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" placeholder="0,00" />
+                            <Input
+                              {...field}
+                              type="number"
+                              step="0.01"
+                              placeholder="0,00"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -321,7 +414,10 @@ export default function AccountsReceivable() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione o status" />
@@ -331,7 +427,9 @@ export default function AccountsReceivable() {
                               <SelectItem value="pending">Pendente</SelectItem>
                               <SelectItem value="received">Recebido</SelectItem>
                               <SelectItem value="overdue">Vencido</SelectItem>
-                              <SelectItem value="cancelled">Cancelado</SelectItem>
+                              <SelectItem value="cancelled">
+                                Cancelado
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -346,7 +444,10 @@ export default function AccountsReceivable() {
                         <FormItem>
                           <FormLabel>Número da Fatura</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Número da fatura (opcional)" />
+                            <Input
+                              {...field}
+                              placeholder="Número da fatura (opcional)"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -355,11 +456,20 @@ export default function AccountsReceivable() {
                   </div>
 
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
                       Cancelar
                     </Button>
-                    <Button type="submit" disabled={createAccountMutation.isPending}>
-                      {createAccountMutation.isPending ? 'Salvando...' : 'Registrar Conta'}
+                    <Button
+                      type="submit"
+                      disabled={createAccountMutation.isPending}
+                    >
+                      {createAccountMutation.isPending
+                        ? "Salvando..."
+                        : "Registrar Conta"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -372,17 +482,21 @@ export default function AccountsReceivable() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total a Receber</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total a Receber
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalToReceive)}</div>
+              <div className="text-2xl font-bold">
+                {formatCurrency(totalToReceive)}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {totalToReceiveCount} contas (pendentes + vencidas)
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
@@ -395,7 +509,7 @@ export default function AccountsReceivable() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Vencidas</CardTitle>
@@ -408,14 +522,16 @@ export default function AccountsReceivable() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Recebidas</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{receivedAccounts.length}</div>
+              <div className="text-2xl font-bold">
+                {receivedAccounts.length}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {formatCurrency(receivedAmount)} recebido
               </p>
@@ -447,13 +563,17 @@ export default function AccountsReceivable() {
                 <SelectItem value="cancelled">Canceladas</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <PopoverTrigger asChild>
-                <Button 
-                  variant={hasActiveFilters() ? "default" : "outline"} 
+                <Button
+                  variant={hasActiveFilters() ? "default" : "outline"}
                   size="icon"
-                  className={hasActiveFilters() ? "bg-primary text-primary-foreground" : ""}
+                  className={
+                    hasActiveFilters()
+                      ? "bg-primary text-primary-foreground"
+                      : ""
+                  }
                 >
                   <Filter className="h-4 w-4" />
                 </Button>
@@ -463,8 +583,8 @@ export default function AccountsReceivable() {
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">Filtros Avançados</h4>
                     {hasActiveFilters() && (
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={clearAllFilters}
                         className="text-muted-foreground hover:text-foreground"
@@ -474,9 +594,9 @@ export default function AccountsReceivable() {
                       </Button>
                     )}
                   </div>
-                  
+
                   <Separator />
-                  
+
                   {/* Amount Filter */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Valor (R$)</Label>
@@ -487,7 +607,12 @@ export default function AccountsReceivable() {
                           type="number"
                           step="0.01"
                           value={amountFilter.min}
-                          onChange={(e) => setAmountFilter(prev => ({ ...prev, min: e.target.value }))}
+                          onChange={(e) =>
+                            setAmountFilter((prev) => ({
+                              ...prev,
+                              min: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -496,12 +621,17 @@ export default function AccountsReceivable() {
                           type="number"
                           step="0.01"
                           value={amountFilter.max}
-                          onChange={(e) => setAmountFilter(prev => ({ ...prev, max: e.target.value }))}
+                          onChange={(e) =>
+                            setAmountFilter((prev) => ({
+                              ...prev,
+                              max: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Date Filter */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
@@ -514,7 +644,12 @@ export default function AccountsReceivable() {
                           placeholder="De"
                           type="date"
                           value={dateFilter.start}
-                          onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+                          onChange={(e) =>
+                            setDateFilter((prev) => ({
+                              ...prev,
+                              start: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -522,30 +657,34 @@ export default function AccountsReceivable() {
                           placeholder="Até"
                           type="date"
                           value={dateFilter.end}
-                          onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+                          onChange={(e) =>
+                            setDateFilter((prev) => ({
+                              ...prev,
+                              end: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Invoice Filter */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Número da Fatura</Label>
+                    <Label className="text-sm font-medium">
+                      Número da Fatura
+                    </Label>
                     <Input
                       placeholder="Buscar por número da fatura..."
                       value={invoiceFilter}
                       onChange={(e) => setInvoiceFilter(e.target.value)}
                     />
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>{filteredAccounts.length} contas encontradas</span>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setIsFilterOpen(false)}
-                    >
+                    <Button size="sm" onClick={() => setIsFilterOpen(false)}>
                       Aplicar Filtros
                     </Button>
                   </div>
@@ -554,57 +693,62 @@ export default function AccountsReceivable() {
             </Popover>
           </div>
         </div>
-        
+
         {/* Active Filters Display */}
         {hasActiveFilters() && (
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-sm text-muted-foreground">Filtros ativos:</span>
+            <span className="text-sm text-muted-foreground">
+              Filtros ativos:
+            </span>
             {searchTerm && (
               <Badge variant="secondary" className="gap-1">
                 Busca: {searchTerm}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => setSearchTerm('')}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => setSearchTerm("")}
                 />
               </Badge>
             )}
-            {statusFilter !== 'all' && (
+            {statusFilter !== "all" && (
               <Badge variant="secondary" className="gap-1">
                 Status: {getStatusLabel(statusFilter)}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => setStatusFilter('all')}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => setStatusFilter("all")}
                 />
               </Badge>
             )}
             {(amountFilter.min || amountFilter.max) && (
               <Badge variant="secondary" className="gap-1">
-                Valor: {amountFilter.min && `≥ ${formatCurrency(parseFloat(amountFilter.min))}`}
-                {amountFilter.min && amountFilter.max && ' e '}
-                {amountFilter.max && `≤ ${formatCurrency(parseFloat(amountFilter.max))}`}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => setAmountFilter({ min: '', max: '' })}
+                Valor:{" "}
+                {amountFilter.min &&
+                  `≥ ${formatCurrency(parseFloat(amountFilter.min))}`}
+                {amountFilter.min && amountFilter.max && " e "}
+                {amountFilter.max &&
+                  `≤ ${formatCurrency(parseFloat(amountFilter.max))}`}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => setAmountFilter({ min: "", max: "" })}
                 />
               </Badge>
             )}
             {(dateFilter.start || dateFilter.end) && (
               <Badge variant="secondary" className="gap-1">
                 Data: {dateFilter.start && formatDate(dateFilter.start)}
-                {dateFilter.start && dateFilter.end && ' até '}
+                {dateFilter.start && dateFilter.end && " até "}
                 {dateFilter.end && formatDate(dateFilter.end)}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => setDateFilter({ start: '', end: '' })}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => setDateFilter({ start: "", end: "" })}
                 />
               </Badge>
             )}
             {invoiceFilter && (
               <Badge variant="secondary" className="gap-1">
                 Fatura: {invoiceFilter}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => setInvoiceFilter('')}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => setInvoiceFilter("")}
                 />
               </Badge>
             )}
@@ -623,11 +767,13 @@ export default function AccountsReceivable() {
             {filteredAccounts.length === 0 ? (
               <div className="text-center py-8">
                 <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">Nenhuma conta encontrada</h3>
+                <h3 className="text-lg font-medium">
+                  Nenhuma conta encontrada
+                </h3>
                 <p className="text-muted-foreground">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? 'Tente ajustar os filtros de busca' 
-                    : 'Comece registrando a primeira conta a receber'}
+                  {searchTerm || statusFilter !== "all"
+                    ? "Tente ajustar os filtros de busca"
+                    : "Comece registrando a primeira conta a receber"}
                 </p>
               </div>
             ) : (
@@ -635,22 +781,41 @@ export default function AccountsReceivable() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Descrição</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Valor</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Vencimento</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Fatura</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Descrição
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Valor
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Vencimento
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Fatura
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAccounts.map((account: any) => (
-                      <tr key={account.id} className="border-b hover:bg-muted/50">
+                      <tr
+                        key={account.id}
+                        className="border-b hover:bg-muted/50"
+                      >
                         <td className="py-3 px-4">
-                          <div className="font-medium">{account.description}</div>
+                          <div className="font-medium">
+                            {account.description}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium">{formatCurrency(parseFloat(account.amount))}</div>
+                          <div className="font-medium">
+                            {formatCurrency(parseFloat(account.amount))}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           {formatDate(account.dueDate)}
@@ -662,20 +827,20 @@ export default function AccountsReceivable() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="max-w-32 truncate">
-                            {account.invoiceNumber || '-'}
+                            {account.invoiceNumber || "-"}
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => handleViewAccount(account)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => handleEditAccount(account)}
                             >
@@ -701,48 +866,68 @@ export default function AccountsReceivable() {
                 Informações completas sobre a conta selecionada.
               </DialogDescription>
             </DialogHeader>
-            
+
             {selectedAccount && (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Descrição
+                    </label>
                     <p className="text-sm">{selectedAccount.description}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Valor</label>
-                    <p className="text-sm font-semibold">{formatCurrency(parseFloat(selectedAccount.amount))}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Valor
+                    </label>
+                    <p className="text-sm font-semibold">
+                      {formatCurrency(parseFloat(selectedAccount.amount))}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Data de Vencimento</label>
-                    <p className="text-sm">{formatDate(selectedAccount.dueDate)}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Data de Vencimento
+                    </label>
+                    <p className="text-sm">
+                      {formatDate(selectedAccount.dueDate)}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Status
+                    </label>
                     <Badge variant={getStatusVariant(selectedAccount.status)}>
                       {getStatusLabel(selectedAccount.status)}
                     </Badge>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Número da Fatura</label>
-                    <p className="text-sm">{selectedAccount.invoiceNumber || 'Não informado'}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Número da Fatura
+                    </label>
+                    <p className="text-sm">
+                      {selectedAccount.invoiceNumber || "Não informado"}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Data de Criação</label>
-                    <p className="text-sm">{formatDate(selectedAccount.createdAt)}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Data de Criação
+                    </label>
+                    <p className="text-sm">
+                      {formatDate(selectedAccount.createdAt)}
+                    </p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsViewDialogOpen(false)}
               >
                 Fechar
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   setIsViewDialogOpen(false);
                   handleEditAccount(selectedAccount);
@@ -763,9 +948,12 @@ export default function AccountsReceivable() {
                 Altere as informações da conta selecionada.
               </DialogDescription>
             </DialogHeader>
-            
+
             <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+              <form
+                onSubmit={editForm.handleSubmit(onEditSubmit)}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={editForm.control}
@@ -774,7 +962,10 @@ export default function AccountsReceivable() {
                       <FormItem className="col-span-2">
                         <FormLabel>Descrição</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Descrição da conta a receber" />
+                          <Input
+                            {...field}
+                            placeholder="Descrição da conta a receber"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -788,7 +979,12 @@ export default function AccountsReceivable() {
                       <FormItem>
                         <FormLabel>Valor (R$)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" placeholder="0,00" />
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            placeholder="0,00"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -815,7 +1011,10 @@ export default function AccountsReceivable() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o status" />
@@ -840,7 +1039,10 @@ export default function AccountsReceivable() {
                       <FormItem>
                         <FormLabel>Número da Fatura</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Número da fatura (opcional)" />
+                          <Input
+                            {...field}
+                            placeholder="Número da fatura (opcional)"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -849,15 +1051,20 @@ export default function AccountsReceivable() {
                 </div>
 
                 <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setIsEditDialogOpen(false)}
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={updateAccountMutation.isPending}>
-                    {updateAccountMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                  <Button
+                    type="submit"
+                    disabled={updateAccountMutation.isPending}
+                  >
+                    {updateAccountMutation.isPending
+                      ? "Salvando..."
+                      : "Salvar Alterações"}
                   </Button>
                 </DialogFooter>
               </form>

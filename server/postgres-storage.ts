@@ -322,8 +322,53 @@ export class PostgresStorage implements IStorage {
 
   // Projects
   async getProjects(organizationId: string): Promise<Project[]> {
-    const result = await db.select().from(projects).where(eq(projects.organizationId, organizationId));
-    return result;
+    // Get all projects
+    const projectList = await db.select().from(projects).where(eq(projects.organizationId, organizationId));
+    
+    // Calculate actual spent amounts based on donations and other expenses
+    const enrichedProjects = await Promise.all(
+      projectList.map(async (project) => {
+        try {
+          // Calculate total donations for this project
+          const [donationsSum] = await db
+            .select({ 
+              total: sql<string>`COALESCE(SUM(CAST(${donations.amount} AS DECIMAL)), 0)`
+            })
+            .from(donations)
+            .where(and(
+              eq(donations.organizationId, organizationId),
+              eq(donations.projectId, project.id)
+            ));
+
+          // Use donations as spent amount for budget tracking
+          const calculatedSpentAmount = donationsSum?.total || '0.00';
+          
+          return {
+            ...project,
+            spentAmount: calculatedSpentAmount,
+            // Add calculated completion rate based on milestones
+            calculatedCompletionRate: this.calculateMilestoneProgress(project.milestones)
+          };
+        } catch (error) {
+          console.error('Error calculating project financials for project', project.id, ':', error);
+          // Return original project data if calculation fails
+          return {
+            ...project,
+            calculatedCompletionRate: this.calculateMilestoneProgress(project.milestones)
+          };
+        }
+      })
+    );
+    
+    return enrichedProjects;
+  }
+
+  private calculateMilestoneProgress(milestones: any): number {
+    if (!milestones || !Array.isArray(milestones) || milestones.length === 0) {
+      return 0;
+    }
+    const completedMilestones = milestones.filter((m: any) => m.completed === true).length;
+    return Math.round((completedMilestones / milestones.length) * 100);
   }
 
   async getProject(id: string, organizationId: string): Promise<Project | undefined> {

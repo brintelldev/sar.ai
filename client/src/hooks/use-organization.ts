@@ -18,7 +18,8 @@ export function useDashboardMetrics() {
 export function useProjects() {
   return useQuery({
     queryKey: ['/api/projects'],
-    staleTime: 60000, // 1 minute
+    staleTime: 10000, // 10 seconds for real-time updates
+    refetchInterval: 30000, // Auto-refetch every 30 seconds
   });
 }
 
@@ -148,6 +149,7 @@ export function useCreateDonation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/donations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] }); // Invalidate projects for budget tracking
     },
   });
 }
@@ -161,6 +163,7 @@ export function useUpdateDonation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/donations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] }); // Invalidate projects for budget tracking
     },
   });
 }
