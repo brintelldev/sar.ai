@@ -952,6 +952,15 @@ export class PostgresStorage implements IStorage {
     return result;
   }
 
+  async updateAccountPayable(id: string, updates: any): Promise<AccountsPayable | undefined> {
+    const [result] = await db
+      .update(accountsPayable)
+      .set(updates)
+      .where(eq(accountsPayable.id, id))
+      .returning();
+    return result;
+  }
+
   // Funders methods
   async getFunders(organizationId: string): Promise<Funder[]> {
     return await db

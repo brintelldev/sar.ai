@@ -1054,6 +1054,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/accounts-payable/:id", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const organizationId = req.session.organizationId!;
+      
+      // Verify the account belongs to the organization
+      const accounts = await storage.getAccountsPayable(organizationId);
+      const existingAccount = accounts.find(account => account.id === id);
+      if (!existingAccount) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      
+      const updatedAccount = await storage.updateAccountPayable(id, req.body);
+      res.json(updatedAccount);
+    } catch (error) {
+      console.error("Update account payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Funders routes
   app.get("/api/funders", requireAuth, requireOrganization, async (req, res) => {
     try {

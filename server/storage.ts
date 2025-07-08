@@ -102,6 +102,7 @@ export interface IStorage {
   // Accounts Payable
   getAccountsPayable(organizationId: string): Promise<AccountsPayable[]>;
   createAccountPayable(account: any): Promise<AccountsPayable>;
+  updateAccountPayable(id: string, updates: any): Promise<AccountsPayable | undefined>;
 
   // Funders
   getFunders(organizationId: string): Promise<Funder[]>;
@@ -360,6 +361,7 @@ export class MemStorage implements IStorage {
 
   async getAccountsPayable(organizationId: string): Promise<AccountsPayable[]> { return []; }
   async createAccountPayable(account: any): Promise<AccountsPayable> { throw new Error("Not implemented in MemStorage"); }
+  async updateAccountPayable(id: string, updates: any): Promise<AccountsPayable | undefined> { throw new Error("Not implemented in MemStorage"); }
 
   async getFunders(organizationId: string): Promise<Funder[]> { return []; }
   async createFunder(funder: any): Promise<Funder> { throw new Error("Not implemented in MemStorage"); }

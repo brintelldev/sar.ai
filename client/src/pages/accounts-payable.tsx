@@ -34,6 +34,10 @@ export default function AccountsPayable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [projectComboboxOpen, setProjectComboboxOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editProjectComboboxOpen, setEditProjectComboboxOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -63,6 +67,26 @@ export default function AccountsPayable() {
     }
   });
 
+  const updateAccountMutation = useMutation({
+    mutationFn: (data: any) => apiRequest(`/api/accounts-payable/${selectedAccount?.id}`, 'PATCH', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/accounts-payable'] });
+      setIsEditDialogOpen(false);
+      setSelectedAccount(null);
+      toast({
+        title: "Conta atualizada",
+        description: "As informações foram atualizadas com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao salvar as alterações.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const form = useForm({
     resolver: zodResolver(insertAccountPayableSchema),
     defaultValues: {
@@ -79,8 +103,47 @@ export default function AccountsPayable() {
   const watchCategory = form.watch('category');
   const watchProjectId = form.watch('projectId');
 
+  // Formulário para edição
+  const editForm = useForm({
+    resolver: zodResolver(insertAccountPayableSchema),
+    defaultValues: {
+      supplierName: '',
+      description: '',
+      amount: '',
+      dueDate: '',
+      status: 'pending',
+      category: '',
+      projectId: '',
+    }
+  });
+
+  const watchEditCategory = editForm.watch('category');
+
   const onSubmit = async (data: any) => {
     await createAccountMutation.mutateAsync(data);
+  };
+
+  const onEditSubmit = async (data: any) => {
+    await updateAccountMutation.mutateAsync(data);
+  };
+
+  const handleViewAccount = (account: any) => {
+    setSelectedAccount(account);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditAccount = (account: any) => {
+    setSelectedAccount(account);
+    editForm.reset({
+      supplierName: account.supplierName,
+      description: account.description,
+      amount: account.amount.toString(),
+      dueDate: account.dueDate,
+      status: account.status,
+      category: account.category || '',
+      projectId: account.projectId || '',
+    });
+    setIsEditDialogOpen(true);
   };
 
   const getStatusVariant = (status: string) => {
@@ -365,6 +428,265 @@ export default function AccountsPayable() {
               </Form>
             </DialogContent>
           </Dialog>
+
+          {/* Dialog de Visualização */}
+          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Detalhes da Conta a Pagar</DialogTitle>
+                <DialogDescription>
+                  Informações completas da conta selecionada
+                </DialogDescription>
+              </DialogHeader>
+              
+              {selectedAccount && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label className="text-right font-medium">Fornecedor:</label>
+                    <div className="col-span-3">{selectedAccount.supplierName}</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label className="text-right font-medium">Descrição:</label>
+                    <div className="col-span-3">{selectedAccount.description}</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label className="text-right font-medium">Valor:</label>
+                    <div className="col-span-3">{formatCurrency(parseFloat(selectedAccount.amount))}</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label className="text-right font-medium">Vencimento:</label>
+                    <div className="col-span-3">{formatDate(selectedAccount.dueDate)}</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label className="text-right font-medium">Status:</label>
+                    <div className="col-span-3">
+                      <Badge variant={getStatusVariant(selectedAccount.status)}>
+                        {getStatusLabel(selectedAccount.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label className="text-right font-medium">Categoria:</label>
+                    <div className="col-span-3">
+                      {selectedAccount.category ? getCategoryLabel(selectedAccount.category) : '-'}
+                    </div>
+                  </div>
+                  
+                  {selectedAccount.projectId && (
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <label className="text-right font-medium">Projeto:</label>
+                      <div className="col-span-3">{getProjectName(selectedAccount.projectId)}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                  Fechar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog de Edição */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Editar Conta a Pagar</DialogTitle>
+                <DialogDescription>
+                  Modifique as informações da conta selecionada
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="supplierName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome do Fornecedor</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Nome da empresa ou pessoa" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor (R$)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.01" placeholder="0.00" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Vencimento</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="pending">Pendente</SelectItem>
+                              <SelectItem value="approved">Aprovado</SelectItem>
+                              <SelectItem value="paid">Pago</SelectItem>
+                              <SelectItem value="overdue">Vencido</SelectItem>
+                              <SelectItem value="cancelled">Cancelado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Categoria</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione a categoria" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="administrative">Administrativo</SelectItem>
+                              <SelectItem value="project">Projeto</SelectItem>
+                              <SelectItem value="operational">Operacional</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Campo condicional de projeto para edição */}
+                    {watchEditCategory === 'project' && (
+                      <FormField
+                        control={editForm.control}
+                        name="projectId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Projeto</FormLabel>
+                            <Popover open={editProjectComboboxOpen} onOpenChange={setEditProjectComboboxOpen}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={editProjectComboboxOpen}
+                                    className="w-full justify-between"
+                                  >
+                                    {field.value
+                                      ? projects.find((project: any) => project.id === field.value)?.name
+                                      : "Selecione um projeto..."}
+                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0">
+                                <Command>
+                                  <CommandInput placeholder="Buscar projeto..." />
+                                  <CommandList>
+                                    <CommandEmpty>Nenhum projeto encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                      {projects.map((project: any) => (
+                                        <CommandItem
+                                          key={project.id}
+                                          value={project.name}
+                                          onSelect={() => {
+                                            editForm.setValue('projectId', project.id);
+                                            setEditProjectComboboxOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={`mr-2 h-4 w-4 ${
+                                              field.value === project.id ? "opacity-100" : "opacity-0"
+                                            }`}
+                                          />
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">{project.name}</span>
+                                            <span className="text-sm text-muted-foreground truncate">
+                                              {project.description}
+                                            </span>
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    <FormField
+                      control={editForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Descrição</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Descrição da despesa" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={updateAccountMutation.isPending}>
+                      {updateAccountMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Stats Cards */}
@@ -519,10 +841,10 @@ export default function AccountsPayable() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => handleViewAccount(account)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => handleEditAccount(account)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                           </div>
