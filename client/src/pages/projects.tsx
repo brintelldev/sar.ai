@@ -141,8 +141,44 @@ export default function Projects() {
     }
   });
 
+  const validateStatusWithDates = (status: string, startDate: string, endDate: string) => {
+    const now = new Date();
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    switch (status) {
+      case 'planning':
+        if (start && now >= start) {
+          return 'Status "Planejamento" só pode ser usado quando a data atual for anterior à data de início';
+        }
+        break;
+      case 'active':
+        if (!start || now <= start) {
+          return 'Status "Em Andamento" só pode ser usado quando a data atual for posterior à data de início';
+        }
+        break;
+      case 'completed':
+        if (!end || now <= end) {
+          return 'Status "Concluído" só pode ser usado quando a data atual for posterior à data de término';
+        }
+        break;
+    }
+    return null;
+  };
+
   const onCreateSubmit = async (data: any) => {
     try {
+      // Validate status with dates
+      const statusError = validateStatusWithDates(data.status, data.startDate, data.endDate);
+      if (statusError) {
+        toast({
+          title: "Erro de validação",
+          description: statusError,
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Remove organizationId from data since it's added automatically by the backend
       const { organizationId, ...projectData } = data;
       console.log('Creating project with data:', projectData);
@@ -178,6 +214,17 @@ export default function Projects() {
 
   const onEditSubmit = async (data: any) => {
     try {
+      // Validate status with dates
+      const statusError = validateStatusWithDates(data.status, data.startDate, data.endDate);
+      if (statusError) {
+        toast({
+          title: "Erro de validação",
+          description: statusError,
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Updating project with data:', data, 'project id:', selectedProject?.id);
       await updateProjectMutation.mutateAsync({ id: selectedProject.id, data });
       toast({
@@ -457,7 +504,22 @@ export default function Projects() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={(value) => {
+                            const startDate = createForm.getValues('startDate');
+                            const endDate = createForm.getValues('endDate');
+                            const statusError = validateStatusWithDates(value, startDate, endDate);
+                            
+                            if (statusError) {
+                              createForm.setError('status', {
+                                type: 'manual',
+                                message: statusError
+                              });
+                            } else {
+                              createForm.clearErrors('status');
+                            }
+                            
+                            field.onChange(value);
+                          }} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione o status" />
@@ -503,12 +565,26 @@ export default function Projects() {
                               onChange={(e) => {
                                 const startDate = e.target.value;
                                 const endDate = createForm.getValues('endDate');
+                                const status = createForm.getValues('status');
                                 
                                 field.onChange(e);
                                 
                                 // Clear end date error if start date is changed and now valid
                                 if (startDate && endDate && new Date(endDate) >= new Date(startDate)) {
                                   createForm.clearErrors('endDate');
+                                }
+                                
+                                // Revalidate status when start date changes
+                                if (status) {
+                                  const statusError = validateStatusWithDates(status, startDate, endDate);
+                                  if (statusError) {
+                                    createForm.setError('status', {
+                                      type: 'manual',
+                                      message: statusError
+                                    });
+                                  } else {
+                                    createForm.clearErrors('status');
+                                  }
                                 }
                               }}
                             />
@@ -532,6 +608,7 @@ export default function Projects() {
                               onChange={(e) => {
                                 const startDate = createForm.getValues('startDate');
                                 const endDate = e.target.value;
+                                const status = createForm.getValues('status');
                                 
                                 if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
                                   createForm.setError('endDate', {
@@ -543,6 +620,19 @@ export default function Projects() {
                                 
                                 createForm.clearErrors('endDate');
                                 field.onChange(e);
+                                
+                                // Revalidate status when end date changes
+                                if (status) {
+                                  const statusError = validateStatusWithDates(status, startDate, endDate);
+                                  if (statusError) {
+                                    createForm.setError('status', {
+                                      type: 'manual',
+                                      message: statusError
+                                    });
+                                  } else {
+                                    createForm.clearErrors('status');
+                                  }
+                                }
                               }}
                             />
                           </FormControl>
@@ -1126,7 +1216,22 @@ export default function Projects() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={(value) => {
+                          const startDate = editForm.getValues('startDate');
+                          const endDate = editForm.getValues('endDate');
+                          const statusError = validateStatusWithDates(value, startDate, endDate);
+                          
+                          if (statusError) {
+                            editForm.setError('status', {
+                              type: 'manual',
+                              message: statusError
+                            });
+                          } else {
+                            editForm.clearErrors('status');
+                          }
+                          
+                          field.onChange(value);
+                        }} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o status" />
@@ -1172,12 +1277,26 @@ export default function Projects() {
                             onChange={(e) => {
                               const startDate = e.target.value;
                               const endDate = editForm.getValues('endDate');
+                              const status = editForm.getValues('status');
                               
                               field.onChange(e);
                               
                               // Clear end date error if start date is changed and now valid
                               if (startDate && endDate && new Date(endDate) >= new Date(startDate)) {
                                 editForm.clearErrors('endDate');
+                              }
+                              
+                              // Revalidate status when start date changes
+                              if (status) {
+                                const statusError = validateStatusWithDates(status, startDate, endDate);
+                                if (statusError) {
+                                  editForm.setError('status', {
+                                    type: 'manual',
+                                    message: statusError
+                                  });
+                                } else {
+                                  editForm.clearErrors('status');
+                                }
                               }
                             }}
                           />
@@ -1201,6 +1320,7 @@ export default function Projects() {
                             onChange={(e) => {
                               const startDate = editForm.getValues('startDate');
                               const endDate = e.target.value;
+                              const status = editForm.getValues('status');
                               
                               if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
                                 editForm.setError('endDate', {
@@ -1212,6 +1332,19 @@ export default function Projects() {
                               
                               editForm.clearErrors('endDate');
                               field.onChange(e);
+                              
+                              // Revalidate status when end date changes
+                              if (status) {
+                                const statusError = validateStatusWithDates(status, startDate, endDate);
+                                if (statusError) {
+                                  editForm.setError('status', {
+                                    type: 'manual',
+                                    message: statusError
+                                  });
+                                } else {
+                                  editForm.clearErrors('status');
+                                }
+                              }
                             }}
                           />
                         </FormControl>
