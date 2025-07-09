@@ -16,6 +16,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formatCurrency, formatDate } from '@/lib/utils';
+
+// Helper function to format date from input[type="date"] correctly
+const formatInputDate = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '@/hooks/use-organization';
 import { insertProjectSchema } from '@/../../shared/schema';
 import { useToast } from '@/hooks/use-toast';
@@ -847,7 +858,7 @@ export default function Projects() {
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
                         <span className="text-xs md:text-sm text-muted-foreground truncate">
-                          {formatDate(project.startDate)} - {formatDate(project.endDate)}
+                          {formatInputDate(project.startDate)} - {formatInputDate(project.endDate)}
                         </span>
                       </div>
                     )}
@@ -982,13 +993,13 @@ export default function Projects() {
                   {selectedProject.startDate && (
                     <div>
                       <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Início</h4>
-                      <p className="text-sm">{formatDate(selectedProject.startDate)}</p>
+                      <p className="text-sm">{formatInputDate(selectedProject.startDate)}</p>
                     </div>
                   )}
                   {selectedProject.endDate && (
                     <div>
                       <h4 className="font-medium text-sm text-muted-foreground mb-1">Data de Término</h4>
-                      <p className="text-sm">{formatDate(selectedProject.endDate)}</p>
+                      <p className="text-sm">{formatInputDate(selectedProject.endDate)}</p>
                     </div>
                   )}
                 </div>
