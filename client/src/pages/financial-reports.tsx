@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,60 +7,134 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { DollarSign, TrendingUp, TrendingDown, FileText, Download, Calendar, Filter } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, FileText, Download, Calendar, Filter, RefreshCw } from 'lucide-react';
 
 export default function FinancialReports() {
   const [reportType, setReportType] = useState('overview');
   const [dateRange, setDateRange] = useState('current-month');
   const [selectedYear, setSelectedYear] = useState('2024');
 
-  const { data: donations } = useQuery({
+  const { data: donations, refetch: refetchDonations } = useQuery({
     queryKey: ['/api/donations'],
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
 
-  const { data: accountsReceivable } = useQuery({
+  const { data: accountsReceivable, refetch: refetchReceivable } = useQuery({
     queryKey: ['/api/accounts-receivable'],
+    refetchInterval: 30000,
   });
 
-  const { data: accountsPayable } = useQuery({
+  const { data: accountsPayable, refetch: refetchPayable } = useQuery({
     queryKey: ['/api/accounts-payable'],
+    refetchInterval: 30000,
   });
 
-  // Calculate financial metrics
-  const totalDonations = Array.isArray(donations) ? 
-    donations.reduce((sum: number, d: any) => sum + parseFloat(d.amount || 0), 0) : 0;
+  // Calculate financial metrics with real-time data
+  const financialMetrics = useMemo(() => {
+    const donationsData = Array.isArray(donations) ? donations : [];
+    const receivableData = Array.isArray(accountsReceivable) ? accountsReceivable : [];
+    const payableData = Array.isArray(accountsPayable) ? accountsPayable : [];
 
-  const totalReceivable = Array.isArray(accountsReceivable) ? 
-    accountsReceivable.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0) : 0;
+    const totalDonations = donationsData.reduce((sum: number, d: any) => sum + parseFloat(d.amount || 0), 0);
+    const totalReceivable = receivableData.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0);
+    const totalPayable = payableData.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0);
+    const netBalance = totalDonations + totalReceivable - totalPayable;
 
-  const totalPayable = Array.isArray(accountsPayable) ? 
-    accountsPayable.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0) : 0;
+    return {
+      totalDonations,
+      totalReceivable,
+      totalPayable,
+      netBalance,
+      donationsData,
+      receivableData,
+      payableData
+    };
+  }, [donations, accountsReceivable, accountsPayable]);
 
-  const netBalance = totalDonations + totalReceivable - totalPayable;
+  // Generate real-time chart data from actual platform data
+  const chartData = useMemo(() => {
+    const { donationsData, payableData, receivableData } = financialMetrics;
+    
+    // Group data by month
+    const monthlyGroups: { [key: string]: { donations: number; expenses: number; receivable: number } } = {};
+    
+    // Process donations by month
+    donationsData.forEach((donation: any) => {
+      const date = new Date(donation.donationDate || donation.createdAt);
+      const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = { donations: 0, expenses: 0, receivable: 0 };
+      }
+      monthlyGroups[monthKey].donations += parseFloat(donation.amount || 0);
+    });
 
-  // Sample data for charts
-  const monthlyData = [
-    { month: 'Jan', donations: 15000, expenses: 8500, balance: 6500 },
-    { month: 'Fev', donations: 18500, expenses: 12000, balance: 6500 },
-    { month: 'Mar', donations: 22000, expenses: 9800, balance: 12200 },
-    { month: 'Abr', donations: 19200, expenses: 11500, balance: 7700 },
-    { month: 'Mai', donations: 25800, expenses: 13200, balance: 12600 },
-    { month: 'Jun', donations: 21500, expenses: 10800, balance: 10700 },
-  ];
+    // Process accounts payable by month
+    payableData.forEach((account: any) => {
+      const date = new Date(account.dueDate || account.createdAt);
+      const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = { donations: 0, expenses: 0, receivable: 0 };
+      }
+      monthlyGroups[monthKey].expenses += parseFloat(account.amount || 0);
+    });
 
-  const expenseCategories = [
-    { name: 'Administrativo', value: 35000, color: '#8884d8' },
-    { name: 'Projetos', value: 45000, color: '#82ca9d' },
-    { name: 'Operacional', value: 25000, color: '#ffc658' },
-    { name: 'Marketing', value: 15000, color: '#ff7c7c' },
-  ];
+    // Process accounts receivable by month
+    receivableData.forEach((account: any) => {
+      const date = new Date(account.dueDate || account.createdAt);
+      const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = { donations: 0, expenses: 0, receivable: 0 };
+      }
+      monthlyGroups[monthKey].receivable += parseFloat(account.amount || 0);
+    });
 
-  const donationSources = [
-    { name: 'Website', value: 40000, color: '#8884d8' },
-    { name: 'Instagram', value: 25000, color: '#82ca9d' },
-    { name: 'Eventos', value: 35000, color: '#ffc658' },
-    { name: 'Parcerias', value: 20000, color: '#ff7c7c' },
-  ];
+    // Convert to chart format
+    const monthlyData = Object.keys(monthlyGroups).map(month => ({
+      month,
+      donations: monthlyGroups[month].donations,
+      expenses: monthlyGroups[month].expenses,
+      receivable: monthlyGroups[month].receivable,
+      balance: monthlyGroups[month].donations + monthlyGroups[month].receivable - monthlyGroups[month].expenses
+    })).slice(-6); // Last 6 months
+
+    // Generate expense categories from real data
+    const expensesByCategory: { [key: string]: number } = {};
+    payableData.forEach((account: any) => {
+      const category = account.category || 'Outros';
+      expensesByCategory[category] = (expensesByCategory[category] || 0) + parseFloat(account.amount || 0);
+    });
+
+    const expenseCategories = Object.keys(expensesByCategory).map((category, index) => ({
+      name: category,
+      value: expensesByCategory[category],
+      color: ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1', '#d084d0'][index % 6]
+    }));
+
+    // Generate donation sources from real data
+    const donationsBySource: { [key: string]: number } = {};
+    donationsData.forEach((donation: any) => {
+      const source = donation.campaignSource || 'Outros';
+      donationsBySource[source] = (donationsBySource[source] || 0) + parseFloat(donation.amount || 0);
+    });
+
+    const donationSources = Object.keys(donationsBySource).map((source, index) => ({
+      name: source,
+      value: donationsBySource[source],
+      color: ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1', '#d084d0'][index % 6]
+    }));
+
+    return {
+      monthlyData,
+      expenseCategories,
+      donationSources
+    };
+  }, [financialMetrics]);
+
+  const handleRefreshData = () => {
+    refetchDonations();
+    refetchReceivable();
+    refetchPayable();
+  };
 
   const renderOverviewReport = () => (
     <div className="space-y-6">
@@ -72,10 +146,10 @@ export default function FinancialReports() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalDonations)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(financialMetrics.totalDonations)}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +12% em relação ao mês anterior
+              Dados em tempo real
             </p>
           </CardContent>
         </Card>
@@ -86,7 +160,7 @@ export default function FinancialReports() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalReceivable)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(financialMetrics.totalReceivable)}</div>
             <p className="text-xs text-muted-foreground">
               Valores pendentes de recebimento
             </p>
@@ -99,7 +173,7 @@ export default function FinancialReports() {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalPayable)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(financialMetrics.totalPayable)}</div>
             <p className="text-xs text-muted-foreground">
               Compromissos financeiros pendentes
             </p>
@@ -112,11 +186,11 @@ export default function FinancialReports() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(Math.abs(netBalance))}
+            <div className={`text-2xl font-bold ${financialMetrics.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(Math.abs(financialMetrics.netBalance))}
             </div>
             <p className="text-xs text-muted-foreground">
-              {netBalance >= 0 ? 'Posição positiva' : 'Déficit'}
+              {financialMetrics.netBalance >= 0 ? 'Posição positiva' : 'Déficit'}
             </p>
           </CardContent>
         </Card>
@@ -133,7 +207,7 @@ export default function FinancialReports() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
+              <BarChart data={chartData.monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -149,14 +223,14 @@ export default function FinancialReports() {
           <CardHeader>
             <CardTitle>Distribuição de Despesas</CardTitle>
             <CardDescription>
-              Por categoria nos últimos 6 meses
+              Por categoria (dados em tempo real)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={expenseCategories}
+                  data={chartData.expenseCategories}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -165,7 +239,7 @@ export default function FinancialReports() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {expenseCategories.map((entry, index) => (
+                  {chartData.expenseCategories.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -180,12 +254,12 @@ export default function FinancialReports() {
         <CardHeader>
           <CardTitle>Tendência Financeira</CardTitle>
           <CardDescription>
-            Evolução do saldo ao longo do tempo
+            Evolução do saldo ao longo do tempo (dados reais)
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyData}>
+            <LineChart data={chartData.monthlyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -205,14 +279,14 @@ export default function FinancialReports() {
           <CardHeader>
             <CardTitle>Doações por Fonte</CardTitle>
             <CardDescription>
-              Origem das doações recebidas
+              Origem das doações recebidas (dados reais)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={donationSources}
+                  data={chartData.donationSources}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -221,7 +295,7 @@ export default function FinancialReports() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {donationSources.map((entry, index) => (
+                  {chartData.donationSources.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -278,7 +352,7 @@ export default function FinancialReports() {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={monthlyData}>
+            <BarChart data={chartData.monthlyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -332,7 +406,7 @@ export default function FinancialReports() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {expenseCategories.map((category, index) => (
+              {chartData.expenseCategories.map((category, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div 
@@ -344,7 +418,8 @@ export default function FinancialReports() {
                   <div className="text-right">
                     <p className="font-medium">{formatCurrency(category.value)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {((category.value / expenseCategories.reduce((sum, c) => sum + c.value, 0)) * 100).toFixed(1)}%
+                      {chartData.expenseCategories.length > 0 ? 
+                        ((category.value / chartData.expenseCategories.reduce((sum, c) => sum + c.value, 0)) * 100).toFixed(1) : 0}%
                     </p>
                   </div>
                 </div>
@@ -374,10 +449,18 @@ export default function FinancialReports() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Relatórios Financeiros</h1>
             <p className="text-muted-foreground mt-2">
-              Análise completa da situação financeira da organização
+              Análise completa da situação financeira da organização • 
+              <span className="inline-flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                Dados em tempo real
+              </span>
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRefreshData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar Dados
+            </Button>
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Exportar PDF
