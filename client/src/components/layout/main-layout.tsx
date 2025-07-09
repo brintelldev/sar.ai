@@ -8,13 +8,15 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen bg-background">
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Navbar />
+            <SidebarTrigger className="-ml-1 md:hidden" />
+            <div className="flex-1">
+              <Navbar />
+            </div>
           </header>
           <main className="flex-1 overflow-auto">
             {children}
