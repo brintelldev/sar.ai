@@ -29,15 +29,49 @@ export default function FinancialReports() {
     refetchInterval: 30000,
   });
 
-  // Calculate financial metrics with real-time data
+  // Calculate financial metrics with real-time data and filters
   const financialMetrics = useMemo(() => {
     const donationsData = Array.isArray(donations) ? donations : [];
     const receivableData = Array.isArray(accountsReceivable) ? accountsReceivable : [];
     const payableData = Array.isArray(accountsPayable) ? accountsPayable : [];
 
-    const totalDonations = donationsData.reduce((sum: number, d: any) => sum + parseFloat(d.amount || 0), 0);
-    const totalReceivable = receivableData.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0);
-    const totalPayable = payableData.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0);
+    // Filter data based on selected date range and year
+    const filterByDateRange = (data: any[], dateField: string) => {
+      return data.filter((item: any) => {
+        const itemDate = new Date(item[dateField] || item.createdAt);
+        const itemYear = itemDate.getFullYear();
+        const itemMonth = itemDate.getMonth();
+        const currentYear = parseInt(selectedYear);
+        const currentMonth = new Date().getMonth();
+
+        // Filter by year first
+        if (itemYear !== currentYear) return false;
+
+        // Then filter by date range
+        if (dateRange === 'current-month') {
+          return itemMonth === currentMonth;
+        } else if (dateRange === 'current-year') {
+          return true; // Already filtered by year
+        } else if (dateRange === 'last-30-days') {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          return itemDate >= thirtyDaysAgo && itemDate <= new Date();
+        } else if (dateRange === 'last-quarter') {
+          const currentQuarter = Math.floor(currentMonth / 3);
+          const itemQuarter = Math.floor(itemMonth / 3);
+          return itemQuarter === currentQuarter;
+        }
+        return true;
+      });
+    };
+
+    const filteredDonations = filterByDateRange(donationsData, 'donationDate');
+    const filteredReceivable = filterByDateRange(receivableData, 'dueDate');
+    const filteredPayable = filterByDateRange(payableData, 'dueDate');
+
+    const totalDonations = filteredDonations.reduce((sum: number, d: any) => sum + parseFloat(d.amount || 0), 0);
+    const totalReceivable = filteredReceivable.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0);
+    const totalPayable = filteredPayable.reduce((sum: number, a: any) => sum + parseFloat(a.amount || 0), 0);
     const netBalance = totalDonations + totalReceivable - totalPayable;
 
     return {
@@ -45,22 +79,25 @@ export default function FinancialReports() {
       totalReceivable,
       totalPayable,
       netBalance,
-      donationsData,
-      receivableData,
-      payableData
+      donationsData: filteredDonations,
+      receivableData: filteredReceivable,
+      payableData: filteredPayable,
+      originalDonations: donationsData,
+      originalReceivable: receivableData,
+      originalPayable: payableData
     };
-  }, [donations, accountsReceivable, accountsPayable]);
+  }, [donations, accountsReceivable, accountsPayable, dateRange, selectedYear]);
 
-  // Calculate available years from data
+  // Calculate available years from original data (not filtered)
   const availableYears = useMemo(() => {
-    const { donationsData, receivableData, payableData } = financialMetrics;
+    const { originalDonations, originalReceivable, originalPayable } = financialMetrics;
     const years = new Set<number>();
 
     // Add current year by default
     years.add(new Date().getFullYear());
 
     // Extract years from donations
-    donationsData.forEach((donation: any) => {
+    originalDonations?.forEach((donation: any) => {
       const date = new Date(donation.donationDate || donation.createdAt);
       if (!isNaN(date.getTime())) {
         years.add(date.getFullYear());
@@ -68,7 +105,7 @@ export default function FinancialReports() {
     });
 
     // Extract years from accounts receivable
-    receivableData.forEach((account: any) => {
+    originalReceivable?.forEach((account: any) => {
       const date = new Date(account.dueDate || account.createdAt);
       if (!isNaN(date.getTime())) {
         years.add(date.getFullYear());
@@ -76,7 +113,7 @@ export default function FinancialReports() {
     });
 
     // Extract years from accounts payable
-    payableData.forEach((account: any) => {
+    originalPayable?.forEach((account: any) => {
       const date = new Date(account.dueDate || account.createdAt);
       if (!isNaN(date.getTime())) {
         years.add(date.getFullYear());
@@ -170,6 +207,21 @@ export default function FinancialReports() {
     refetchDonations();
     refetchReceivable();
     refetchPayable();
+  };
+
+  const getPeriodDescription = () => {
+    switch (dateRange) {
+      case 'current-month':
+        return 'Mês atual';
+      case 'last-30-days':
+        return 'Últimos 30 dias';
+      case 'last-quarter':
+        return 'Trimestre atual';
+      case 'current-year':
+        return 'Ano selecionado completo';
+      default:
+        return 'Período personalizado';
+    }
   };
 
   const renderOverviewReport = () => (
@@ -490,6 +542,10 @@ export default function FinancialReports() {
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
                 Dados em tempo real
               </span>
+              <br />
+              <span className="text-sm">
+                Período: {getPeriodDescription()} • Ano: {selectedYear}
+              </span>
             </p>
           </div>
           <div className="flex gap-2">
@@ -527,10 +583,9 @@ export default function FinancialReports() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="current-month">Mês Atual</SelectItem>
-              <SelectItem value="last-3-months">Últimos 3 Meses</SelectItem>
-              <SelectItem value="last-6-months">Últimos 6 Meses</SelectItem>
-              <SelectItem value="current-year">Ano Atual</SelectItem>
-              <SelectItem value="last-year">Ano Anterior</SelectItem>
+              <SelectItem value="last-30-days">Últimos 30 Dias</SelectItem>
+              <SelectItem value="last-quarter">Trimestre Atual</SelectItem>
+              <SelectItem value="current-year">Ano Selecionado</SelectItem>
             </SelectContent>
           </Select>
 
