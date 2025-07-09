@@ -557,10 +557,6 @@ export default function FinancialReports() {
               <Download className="h-4 w-4 mr-2" />
               Exportar PDF
             </Button>
-            <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Relatório Completo
-            </Button>
           </div>
         </div>
 
