@@ -15,16 +15,17 @@ import { useTheme } from '@/hooks/use-theme';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Bell, Shield, Database, Users, Mail, Globe, Palette } from 'lucide-react';
+import { formatCurrency, formatDate, maskCNPJ } from '@/lib/utils';
 
 export default function Settings() {
   const { user, currentOrganization, userRole } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
-  
+
   // Verificar se o usuário tem permissão de administrador
   const isAdmin = userRole === 'admin' || userRole === 'manager';
-  
+
   const [accountForm, setAccountForm] = useState({
     name: '',
     email: '',
@@ -239,8 +240,13 @@ export default function Settings() {
       });
       return;
     }
-    
+
     updateOrganizationMutation.mutate(organizationForm);
+  };
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const maskedValue = maskCNPJ(e.target.value);
+    setOrganizationForm({ ...organizationForm, cnpj: maskedValue });
   };
 
   return (
@@ -486,9 +492,9 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label>CNPJ</Label>
-                    <Input 
+                    <Input
                       value={organizationForm.cnpj}
-                      onChange={(e) => setOrganizationForm({...organizationForm, cnpj: e.target.value})}
+                      onChange={handleCnpjChange}
                       disabled={!isAdmin}
                     />
                   </div>
