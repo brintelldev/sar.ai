@@ -48,16 +48,24 @@ export function useSimpleAuth() {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       login(email, password),
     onSuccess: (data) => {
+      console.log('Login successful, setting auth state:', data);
       setAuthState(data);
       setIsLoading(false);
+      setHasChecked(true);
       queryClient.setQueryData(['/api/auth/me'], data);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       // Aplicar tema imediatamente após login bem-sucedido
       applyStoredTheme();
-      // Force a brief delay to ensure state is updated
+      // Use replace instead of href to ensure proper navigation in production
       setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
+        window.location.replace('/');
+      }, 200);
     },
+    onError: (error) => {
+      console.error('Login error:', error);
+      setAuthState(null);
+      setIsLoading(false);
+    }
   });
 
   const registerMutation = useMutation({

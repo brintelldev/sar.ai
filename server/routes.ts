@@ -76,6 +76,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     conString: process.env.DATABASE_URL,
     tableName: 'user_sessions',
     createTableIfMissing: true,
+    pruneSessionInterval: 60 * 15, // Prune expired entries every 15 minutes
+    errorLog: (error) => {
+      console.error('Session store error:', error);
+    }
   });
 
   // Session middleware with PostgreSQL store
@@ -84,13 +88,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     secret: process.env.SESSION_SECRET || 'your-secret-key-development-mode',
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Refresh session on each request
     cookie: { 
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      secure: false, // Keep false for now - Replit deployments may not have HTTPS setup
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax'
+      sameSite: 'lax',
+      domain: undefined, // Let browser handle domain automatically
+      path: '/' // Explicit path
     },
-    name: 'sessionId' // Explicit session name
+    name: 'sessionId', // Explicit session name
+    proxy: process.env.NODE_ENV === 'production', // Trust proxy in production
+    unset: 'destroy' // Destroy session when unsetting
   }));
 
   // Health check endpoint for deployment monitoring
@@ -109,6 +118,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Session validation endpoint for debugging
+  app.get('/api/session/validate', (req, res) => {
+    res.status(200).json({
+      sessionId: req.sessionID,
+      hasUserId: !!req.session.userId,
+      hasOrganizationId: !!req.session.organizationId,
+      userRole: (req.session as any).userRole,
+      cookie: req.session.cookie,
+      timestamp: new Date().toISOString()
     });
   });
 
@@ -231,8 +252,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       req.session.userId = user.id;
       req.session.organizationId = organization.id;
+      (req.session as any).userRole = 'admin';
 
-      res.json({ user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt }, organization });
+      // Explicitly save the session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error('Registration session save error:', err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        
+        console.log('Registration session saved successfully:', req.sessionID);
+        res.json({ user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt }, organization });
+      });
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -277,11 +308,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Setting session:', { userId: user.id, organizationId: organizations[0]?.id, userRole });
       console.log('Session after setting:', req.session);
 
-      res.json({ 
-        user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
-        organizations,
-        currentOrganization: organizations[0] || null,
-        userRole
+      // Explicitly save the session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        
+        console.log('Session saved successfully:', req.sessionID);
+        res.json({ 
+          user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
+          organizations,
+          currentOrganization: organizations[0] || null,
+          userRole
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -358,6 +398,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
+      console.log('Me endpoint - Session check:', { 
+        sessionId: req.sessionID, 
+        userId: req.session.userId,
+        organizationId: req.session.organizationId 
+      });
+
       const user = await storage.getUser(req.session.userId!);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -366,26 +412,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const organizations = await storage.getUserOrganizations(user.id);
       let currentOrganization = null;
       let userRole = null;
+      let sessionUpdated = false;
       
       if (req.session.organizationId) {
         currentOrganization = await storage.getOrganization(req.session.organizationId);
         // Get user role in current organization
         const roleData = await storage.getUserRole(user.id, req.session.organizationId);
         userRole = roleData?.role || null;
+        (req.session as any).userRole = userRole;
       } else if (organizations.length > 0) {
         // If no organization is set in session, use the first one
         currentOrganization = organizations[0];
         req.session.organizationId = organizations[0].id;
         const roleData = await storage.getUserRole(user.id, organizations[0].id);
         userRole = roleData?.role || null;
+        (req.session as any).userRole = userRole;
+        sessionUpdated = true;
       }
 
-      res.json({ 
+      const responseData = { 
         user: { id: user.id, email: user.email, name: user.name, phone: user.phone, position: user.position, createdAt: user.createdAt },
         organizations,
         currentOrganization,
         userRole
-      });
+      };
+
+      if (sessionUpdated) {
+        // Save session if we updated it
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error in /me:', err);
+          }
+          res.json(responseData);
+        });
+      } else {
+        res.json(responseData);
+      }
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ message: "Internal server error" });

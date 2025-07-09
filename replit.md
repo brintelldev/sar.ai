@@ -134,6 +134,14 @@ Changelog:
   * Improved server startup error handling with port conflict resolution
   * Server now properly listens on 0.0.0.0 interface for deployment compatibility
   * Environment variable PORT support with fallback to 5000
+- July 09, 2025. Session persistence fixes for production login issues:
+  * Fixed session configuration with rolling refresh and proper cookie settings
+  * Added explicit session.save() calls in login and registration endpoints
+  * Improved client-side authentication flow with better error handling
+  * Added session validation endpoint /api/session/validate for debugging
+  * Enhanced PostgreSQL session store with error logging and pruning
+  * Updated authentication hooks to handle production environment navigation
+  * Trust proxy configuration for production deployments
 - July 08, 2025. Sistema completo de contas a pagar implementado:
   * Diálogo de visualização com informações detalhadas
   * Funcionalidade de edição com formulário completo
