@@ -12,7 +12,7 @@ import { DollarSign, TrendingUp, TrendingDown, FileText, Download, Calendar, Fil
 export default function FinancialReports() {
   const [reportType, setReportType] = useState('overview');
   const [dateRange, setDateRange] = useState('current-month');
-  const [selectedYear, setSelectedYear] = useState('2024');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
   const { data: donations, refetch: refetchDonations } = useQuery({
     queryKey: ['/api/donations'],
@@ -50,6 +50,42 @@ export default function FinancialReports() {
       payableData
     };
   }, [donations, accountsReceivable, accountsPayable]);
+
+  // Calculate available years from data
+  const availableYears = useMemo(() => {
+    const { donationsData, receivableData, payableData } = financialMetrics;
+    const years = new Set<number>();
+
+    // Add current year by default
+    years.add(new Date().getFullYear());
+
+    // Extract years from donations
+    donationsData.forEach((donation: any) => {
+      const date = new Date(donation.donationDate || donation.createdAt);
+      if (!isNaN(date.getTime())) {
+        years.add(date.getFullYear());
+      }
+    });
+
+    // Extract years from accounts receivable
+    receivableData.forEach((account: any) => {
+      const date = new Date(account.dueDate || account.createdAt);
+      if (!isNaN(date.getTime())) {
+        years.add(date.getFullYear());
+      }
+    });
+
+    // Extract years from accounts payable
+    payableData.forEach((account: any) => {
+      const date = new Date(account.dueDate || account.createdAt);
+      if (!isNaN(date.getTime())) {
+        years.add(date.getFullYear());
+      }
+    });
+
+    // Convert to sorted array (most recent first)
+    return Array.from(years).sort((a, b) => b - a);
+  }, [financialMetrics]);
 
   // Generate real-time chart data from actual platform data
   const chartData = useMemo(() => {
@@ -503,9 +539,11 @@ export default function FinancialReports() {
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2022">2022</SelectItem>
+              {availableYears.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
