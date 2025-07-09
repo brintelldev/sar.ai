@@ -15,7 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Bell, Shield, Database, Users, Mail, Globe, Palette } from 'lucide-react';
-import { formatCurrency, formatDate, maskCNPJ } from '@/lib/utils';
+import { formatCurrency, formatDate, maskCNPJ, maskPhone } from '@/lib/utils';
 
 export default function Settings() {
   const { user, currentOrganization, userRole } = useAuth();
@@ -247,6 +247,11 @@ export default function Settings() {
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const maskedValue = maskCNPJ(e.target.value);
     setOrganizationForm({ ...organizationForm, cnpj: maskedValue });
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const maskedValue = maskPhone(e.target.value);
+    setOrganizationForm({ ...organizationForm, phone: maskedValue });
   };
 
   return (
@@ -512,7 +517,7 @@ export default function Settings() {
                     <Label>Telefone</Label>
                     <Input 
                       value={organizationForm.phone}
-                      onChange={(e) => setOrganizationForm({...organizationForm, phone: e.target.value})}
+                      onChange={handlePhoneChange}
                       placeholder="(11) 3333-3333" 
                       disabled={!isAdmin}
                     />
