@@ -124,6 +124,16 @@ O super admin tem acesso completo ao painel administrativo da plataforma SaaS, i
 
 ```
 Changelog:
+- July 09, 2025. Deployment fixes implemented for production readiness:
+  * Enhanced database connection with proper error handling and connection pool settings
+  * PostgreSQL session store configured with connect-pg-simple for production persistence
+  * Health check endpoints added at /health and /api/health for deployment monitoring
+  * Database health check endpoints at /health/db and /api/health/db
+  * Secure cookie configuration for production (HTTPS-only when NODE_ENV=production)
+  * Graceful shutdown handling for SIGTERM and SIGINT signals
+  * Improved server startup error handling with port conflict resolution
+  * Server now properly listens on 0.0.0.0 interface for deployment compatibility
+  * Environment variable PORT support with fallback to 5000
 - July 08, 2025. Sistema completo de contas a pagar implementado:
   * Diálogo de visualização com informações detalhadas
   * Funcionalidade de edição com formulário completo

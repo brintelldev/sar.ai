@@ -67,12 +67,46 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT || 5000;
+  
+  // Graceful shutdown handling
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+      process.exit(0);
+    });
+  });
+
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    log(`Health check available at: http://0.0.0.0:${port}/health`);
+  });
+
+  // Error handling for server startup
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Trying to restart...`);
+      setTimeout(() => {
+        server.close();
+        server.listen({ port, host: "0.0.0.0", reusePort: true });
+      }, 1000);
+    } else {
+      console.error('Server error:', error);
+      process.exit(1);
+    }
   });
 })();

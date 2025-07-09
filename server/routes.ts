@@ -8,6 +8,8 @@ import {
 } from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { neon } from "@neondatabase/serverless";
 
 // Session middleware configuration
 declare module 'express-session' {
@@ -68,19 +70,90 @@ async function createRoleBasedNotification(
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Session middleware with more robust configuration
+  // PostgreSQL session store configuration
+  const PgSession = connectPgSimple(session);
+  const pgSession = new PgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'user_sessions',
+    createTableIfMissing: true,
+  });
+
+  // Session middleware with PostgreSQL store
   app.use(session({
+    store: pgSession,
     secret: process.env.SESSION_SECRET || 'your-secret-key-development-mode',
     resave: false,
     saveUninitialized: false,
     cookie: { 
-      secure: false, // Set to true in production with HTTPS
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax'
     },
     name: 'sessionId' // Explicit session name
   }));
+
+  // Health check endpoint for deployment monitoring
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Database health check endpoint
+  app.get('/health/db', async (req, res) => {
+    try {
+      // Simple query to check database connection
+      const sql = neon(process.env.DATABASE_URL!);
+      await sql`SELECT 1`;
+      res.status(200).json({ 
+        status: 'healthy',
+        database: 'connected',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Database health check failed:', error);
+      res.status(503).json({ 
+        status: 'unhealthy',
+        database: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  app.get('/api/health/db', async (req, res) => {
+    try {
+      // Simple query to check database connection
+      const sql = neon(process.env.DATABASE_URL!);
+      await sql`SELECT 1`;
+      res.status(200).json({ 
+        status: 'healthy',
+        database: 'connected',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Database health check failed:', error);
+      res.status(503).json({ 
+        status: 'unhealthy',
+        database: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 
   // Auth middleware
   const requireAuth = (req: any, res: any, next: any) => {

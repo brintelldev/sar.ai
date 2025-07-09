@@ -6,8 +6,25 @@ import * as schema from '../shared/schema';
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is required');
+  console.error('DATABASE_URL environment variable is required');
+  process.exit(1);
 }
 
-const sql = neon(connectionString);
-export const db = drizzle(sql, { schema });
+// Initialize database connection with error handling
+let db: ReturnType<typeof drizzle>;
+
+try {
+  const sql = neon(connectionString, {
+    // Connection pool settings for better performance
+    connectionTimeout: 30000,
+    commandTimeout: 30000,
+  });
+  
+  db = drizzle(sql, { schema });
+  console.log('✅ Database connection established successfully');
+} catch (error) {
+  console.error('❌ Failed to establish database connection:', error);
+  process.exit(1);
+}
+
+export { db };
