@@ -486,7 +486,21 @@ export default function Projects() {
                         <FormItem>
                           <FormLabel>Data de Início</FormLabel>
                           <FormControl>
-                            <Input {...field} type="date" />
+                            <Input 
+                              {...field} 
+                              type="date"
+                              onChange={(e) => {
+                                const startDate = e.target.value;
+                                const endDate = createForm.getValues('endDate');
+                                
+                                field.onChange(e);
+                                
+                                // Clear end date error if start date is changed and now valid
+                                if (startDate && endDate && new Date(endDate) >= new Date(startDate)) {
+                                  createForm.clearErrors('endDate');
+                                }
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -500,7 +514,26 @@ export default function Projects() {
                         <FormItem>
                           <FormLabel>Data de Término</FormLabel>
                           <FormControl>
-                            <Input {...field} type="date" />
+                            <Input 
+                              {...field} 
+                              type="date" 
+                              min={createForm.watch('startDate') || undefined}
+                              onChange={(e) => {
+                                const startDate = createForm.getValues('startDate');
+                                const endDate = e.target.value;
+                                
+                                if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+                                  createForm.setError('endDate', {
+                                    type: 'manual',
+                                    message: 'A data de término deve ser maior ou igual à data de início'
+                                  });
+                                  return;
+                                }
+                                
+                                createForm.clearErrors('endDate');
+                                field.onChange(e);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1122,7 +1155,21 @@ export default function Projects() {
                       <FormItem>
                         <FormLabel>Data de Início</FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" />
+                          <Input 
+                            {...field} 
+                            type="date"
+                            onChange={(e) => {
+                              const startDate = e.target.value;
+                              const endDate = editForm.getValues('endDate');
+                              
+                              field.onChange(e);
+                              
+                              // Clear end date error if start date is changed and now valid
+                              if (startDate && endDate && new Date(endDate) >= new Date(startDate)) {
+                                editForm.clearErrors('endDate');
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1136,7 +1183,26 @@ export default function Projects() {
                       <FormItem>
                         <FormLabel>Data de Término</FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" />
+                          <Input 
+                            {...field} 
+                            type="date"
+                            min={editForm.watch('startDate') || undefined}
+                            onChange={(e) => {
+                              const startDate = editForm.getValues('startDate');
+                              const endDate = e.target.value;
+                              
+                              if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+                                editForm.setError('endDate', {
+                                  type: 'manual',
+                                  message: 'A data de término deve ser maior ou igual à data de início'
+                                });
+                                return;
+                              }
+                              
+                              editForm.clearErrors('endDate');
+                              field.onChange(e);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
