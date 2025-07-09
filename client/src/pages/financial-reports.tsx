@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,15 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { DollarSign, TrendingUp, TrendingDown, FileText, Download, Calendar, Filter, RefreshCw } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function FinancialReports() {
   const [reportType, setReportType] = useState('overview');
   const [dateRange, setDateRange] = useState('current-month');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [isExporting, setIsExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const { data: donations, refetch: refetchDonations } = useQuery({
     queryKey: ['/api/donations'],
@@ -221,6 +225,118 @@ export default function FinancialReports() {
         return 'Ano selecionado completo';
       default:
         return 'Período personalizado';
+    }
+  };
+
+  const exportToPDF = async () => {
+    if (!reportRef.current) return;
+
+    setIsExporting(true);
+    
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const originalReportType = reportType;
+      
+      // Configurações do PDF
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      
+      // Função para adicionar cabeçalho
+      const addHeader = (pageNumber: number) => {
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Relatório Financeiro Completo', margin, margin);
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Instituto Esperança`, margin, margin + 8);
+        pdf.text(`Período: ${getPeriodDescription()} • Ano: ${selectedYear}`, margin, margin + 14);
+        pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, margin, margin + 20);
+        
+        // Número da página
+        pdf.text(`Página ${pageNumber}`, pageWidth - margin - 20, margin);
+        
+        return margin + 30;
+      };
+
+      // Função para capturar e adicionar seção ao PDF
+      const addSectionToPDF = async (sectionTitle: string, reportTypeValue: string) => {
+        setReportType(reportTypeValue);
+        
+        // Aguarda um pouco para o componente atualizar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const canvas = await html2canvas(reportRef.current!, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          onclone: (clonedDoc) => {
+            // Remove elementos de navegação que não devem aparecer no PDF
+            const navElements = clonedDoc.querySelectorAll('nav, .sidebar, .navigation');
+            navElements.forEach(el => el.remove());
+          }
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Adiciona nova página
+        pdf.addPage();
+        let yPosition = addHeader(pdf.internal.pages.length - 1);
+        
+        // Adiciona título da seção
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(sectionTitle, margin, yPosition);
+        yPosition += 10;
+        
+        // Adiciona imagem
+        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+      };
+
+      // Primeira página - Capa
+      let yPosition = addHeader(1);
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Este relatório contém uma análise completa da situação financeira', margin, yPosition + 10);
+      pdf.text('da organização, incluindo:', margin, yPosition + 20);
+      
+      pdf.text('• Visão geral financeira com métricas principais', margin + 5, yPosition + 35);
+      pdf.text('• Análise detalhada de doações recebidas', margin + 5, yPosition + 45);
+      pdf.text('• Detalhamento de despesas por categoria', margin + 5, yPosition + 55);
+      pdf.text('• Gráficos e visualizações em tempo real', margin + 5, yPosition + 65);
+      
+      // Adiciona resumo das métricas principais
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Resumo Executivo:', margin, yPosition + 85);
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Total de Doações: ${formatCurrency(financialMetrics.totalDonations)}`, margin, yPosition + 100);
+      pdf.text(`Contas a Receber: ${formatCurrency(financialMetrics.totalReceivable)}`, margin, yPosition + 110);
+      pdf.text(`Contas a Pagar: ${formatCurrency(financialMetrics.totalPayable)}`, margin, yPosition + 120);
+      pdf.text(`Saldo Líquido: ${formatCurrency(financialMetrics.netBalance)}`, margin, yPosition + 130);
+      
+      // Adiciona seções
+      await addSectionToPDF('Visão Geral', 'overview');
+      await addSectionToPDF('Relatório de Doações', 'donations');
+      await addSectionToPDF('Relatório de Despesas', 'expenses');
+      
+      // Restaura tipo de relatório original
+      setReportType(originalReportType);
+      
+      // Salva o PDF
+      pdf.save(`relatorio-financeiro-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      alert('Erro ao gerar o PDF. Tente novamente.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -553,9 +669,9 @@ export default function FinancialReports() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar Dados
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={exportToPDF} disabled={isExporting}>
               <Download className="h-4 w-4 mr-2" />
-              Exportar PDF
+              {isExporting ? 'Gerando PDF...' : 'Exportar PDF'}
             </Button>
           </div>
         </div>
@@ -600,7 +716,9 @@ export default function FinancialReports() {
         </div>
 
         {/* Report Content */}
-        {renderCurrentReport()}
+        <div ref={reportRef}>
+          {renderCurrentReport()}
+        </div>
       </div>
     </MainLayout>
   );
