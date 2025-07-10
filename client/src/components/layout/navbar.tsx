@@ -50,38 +50,39 @@ export function Navbar() {
 
   return (
     <nav className="bg-white dark:bg-card border-b border-border px-6 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3">
-            <img 
-              src={logoSarai} 
-              alt="SAR.AI" 
-              className="h-8 w-auto"
-            />
-          </div>
-
-          {currentOrganization && (
-            <div className="flex items-center space-x-2 ml-8">
-              <span className="text-sm text-muted-foreground">Organização:</span>
-              <Select
-                value={currentOrganization.id}
-                onValueChange={handleOrganizationChange}
-              >
-                <SelectTrigger className="w-[250px] bg-muted border-border">
-                  <SelectValue>{currentOrganization.name}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+      <div className="flex items-center justify-between w-full">
+        {/* Logo - Canto esquerdo */}
+        <div className="flex items-center space-x-3">
+          <img 
+            src={logoSarai} 
+            alt="SAR.AI" 
+            className="h-8 w-auto"
+          />
         </div>
 
+        {/* Centro - Seletor de organização */}
+        {currentOrganization && (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">Organização:</span>
+            <Select
+              value={currentOrganization.id}
+              onValueChange={handleOrganizationChange}
+            >
+              <SelectTrigger className="w-[250px] bg-muted border-border">
+                <SelectValue>{currentOrganization.name}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Direita - Notificações e Menu do usuário */}
         <div className="flex items-center space-x-4">
           {/* Notifications - only show for admins */}
           {userRole === 'admin' && <NotificationsDropdown />}
