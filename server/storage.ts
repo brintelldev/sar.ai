@@ -93,6 +93,21 @@ export interface IStorage {
     activeVolunteers: number;
   }>;
 
+  // Project Indicators
+  getProjectIndicators(organizationId: string): Promise<{
+    projectsInPlanning: number;
+    projectsInProgress: number;
+    projectDetails: Array<{
+      id: string;
+      name: string;
+      status: string;
+      budget: number;
+      spent: number;
+      progress: number;
+      milestones?: any;
+    }>;
+  }>;
+
   // Accounts Receivable
   getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]>;
   getAccountReceivable(id: string): Promise<AccountsReceivable | undefined>;
@@ -352,6 +367,22 @@ export class MemStorage implements IStorage {
 
   async getDashboardMetrics(organizationId: string): Promise<{ activeProjects: number; totalDonated: number; beneficiariesServed: number; activeVolunteers: number; }> {
     return { activeProjects: 0, totalDonated: 0, beneficiariesServed: 0, activeVolunteers: 0 };
+  }
+
+  async getProjectIndicators(organizationId: string): Promise<{
+    projectsInPlanning: number;
+    projectsInProgress: number;
+    projectDetails: Array<{
+      id: string;
+      name: string;
+      status: string;
+      budget: number;
+      spent: number;
+      progress: number;
+      milestones?: any;
+    }>;
+  }> {
+    return { projectsInPlanning: 0, projectsInProgress: 0, projectDetails: [] };
   }
 
   async getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]> { return []; }

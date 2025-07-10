@@ -15,6 +15,27 @@ export function useDashboardMetrics() {
   });
 }
 
+export interface ProjectIndicators {
+  projectsInPlanning: number;
+  projectsInProgress: number;
+  projectDetails: Array<{
+    id: string;
+    name: string;
+    status: string;
+    budget: number;
+    spent: number;
+    progress: number;
+    milestones?: any;
+  }>;
+}
+
+export function useProjectIndicators() {
+  return useQuery<ProjectIndicators>({
+    queryKey: ['/api/dashboard/project-indicators'],
+    staleTime: 30000, // 30 seconds
+  });
+}
+
 export function useProjects() {
   return useQuery({
     queryKey: ['/api/projects'],

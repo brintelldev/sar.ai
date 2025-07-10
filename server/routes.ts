@@ -708,6 +708,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Project indicators for dashboard
+  app.get("/api/dashboard/project-indicators", requireAuth, requireOrganization, async (req, res) => {
+    try {
+      const organizationId = req.session.organizationId!;
+      const indicators = await storage.getProjectIndicators(organizationId);
+      res.json(indicators);
+    } catch (error) {
+      console.error("Project indicators error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Projects routes
   app.get("/api/projects", requireAuth, requireOrganization, async (req, res) => {
     try {

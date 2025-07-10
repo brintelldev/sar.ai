@@ -1,6 +1,7 @@
 import { MainLayout } from '@/components/layout/main-layout';
 import { MetricsCards } from '@/components/dashboard/metrics-cards';
 import { ProjectsOverview } from '@/components/dashboard/projects-overview';
+import { ProjectIndicators } from '@/components/dashboard/project-indicators';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { LGPDStatus } from '@/components/dashboard/lgpd-status';
@@ -23,8 +24,9 @@ export default function Dashboard() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Projects Overview */}
-          <div className="xl:col-span-2">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             <ProjectsOverview />
+            <ProjectIndicators />
           </div>
 
           {/* Sidebar Content */}

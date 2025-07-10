@@ -901,6 +901,103 @@ export class PostgresStorage implements IStorage {
     };
   }
 
+  // Project Indicators for dashboard
+  async getProjectIndicators(organizationId: string): Promise<{
+    projectsInPlanning: number;
+    projectsInProgress: number;
+    projectDetails: Array<{
+      id: string;
+      name: string;
+      status: string;
+      budget: number;
+      spent: number;
+      progress: number;
+      milestones?: any;
+    }>;
+  }> {
+    // Count projects by status
+    const [planningResult] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(and(eq(projects.organizationId, organizationId), eq(projects.status, 'planning')));
+
+    const [progressResult] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(and(eq(projects.organizationId, organizationId), eq(projects.status, 'active')));
+
+    // Get all projects with their financial data
+    const projectsData = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        status: projects.status,
+        budget: projects.budget,
+        spentAmount: projects.spentAmount,
+        milestones: projects.milestones,
+        startDate: projects.startDate,
+        endDate: projects.endDate
+      })
+      .from(projects)
+      .where(eq(projects.organizationId, organizationId))
+      .orderBy(projects.name);
+
+    // Calculate actual spent amount from accounts payable for each project
+    const projectDetails = await Promise.all(
+      projectsData.map(async (project) => {
+        // Get total spent from accounts payable for this project
+        const [spentResult] = await db
+          .select({ 
+            total: sql<string>`COALESCE(SUM(CAST(${accountsPayable.amount} AS DECIMAL)), 0)`
+          })
+          .from(accountsPayable)
+          .where(and(
+            eq(accountsPayable.organizationId, organizationId),
+            eq(accountsPayable.projectId, project.id),
+            eq(accountsPayable.status, 'paid')
+          ));
+
+        const actualSpent = parseFloat(spentResult?.total || '0');
+        const budget = parseFloat(project.budget || '0');
+        
+        // Calculate progress based on time elapsed (if dates available) or budget spent
+        let progress = 0;
+        if (project.startDate && project.endDate) {
+          const start = new Date(project.startDate);
+          const end = new Date(project.endDate);
+          const now = new Date();
+          
+          if (now >= start && now <= end) {
+            const totalDuration = end.getTime() - start.getTime();
+            const elapsed = now.getTime() - start.getTime();
+            progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+          } else if (now > end) {
+            progress = 100;
+          }
+        } else if (budget > 0) {
+          // Use budget spent as progress indicator
+          progress = Math.min(100, (actualSpent / budget) * 100);
+        }
+
+        return {
+          id: project.id,
+          name: project.name,
+          status: project.status,
+          budget: budget,
+          spent: actualSpent,
+          progress: Math.round(progress),
+          milestones: project.milestones
+        };
+      })
+    );
+
+    return {
+      projectsInPlanning: planningResult?.count || 0,
+      projectsInProgress: progressResult?.count || 0,
+      projectDetails
+    };
+  }
+
   // Accounts Receivable methods
   async getAccountsReceivable(organizationId: string): Promise<AccountsReceivable[]> {
     return await db
