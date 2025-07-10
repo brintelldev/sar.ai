@@ -118,39 +118,7 @@ export function ProjectsOverview() {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              Projetos em Andamento
-              {isFetching && (
-                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-              )}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Acompanhe o progresso em tempo real
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={isFetching}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-            <Link href="/projects">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Ver Todos
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </CardHeader>
+      {/* CardHeader oculto */}
       {/* CardContent oculto */}
     </Card>
   );
