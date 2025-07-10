@@ -132,7 +132,7 @@ export function ProjectIndicators() {
               <p className="text-sm">Crie seu primeiro projeto para começar</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {indicators.projectDetails.map((project) => (
                 <div 
                   key={project.id} 
