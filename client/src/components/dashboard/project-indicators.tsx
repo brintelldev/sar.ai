@@ -1,12 +1,15 @@
-import { FolderKanban, Target, TrendingUp, Activity } from 'lucide-react';
+import { FolderKanban, Target, TrendingUp, Activity, Filter } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { useProjectIndicators } from '@/hooks/use-organization';
+import { useState } from 'react';
 
 export function ProjectIndicators() {
   const { data: indicators, isLoading } = useProjectIndicators();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   if (isLoading) {
     return (
@@ -120,10 +123,47 @@ export function ProjectIndicators() {
 
         {/* Projects Table */}
         <div className="space-y-4">
-          <h4 className="font-semibold flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Detalhamento dos Projetos
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Detalhamento dos Projetos
+            </h4>
+            
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <div className="flex gap-1">
+                <Button
+                  variant={statusFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('all')}
+                >
+                  Todos
+                </Button>
+                <Button
+                  variant={statusFilter === 'planning' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('planning')}
+                >
+                  Planejamento
+                </Button>
+                <Button
+                  variant={statusFilter === 'active' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('active')}
+                >
+                  Em Andamento
+                </Button>
+                <Button
+                  variant={statusFilter === 'completed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('completed')}
+                >
+                  Concluído
+                </Button>
+              </div>
+            </div>
+          </div>
           
           {indicators.projectDetails.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -133,7 +173,9 @@ export function ProjectIndicators() {
             </div>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
-              {indicators.projectDetails.map((project) => (
+              {indicators.projectDetails
+                .filter(project => statusFilter === 'all' || project.status === statusFilter)
+                .map((project) => (
                 <div 
                   key={project.id} 
                   className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
