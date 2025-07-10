@@ -11,6 +11,7 @@ import { Clock, Users, BookOpen, Play, CheckCircle, UserPlus, CalendarDays, Sear
 import { Link, useLocation } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { CourseSearch } from "@/components/course/course-search";
 
 interface Course {
   id: string;
@@ -170,13 +171,12 @@ export default function Courses() {
         {/* Search and Filters */}
         <div className="flex flex-col gap-4 p-4 bg-white rounded-lg border">
           <div className="flex gap-4 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
+            <div className="flex-1">
+              <CourseSearch
+                courses={courses}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
                 placeholder="Buscar cursos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
               />
             </div>
             <Filter className="h-5 w-5 text-gray-500" />

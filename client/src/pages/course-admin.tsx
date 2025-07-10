@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { CourseActionsModal } from "@/components/course/course-actions-modal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CourseSearch } from "@/components/course/course-search";
 
 interface Course {
   id: string;
@@ -55,6 +56,7 @@ export function CourseAdmin() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedAction, setSelectedAction] = useState<'delete' | 'deactivate' | 'activate' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole } = useAuth();
@@ -124,6 +126,17 @@ export function CourseAdmin() {
   };
 
   const coursesList = Array.isArray(courses) ? courses : [];
+
+  // Filter courses based on search term
+  const filteredCourses = coursesList.filter((course: Course) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      course.title.toLowerCase().includes(term) ||
+      course.description.toLowerCase().includes(term) ||
+      course.category.toLowerCase().includes(term)
+    );
+  });
 
   console.log("Processed courses list:", coursesList);
 
@@ -347,6 +360,23 @@ export function CourseAdmin() {
           </Card>
         </div>
 
+        {/* Search Section */}
+        {coursesList.length > 0 && (
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white p-4 rounded-lg border">
+            <div className="flex-1 max-w-md">
+              <CourseSearch
+                courses={coursesList}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                placeholder="Buscar cursos por título, descrição ou categoria..."
+              />
+            </div>
+            <div className="text-sm text-gray-600">
+              {searchTerm ? `${filteredCourses.length} de ${coursesList.length} cursos` : `${coursesList.length} cursos`}
+            </div>
+          </div>
+        )}
+
         {/* Courses List */}
         <Card>
           <CardHeader>
@@ -388,90 +418,106 @@ export function CourseAdmin() {
               </div>
             ) : (
               <div className="space-y-4">
-                {coursesList.map((course) => (
-                  <div 
-                    key={course.id} 
-                    className="border rounded-lg p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
-                          <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                            {course.status === 'published' ? 'Publicado' : 'Rascunho'}
-                          </Badge>
+                {filteredCourses.length === 0 && searchTerm ? (
+                  <div className="text-center py-8">
+                    <BookOpen className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600">
+                      Nenhum curso encontrado para "{searchTerm}"
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setSearchTerm('')}
+                      className="mt-2"
+                    >
+                      Limpar busca
+                    </Button>
+                  </div>
+                ) : (
+                  filteredCourses.map((course) => (
+                    <div 
+                      key={course.id} 
+                      className="border rounded-lg p-6 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
+                            <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
+                              {course.status === 'published' ? 'Publicado' : 'Rascunho'}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-600 mb-3">{course.description}</p>
+                          <div className="flex items-center gap-6 text-sm text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <BookOpen className="w-4 h-4" />
+                              {course.category}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              {course.enrolledCount || 0} matriculados
+                            </span>
+                            <span>Duração: {Math.round((course.duration || 60) / 60)}h</span>
+                            <span>Nível: {course.level}</span>
+                          </div>
                         </div>
-                        <p className="text-gray-600 mb-3">{course.description}</p>
-                        <div className="flex items-center gap-6 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <BookOpen className="w-4 h-4" />
-                            {course.category}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {course.enrolledCount || 0} matriculados
-                          </span>
-                          <span>Duração: {Math.round((course.duration || 60) / 60)}h</span>
-                          <span>Nível: {course.level}</span>
+                        
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/course-admin/${course.id}`)}
+                            title="Editar informações do curso e gerenciar módulos"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar Curso
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/courses/${course.id}`)}
+                            title="Ver como o curso aparece para os beneficiários"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Visualizar
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              {course.status === 'published' ? (
+                                <DropdownMenuItem
+                                  onClick={() => openActionModal(course, 'deactivate')}
+                                  className="text-orange-600"
+                                >
+                                  <PowerOff className="w-4 h-4 mr-2" />
+                                  Desativar Curso
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => openActionModal(course, 'activate')}
+                                  className="text-green-600"
+                                >
+                                  <Power className="w-4 h-4 mr-2" />
+                                  Ativar Curso
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => openActionModal(course, 'delete')}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir Permanentemente
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/course-admin/${course.id}`)}
-                          title="Editar informações do curso e gerenciar módulos"
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Editar Curso
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/courses/${course.id}`)}
-                          title="Ver como o curso aparece para os beneficiários"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Visualizar
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            {course.status === 'published' ? (
-                              <DropdownMenuItem
-                                onClick={() => openActionModal(course, 'deactivate')}
-                                className="text-orange-600"
-                              >
-                                <PowerOff className="w-4 h-4 mr-2" />
-                                Desativar Curso
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                onClick={() => openActionModal(course, 'activate')}
-                                className="text-green-600"
-                              >
-                                <Power className="w-4 h-4 mr-2" />
-                                Ativar Curso
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => openActionModal(course, 'delete')}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Excluir Permanentemente
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
           </CardContent>
