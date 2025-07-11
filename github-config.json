@@ -1,0 +1,25 @@
+{
+  "repository": {
+    "name": "sar.ai",
+    "owner": "brintelldev",
+    "url": "git@github.com:brintelldev/sar.ai.git",
+    "branch": "main"
+  },
+  "sync": {
+    "enabled": true,
+    "auto_commit": true,
+    "commit_message_template": "Sincronização automática Replit - {{timestamp}}"
+  },
+  "instructions": {
+    "setup": [
+      "1. Configure chave SSH no Replit (Settings > SSH Keys)",
+      "2. Adicione a mesma chave SSH no GitHub (Settings > SSH and GPG keys)",
+      "3. Execute: ./sync-github.sh para sincronizar manualmente",
+      "4. Use npm run sync para sincronização via script"
+    ],
+    "commands": {
+      "manual_sync": "./sync-github.sh",
+      "npm_sync": "npm run sync"
+    }
+  }
+}

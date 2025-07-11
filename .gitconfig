@@ -1,0 +1,20 @@
+[user]
+	name = Replit Sar.ai
+	email = sarai@brintelldev.com
+
+[core]
+	autocrlf = false
+	safecrlf = false
+
+[init]
+	defaultBranch = main
+
+[push]
+	default = simple
+
+[pull]
+	rebase = false
+
+[remote "origin"]
+	url = git@github.com:brintelldev/sar.ai.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
