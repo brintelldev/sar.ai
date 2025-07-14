@@ -1,6 +1,6 @@
 // Brevo (antigo Sendinblue) Email Service
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@example.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'yurhi.raele@brintell.com';
 const FROM_NAME = process.env.FROM_NAME || 'Sar.ai';
 
 // Configuração da API do Brevo
@@ -30,6 +30,10 @@ async function sendBrevoEmail(params: EmailParams): Promise<boolean> {
     console.log('📧 Enviando email via Brevo API...');
     console.log('Para:', params.to);
     console.log('Assunto:', params.subject);
+    console.log('🔑 API Key configurada:', BREVO_API_KEY ? 'Sim' : 'Não');
+    
+    // Criar versão em texto puro removendo HTML
+    const textContent = params.text || (params.html ? params.html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() : 'Versão em texto do email');
     
     const requestBody = {
       sender: {
@@ -43,6 +47,7 @@ async function sendBrevoEmail(params: EmailParams): Promise<boolean> {
       ],
       subject: params.subject,
       htmlContent: params.html || `<html><body>${params.text}</body></html>`,
+      textContent: textContent,
     };
 
     console.log('📤 Payload enviado:', JSON.stringify(requestBody, null, 2));
