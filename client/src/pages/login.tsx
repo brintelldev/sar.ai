@@ -115,6 +115,7 @@ export default function Login() {
 
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!forgotPasswordForm.email) {
       toast({
@@ -151,6 +152,7 @@ export default function Login() {
 
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!resetPasswordForm.token) {
       toast({
