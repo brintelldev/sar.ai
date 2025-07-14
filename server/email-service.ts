@@ -1,6 +1,6 @@
 // Brevo (antigo Sendinblue) Email Service
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@sarai.com.br';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@example.com';
 const FROM_NAME = process.env.FROM_NAME || 'Sar.ai';
 
 // Configuração da API do Brevo
@@ -22,31 +22,42 @@ interface EmailParams {
 
 async function sendBrevoEmail(params: EmailParams): Promise<boolean> {
   if (!BREVO_API_KEY) {
+    console.error('❌ BREVO_API_KEY não configurado');
     return false;
   }
 
   try {
+    console.log('📧 Enviando email via Brevo API...');
+    console.log('Para:', params.to);
+    console.log('Assunto:', params.subject);
+    
+    const requestBody = {
+      sender: {
+        name: FROM_NAME,
+        email: FROM_EMAIL,
+      },
+      to: [
+        {
+          email: params.to,
+        },
+      ],
+      subject: params.subject,
+      htmlContent: params.html || `<html><body>${params.text}</body></html>`,
+    };
+
+    console.log('📤 Payload enviado:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'api-key': BREVO_API_KEY,
+        'accept': 'application/json',
       },
-      body: JSON.stringify({
-        sender: {
-          name: FROM_NAME,
-          email: FROM_EMAIL,
-        },
-        to: [
-          {
-            email: params.to,
-          },
-        ],
-        subject: params.subject,
-        textContent: params.text,
-        htmlContent: params.html,
-      }),
+      body: JSON.stringify(requestBody),
     });
+
+    console.log('📥 Status da resposta:', response.status);
 
     if (!response.ok) {
       const errorData = await response.text();
