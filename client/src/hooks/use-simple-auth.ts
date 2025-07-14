@@ -21,9 +21,9 @@ export function useSimpleAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasChecked, setHasChecked] = useState(false);
 
-  // Check authentication only once on mount
+  // Check authentication only once on mount (skip on login page)
   useEffect(() => {
-    if (!hasChecked) {
+    if (!hasChecked && window.location.pathname !== '/login') {
       getCurrentUser()
         .then((data) => {
           console.log('Auth data received:', data); // Debug log
@@ -31,16 +31,24 @@ export function useSimpleAuth() {
           setIsLoading(false);
           setHasChecked(true);
           // Aplicar tema apenas se já estiver autenticado (refresh da página)
-          if (data && window.location.pathname !== '/login') {
+          if (data) {
             applyStoredTheme();
           }
         })
         .catch((error) => {
-          console.log('Auth error:', error); // Debug log
+          // Don't log auth errors on login page
+          if (window.location.pathname !== '/login') {
+            console.log('Auth error:', error); // Debug log
+          }
           setAuthState(null);
           setIsLoading(false);
           setHasChecked(true);
         });
+    } else if (window.location.pathname === '/login') {
+      // On login page, skip auth check
+      setAuthState(null);
+      setIsLoading(false);
+      setHasChecked(true);
     }
   }, [hasChecked]);
 
@@ -62,7 +70,10 @@ export function useSimpleAuth() {
       }, 200);
     },
     onError: (error) => {
-      console.error('Login error:', error);
+      // Only log login errors if they're from actual login attempts
+      if (error.message && !error.message.includes('Authentication required')) {
+        console.error('Login error:', error);
+      }
       setAuthState(null);
       setIsLoading(false);
     }
