@@ -115,8 +115,21 @@ export default function Login() {
 
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!forgotPasswordForm.email) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, digite seu email',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    console.log('Enviando email de recuperação para:', forgotPasswordForm.email);
+    
     forgotPasswordMutation.mutate(forgotPasswordForm.email, {
       onSuccess: (data) => {
+        console.log('Sucesso ao enviar email:', data);
         toast({
           title: 'Email enviado',
           description: 'Verifique sua caixa de entrada e insira o código que você recebeu.',
@@ -126,6 +139,7 @@ export default function Login() {
         setResetPasswordOpen(true);
       },
       onError: (error: any) => {
+        console.error('Erro ao enviar email:', error);
         toast({
           title: 'Erro',
           description: error.message || 'Erro ao enviar email de recuperação',
@@ -137,6 +151,24 @@ export default function Login() {
 
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!resetPasswordForm.token) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, digite o código de verificação',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!resetPasswordForm.newPassword) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, digite uma nova senha',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
       toast({
@@ -156,11 +188,14 @@ export default function Login() {
       return;
     }
 
+    console.log('Redefinindo senha com token:', resetPasswordForm.token);
+    
     resetPasswordMutation.mutate({
       token: resetPasswordForm.token,
       newPassword: resetPasswordForm.newPassword,
     }, {
       onSuccess: (data) => {
+        console.log('Sucesso ao redefinir senha:', data);
         toast({
           title: 'Sucesso',
           description: data.message,
@@ -172,8 +207,10 @@ export default function Login() {
           confirmPassword: '',
         });
         setCurrentEmail('');
+        setForgotPasswordForm({ email: '' });
       },
       onError: (error: any) => {
+        console.error('Erro ao redefinir senha:', error);
         toast({
           title: 'Erro',
           description: error.message || 'Erro ao redefinir senha',
