@@ -366,8 +366,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate secure token
-      const token = crypto.randomBytes(32).toString('hex');
+      // Generate secure token (12 characters)
+      const token = crypto.randomBytes(6).toString('hex');
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
       // Store token in database
