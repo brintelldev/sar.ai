@@ -378,31 +378,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         used: false
       });
 
-      // Send email with reset link
-      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/reset-password?token=${token}`;
+      // Send email with token (not link)
       const success = await sendPasswordResetEmail({
         to: email,
-        subject: "Redefinição de senha - Sar.ai",
-        text: `Clique no link para redefinir sua senha: ${resetUrl}`,
+        subject: "Código de Redefinição de Senha - Sar.ai",
+        text: `
+Olá ${user.name},
+
+Você solicitou a redefinição de sua senha na plataforma Sar.ai.
+
+Seu código de verificação é: ${token}
+
+Para redefinir sua senha:
+1. Volte à página de login
+2. Clique em "Esqueci minha senha"
+3. Digite seu email
+4. Insira o código de verificação acima quando solicitado
+5. Digite sua nova senha
+
+⚠️ Este código expira em 1 hora por motivos de segurança.
+
+Se você não solicitou esta redefinição, ignore este email.
+
+Atenciosamente,
+Equipe Sar.ai
+        `,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Redefinição de senha</h2>
-            <p>Olá ${user.name},</p>
-            <p>Você solicitou a redefinição de sua senha. Clique no botão abaixo para criar uma nova senha:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" 
-                 style="background-color: #007bff; color: white; padding: 12px 24px; 
-                        text-decoration: none; border-radius: 4px; display: inline-block;">
-                Redefinir Senha
-              </a>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="margin: 0; font-size: 28px;">🔒 Código de Redefinição</h1>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">Plataforma Sar.ai</p>
             </div>
-            <p><strong>Este link expira em 1 hora.</strong></p>
-            <p>Se você não solicitou esta redefinição, ignore este email.</p>
-            <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 12px;">
-              Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-              ${resetUrl}
-            </p>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #dee2e6;">
+              <p style="font-size: 16px; margin-bottom: 20px;">
+                Olá <strong>${user.name}</strong>,
+              </p>
+              
+              <p>Você solicitou a redefinição de sua senha na plataforma Sar.ai.</p>
+              
+              <div style="background: white; padding: 25px; border-radius: 8px; border-left: 4px solid #007bff; margin: 25px 0; text-align: center;">
+                <p style="margin: 0 0 15px 0; font-size: 18px;"><strong>🔑 Seu código de verificação:</strong></p>
+                <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; border: 2px dashed #2196f3;">
+                  <span style="font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; color: #1976d2; letter-spacing: 2px;">${token}</span>
+                </div>
+              </div>
+              
+              <div style="background: #e7f3ff; border: 1px solid #b8daff; padding: 20px; border-radius: 6px; margin: 25px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #0056b3;">📋 Como redefinir sua senha:</h3>
+                <ol style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                  <li>Volte à página de login da plataforma</li>
+                  <li>Clique em <strong>"Esqueci minha senha"</strong></li>
+                  <li>Digite seu email e clique em <strong>"Enviar"</strong></li>
+                  <li>Insira o código de verificação acima quando solicitado</li>
+                  <li>Digite sua nova senha</li>
+                </ol>
+              </div>
+              
+              <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 25px 0;">
+                <p style="margin: 0;"><strong>⏰ Importante:</strong> Este código expira em <strong>1 hora</strong> por motivos de segurança.</p>
+              </div>
+              
+              <p style="color: #6c757d; font-size: 14px; margin-top: 30px;">
+                Se você não solicitou esta redefinição, pode ignorar este email com segurança.
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
+              
+              <p style="text-align: center; color: #6c757d; font-size: 14px; margin: 0;">
+                Atenciosamente,<br>
+                <strong>Equipe Sar.ai</strong>
+              </p>
+            </div>
           </div>
         `
       });

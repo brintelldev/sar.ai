@@ -42,14 +42,14 @@ export default function Login() {
   });
 
   const [resetPasswordForm, setResetPasswordForm] = useState({
-    email: '',
     token: '',
     newPassword: '',
     confirmPassword: '',
   });
 
-  const [showResetForm, setShowResetForm] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [currentEmail, setCurrentEmail] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +107,7 @@ export default function Login() {
   });
 
   const resetPasswordMutation = useMutation({
-    mutationFn: async (data: { email: string; token: string; newPassword: string }) => {
+    mutationFn: async (data: { token: string; newPassword: string }) => {
       const response = await apiRequest('/api/auth/reset-password', 'POST', data);
       return response;
     },
@@ -119,18 +119,11 @@ export default function Login() {
       onSuccess: (data) => {
         toast({
           title: 'Email enviado',
-          description: data.message,
+          description: 'Verifique sua caixa de entrada e insira o código que você recebeu.',
         });
-        if (data.resetToken) {
-          // In development, show the token for testing
-          setResetPasswordForm(prev => ({ 
-            ...prev, 
-            email: forgotPasswordForm.email,
-            token: data.resetToken 
-          }));
-          setShowResetForm(true);
-        }
+        setCurrentEmail(forgotPasswordForm.email);
         setForgotPasswordOpen(false);
+        setResetPasswordOpen(true);
       },
       onError: (error: any) => {
         toast({
@@ -164,7 +157,6 @@ export default function Login() {
     }
 
     resetPasswordMutation.mutate({
-      email: resetPasswordForm.email,
       token: resetPasswordForm.token,
       newPassword: resetPasswordForm.newPassword,
     }, {
@@ -173,13 +165,13 @@ export default function Login() {
           title: 'Sucesso',
           description: data.message,
         });
-        setShowResetForm(false);
+        setResetPasswordOpen(false);
         setResetPasswordForm({
-          email: '',
           token: '',
           newPassword: '',
           confirmPassword: '',
         });
+        setCurrentEmail('');
       },
       onError: (error: any) => {
         toast({
@@ -369,12 +361,12 @@ export default function Login() {
         </Tabs>
 
         {/* Reset Password Modal */}
-        <Dialog open={showResetForm} onOpenChange={setShowResetForm}>
+        <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Redefinir senha</DialogTitle>
               <DialogDescription>
-                Digite o token recebido e sua nova senha
+                Digite o código recebido por email e sua nova senha
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleResetPassword} className="space-y-4">
@@ -383,21 +375,21 @@ export default function Login() {
                 <Input
                   id="reset-email"
                   type="email"
-                  value={resetPasswordForm.email}
-                  onChange={(e) => setResetPasswordForm(prev => ({ ...prev, email: e.target.value }))}
-                  required
+                  value={currentEmail}
                   disabled
+                  className="bg-gray-50"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reset-token">Token de recuperação</Label>
+                <Label htmlFor="reset-token">Código de verificação</Label>
                 <Input
                   id="reset-token"
                   type="text"
-                  placeholder="Token recebido por email"
+                  placeholder="Código recebido por email"
                   value={resetPasswordForm.token}
                   onChange={(e) => setResetPasswordForm(prev => ({ ...prev, token: e.target.value }))}
                   required
+                  className="font-mono tracking-wider"
                 />
               </div>
               <div className="space-y-2">
