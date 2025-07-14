@@ -20,7 +20,8 @@ import {
   type WhitelabelMenu, type InsertWhitelabelMenu, type WhitelabelForm,
   type InsertWhitelabelForm, type WhitelabelFormSubmission,
   type PermissionTemplate, type InsertPermissionTemplate,
-  type AccessControlSettings, type InsertAccessControlSettings
+  type AccessControlSettings, type InsertAccessControlSettings,
+  type PasswordResetToken, type InsertPasswordResetToken
 } from "@shared/schema";
 
 export interface IStorage {
@@ -235,6 +236,12 @@ export interface IStorage {
 
   // User Account Sync
   syncUsersForVolunteersAndBeneficiaries(organizationId: string): Promise<void>;
+
+  // Password Reset Tokens
+  createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
+  getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  markPasswordResetTokenAsUsed(token: string): Promise<void>;
+  cleanupExpiredTokens(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {

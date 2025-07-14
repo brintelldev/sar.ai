@@ -34,6 +34,7 @@ import {
   systemAnnouncements,
   permissionTemplates,
   accessControlSettings,
+  passwordResetTokens,
   type Organization,
   type User,
   type UserRole,
@@ -92,7 +93,9 @@ import {
   type AccessControlSettings,
   type InsertAccessControlSettings,
   type Notification,
-  type InsertNotification
+  type InsertNotification,
+  type PasswordResetToken,
+  type InsertPasswordResetToken
 } from '../shared/schema';
 import { 
   volunteerCourseApplications,
@@ -2647,5 +2650,41 @@ export class PostgresStorage implements IStorage {
       console.error('❌ Erro durante sincronização de contas:', error);
       throw error;
     }
+  }
+
+  // Password Reset Tokens Implementation
+  async createPasswordResetToken(tokenData: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    const result = await db.insert(passwordResetTokens).values(tokenData).returning();
+    return result[0];
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const result = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(and(
+        eq(passwordResetTokens.token, token),
+        eq(passwordResetTokens.used, false),
+        gte(passwordResetTokens.expiresAt, new Date())
+      ))
+      .limit(1);
+    
+    return result[0];
+  }
+
+  async markPasswordResetTokenAsUsed(token: string): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ used: true })
+      .where(eq(passwordResetTokens.token, token));
+  }
+
+  async cleanupExpiredTokens(): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(or(
+        eq(passwordResetTokens.used, true),
+        lte(passwordResetTokens.expiresAt, new Date())
+      ));
   }
 }

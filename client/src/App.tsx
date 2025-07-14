@@ -40,6 +40,7 @@ import SuperAdminPage from "@/pages/super-admin";
 import CourseManagement from "@/pages/course-management";
 import BeneficiaryProjects from "@/pages/beneficiary-projects";
 import AccessControl from "@/pages/access-control";
+import ResetPasswordPage from "@/pages/reset-password";
 
 function HomeRedirect() {
   const { userRole } = useAuth();
@@ -95,6 +96,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/">
         <ProtectedRoute>
           {/* Beneficiaries see courses, volunteers see course admin, others see dashboard */}

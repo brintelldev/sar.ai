@@ -10,6 +10,8 @@ import bcrypt from "bcrypt";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { neon } from "@neondatabase/serverless";
+import { sendPasswordResetEmail, isEmailServiceConfigured } from './email-service';
+import crypto from 'crypto';
 
 // Session middleware configuration
 declare module 'express-session' {
@@ -341,27 +343,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/forgot-password", async (req, res) => {
     try {
       const { email } = req.body;
-      
-      // Check if user exists
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({ message: "Email não encontrado em nossa base de dados. Verifique se o email está correto ou crie uma nova conta." });
+
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
       }
 
-      // Generate reset token (in a real app, you'd store this in database with expiration)
-      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      // Check if email service is configured
+      const emailConfigured = await isEmailServiceConfigured();
+      if (!emailConfigured) {
+        return res.status(500).json({ 
+          message: "Serviço de email não configurado. Entre em contato com o suporte." 
+        });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
       
-      // In a real implementation, you would:
-      // 1. Store the reset token in the database with expiration
-      // 2. Send email with reset link
-      // For demo purposes, we'll just log the token
-      console.log(`Password reset token for ${email}: ${resetToken}`);
-      
-      res.json({ 
-        message: "Instruções para redefinir sua senha foram enviadas para seu email.",
-        // In development, include the token for testing
-        ...(process.env.NODE_ENV === 'development' && { resetToken })
+      // Always return success to prevent email enumeration attacks
+      if (!user) {
+        return res.json({ 
+          message: "Se o email existir em nosso sistema, você receberá um link de redefinição de senha." 
+        });
+      }
+
+      // Generate secure token
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Store token in database
+      await storage.createPasswordResetToken({
+        token,
+        userId: user.id,
+        expiresAt,
+        used: false
       });
+
+      // Send email with reset link
+      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/reset-password?token=${token}`;
+      const success = await sendPasswordResetEmail({
+        to: email,
+        subject: "Redefinição de senha - Sar.ai",
+        text: `Clique no link para redefinir sua senha: ${resetUrl}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Redefinição de senha</h2>
+            <p>Olá ${user.name},</p>
+            <p>Você solicitou a redefinição de sua senha. Clique no botão abaixo para criar uma nova senha:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" 
+                 style="background-color: #007bff; color: white; padding: 12px 24px; 
+                        text-decoration: none; border-radius: 4px; display: inline-block;">
+                Redefinir Senha
+              </a>
+            </div>
+            <p><strong>Este link expira em 1 hora.</strong></p>
+            <p>Se você não solicitou esta redefinição, ignore este email.</p>
+            <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;">
+            <p style="color: #666; font-size: 12px;">
+              Se o botão não funcionar, copie e cole este link no seu navegador:<br>
+              ${resetUrl}
+            </p>
+          </div>
+        `
+      });
+
+      if (!success) {
+        return res.status(500).json({ 
+          message: "Erro ao enviar email. Tente novamente mais tarde." 
+        });
+      }
+
+      res.json({ 
+        message: "Se o email existir em nosso sistema, você receberá um link de redefinição de senha." 
+      });
+
     } catch (error) {
       console.error("Forgot password error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
@@ -370,26 +425,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/reset-password", async (req, res) => {
     try {
-      const { email, token, newPassword } = req.body;
-      
-      // In a real implementation, you would verify the token from database
-      // For demo purposes, we'll just check if token is provided
-      if (!token || token.length < 10) {
-        return res.status(400).json({ message: "Token de redefinição inválido ou expirado" });
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token e nova senha são obrigatórios" });
       }
 
-      const user = await storage.getUserByEmail(email);
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
+      }
+
+      // Validate token
+      const resetToken = await storage.getPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.status(400).json({ 
+          message: "Token inválido ou expirado" 
+        });
+      }
+
+      // Get user
+      const user = await storage.getUser(resetToken.userId);
       if (!user) {
-        return res.status(400).json({ message: "Token de redefinição inválido ou expirado" });
+        return res.status(404).json({ message: "Usuário não encontrado" });
       }
 
       // Hash new password
       const passwordHash = await bcrypt.hash(newPassword, 10);
-      
+
       // Update user password
       await storage.updateUser(user.id, { passwordHash });
-      
+
+      // Mark token as used
+      await storage.markPasswordResetTokenAsUsed(token);
+
+      // Clean up expired tokens
+      await storage.cleanupExpiredTokens();
+
       res.json({ message: "Senha redefinida com sucesso. Você pode fazer login agora." });
+
     } catch (error) {
       console.error("Reset password error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
