@@ -21,9 +21,16 @@ echo "📂 Adicionando arquivos modificados..."
 git add .
 
 # Verifica se há mudanças para commit
-if git diff --staged --quiet; then
-    echo "✅ Não há mudanças para sincronizar"
-    exit 0
+if git diff --quiet && git diff --staged --quiet; then
+    echo "ℹ️  Não há mudanças locais para sincronizar"
+    
+    # Verifica se há commits não enviados
+    if git log --oneline origin/main..HEAD | grep -q .; then
+        echo "🔄 Enviando commits pendentes..."
+    else
+        echo "✅ Repositório já está sincronizado"
+        exit 0
+    fi
 fi
 
 # Cria o commit com timestamp
