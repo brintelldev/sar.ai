@@ -445,7 +445,40 @@ export default function Beneficiaries() {
                           <FormItem>
                             <FormLabel>Contato Principal</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Telefone, WhatsApp ou outro contato" />
+                              <Input 
+                                {...field} 
+                                placeholder="Telefone / WhatsApp"
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  // Remover todos os caracteres não numéricos
+                                  const numbers = value.replace(/\D/g, '');
+                                  
+                                  // Aplicar máscara de telefone brasileiro
+                                  let maskedValue = '';
+                                  if (numbers.length <= 10) {
+                                    // Telefone fixo: (11) 1234-5678
+                                    maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                                  } else if (numbers.length <= 11) {
+                                    // Celular: (11) 91234-5678
+                                    maskedValue = numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                  } else {
+                                    // Limitar a 11 dígitos
+                                    const limitedNumbers = numbers.substring(0, 11);
+                                    maskedValue = limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                  }
+                                  
+                                  // Aplicar máscara parcial se ainda não tem todos os dígitos
+                                  if (numbers.length <= 2) {
+                                    maskedValue = numbers.replace(/(\d{2})/, '($1');
+                                  } else if (numbers.length <= 6) {
+                                    maskedValue = numbers.replace(/(\d{2})(\d{1,4})/, '($1) $2');
+                                  } else if (numbers.length <= 10) {
+                                    maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+                                  }
+                                  
+                                  field.onChange(maskedValue);
+                                }}
+                              />
                             </FormControl>
                             <FormDescription>
                               Como podemos entrar em contato de forma segura
@@ -1080,7 +1113,40 @@ export default function Beneficiaries() {
                           <FormItem>
                             <FormLabel>Contato Principal</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Telefone, WhatsApp ou outro contato" />
+                              <Input 
+                                {...field} 
+                                placeholder="Telefone / WhatsApp"
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  // Remover todos os caracteres não numéricos
+                                  const numbers = value.replace(/\D/g, '');
+                                  
+                                  // Aplicar máscara de telefone brasileiro
+                                  let maskedValue = '';
+                                  if (numbers.length <= 10) {
+                                    // Telefone fixo: (11) 1234-5678
+                                    maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                                  } else if (numbers.length <= 11) {
+                                    // Celular: (11) 91234-5678
+                                    maskedValue = numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                  } else {
+                                    // Limitar a 11 dígitos
+                                    const limitedNumbers = numbers.substring(0, 11);
+                                    maskedValue = limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                  }
+                                  
+                                  // Aplicar máscara parcial se ainda não tem todos os dígitos
+                                  if (numbers.length <= 2) {
+                                    maskedValue = numbers.replace(/(\d{2})/, '($1');
+                                  } else if (numbers.length <= 6) {
+                                    maskedValue = numbers.replace(/(\d{2})(\d{1,4})/, '($1) $2');
+                                  } else if (numbers.length <= 10) {
+                                    maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+                                  }
+                                  
+                                  field.onChange(maskedValue);
+                                }}
+                              />
                             </FormControl>
                             <FormDescription>
                               Como podemos entrar em contato de forma segura
