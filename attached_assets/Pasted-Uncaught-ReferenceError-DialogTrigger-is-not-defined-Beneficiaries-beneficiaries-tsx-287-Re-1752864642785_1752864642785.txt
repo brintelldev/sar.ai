@@ -1,0 +1,38 @@
+Uncaught ReferenceError: DialogTrigger is not defined
+    Beneficiaries beneficiaries.tsx:287
+    React 11
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
+beneficiaries.tsx:287:14
+Uncaught ReferenceError: DialogTrigger is not defined
+    Beneficiaries beneficiaries.tsx:287
+    React 12
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
+beneficiaries.tsx:287:14
+The above error occurred in the <Beneficiaries> component:
+
+Beneficiaries@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/src/pages/beneficiaries.tsx:46:47
+RoleGuard@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/src/components/auth/role-guard.tsx:20:26
+AdminGuard@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/src/components/auth/role-guard.tsx:61:27
+RoleGuard@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/src/components/auth/role-guard.tsx:20:26
+NonVolunteerGuard@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/src/components/auth/role-guard.tsx:93:34
+ProtectedRoute@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/src/App.tsx?v=boJb2UDVZWPGpFyxR2s3o:105:24
+Route@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=08dafc6d:323:13
+Switch@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=08dafc6d:379:14
+Router
+Provider@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=08dafc6d:38:47
+TooltipProvider@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=08dafc6d:69:7
+QueryClientProvider@https://258a46bd-4d42-4db2-bf2a-3bae03ee30f5-00-18txj7ioeoq4f.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=08dafc6d:2804:27
+App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. Console.js:61:15
+Uncaught ReferenceError: DialogTrigger is not defined
+    Beneficiaries beneficiaries.tsx:287
+    React 9
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
