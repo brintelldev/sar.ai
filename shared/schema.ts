@@ -624,7 +624,7 @@ export const insertCourseInstructorSchema = createInsertSchema(courseInstructors
   assignedAt: true
 });
 
-export const insertCourseAttendanceSchema = createInsertSchema(courseAttendance).omit({
+export const insertCourseAttendanceSchema = createInsertSchema(courseAttendance).omit({```text
   id: true,
   markedAt: true
 });
