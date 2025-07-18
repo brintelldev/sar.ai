@@ -12,7 +12,7 @@ export default function Dashboard() {
       <div className="p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Painel Geral</h1>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Visão geral das atividades e métricas da sua organização
           </p>
