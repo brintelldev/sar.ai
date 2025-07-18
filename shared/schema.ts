@@ -99,6 +99,8 @@ export const beneficiaries = pgTable("beneficiaries", {
   contactInfo: text("contact_info"), // encrypted contact information
   address: text("address"), // encrypted address information
   emergencyContact: text("emergency_contact"), // encrypted emergency contact
+  emergencyContactName: text("emergency_contact_name"), // nome do contato de emergência
+  emergencyContactPhone: text("emergency_contact_phone"), // telefone do contato de emergência
   status: text("status").notNull().default("active"), // 'active', 'inactive', 'completed'
   needs: text("needs"), // types of support needed
   servicesReceived: text("services_received"), // history of services
