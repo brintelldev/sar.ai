@@ -91,8 +91,33 @@ export default function Beneficiaries() {
 
   const form = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
-      name: insertBeneficiarySchema.shape.name.min(1, 'Nome é obrigatório'),
+      name: insertBeneficiarySchema.shape.name
+        .min(1, 'Nome é obrigatório')
+        .min(2, 'Nome deve ter pelo menos 2 caracteres'),
       registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de beneficiário é obrigatório'),
+      email: insertBeneficiarySchema.shape.email.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      }, 'Por favor, insira um email válido'),
+      document: insertBeneficiarySchema.shape.document.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        const numbers = val.replace(/\D/g, '');
+        return numbers.length === 11;
+      }, 'CPF deve conter 11 dígitos'),
+      contactInfo: insertBeneficiarySchema.shape.contactInfo.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        const numbers = val.replace(/\D/g, '');
+        return numbers.length >= 10 && numbers.length <= 11;
+      }, 'Telefone deve ter 10 ou 11 dígitos'),
+      emergencyContactPhone: insertBeneficiarySchema.shape.emergencyContactPhone.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        const numbers = val.replace(/\D/g, '');
+        return numbers.length >= 10 && numbers.length <= 11;
+      }, 'Telefone deve ter 10 ou 11 dígitos'),
+      emergencyContactName: insertBeneficiarySchema.shape.emergencyContactName.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        return val.length <= 30;
+      }, 'Nome deve ter no máximo 30 caracteres'),
     })),
     defaultValues: {
       name: '',
@@ -121,8 +146,33 @@ export default function Beneficiaries() {
   // Formulário separado para edição
   const editForm = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
-      name: insertBeneficiarySchema.shape.name.min(1, 'Nome é obrigatório'),
+      name: insertBeneficiarySchema.shape.name
+        .min(1, 'Nome é obrigatório')
+        .min(2, 'Nome deve ter pelo menos 2 caracteres'),
       registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de beneficiário é obrigatório'),
+      email: insertBeneficiarySchema.shape.email.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      }, 'Por favor, insira um email válido'),
+      document: insertBeneficiarySchema.shape.document.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        const numbers = val.replace(/\D/g, '');
+        return numbers.length === 11;
+      }, 'CPF deve conter 11 dígitos'),
+      contactInfo: insertBeneficiarySchema.shape.contactInfo.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        const numbers = val.replace(/\D/g, '');
+        return numbers.length >= 10 && numbers.length <= 11;
+      }, 'Telefone deve ter 10 ou 11 dígitos'),
+      emergencyContactPhone: insertBeneficiarySchema.shape.emergencyContactPhone.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        const numbers = val.replace(/\D/g, '');
+        return numbers.length >= 10 && numbers.length <= 11;
+      }, 'Telefone deve ter 10 ou 11 dígitos'),
+      emergencyContactName: insertBeneficiarySchema.shape.emergencyContactName.optional().refine((val) => {
+        if (!val || val === '') return true; // Campo opcional
+        return val.length <= 30;
+      }, 'Nome deve ter no máximo 30 caracteres'),
     })),
     defaultValues: {
       name: '',
@@ -206,6 +256,58 @@ export default function Beneficiaries() {
 
   const onSubmit = async (data: any) => {
     try {
+      // Validações adicionais antes do envio
+      const errors: string[] = [];
+
+      // Validar nome
+      if (!data.name || data.name.trim().length < 2) {
+        errors.push('Nome deve ter pelo menos 2 caracteres');
+      }
+
+      // Validar CPF se preenchido
+      if (data.document) {
+        const numbers = data.document.replace(/\D/g, '');
+        if (numbers.length !== 11) {
+          errors.push('CPF deve conter exatamente 11 dígitos');
+        }
+      }
+
+      // Validar email se preenchido
+      if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        errors.push('Email deve ter um formato válido');
+      }
+
+      // Validar telefone principal se preenchido
+      if (data.contactInfo) {
+        const numbers = data.contactInfo.replace(/\D/g, '');
+        if (numbers.length < 10 || numbers.length > 11) {
+          errors.push('Telefone principal deve ter 10 ou 11 dígitos');
+        }
+      }
+
+      // Validar telefone de emergência se preenchido
+      if (data.emergencyContactPhone) {
+        const numbers = data.emergencyContactPhone.replace(/\D/g, '');
+        if (numbers.length < 10 || numbers.length > 11) {
+          errors.push('Telefone de emergência deve ter 10 ou 11 dígitos');
+        }
+      }
+
+      // Validar nome do contato de emergência se preenchido
+      if (data.emergencyContactName && data.emergencyContactName.length > 30) {
+        errors.push('Nome do contato de emergência deve ter no máximo 30 caracteres');
+      }
+
+      // Se houver erros, exibir mensagem
+      if (errors.length > 0) {
+        toast({
+          title: 'Erro de validação',
+          description: errors.join('; '),
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const result = await createBeneficiaryMutation.mutateAsync(data);
 
       let message = 'Pessoa cadastrada com sucesso.';
@@ -225,10 +327,19 @@ export default function Beneficiaries() {
       });
       form.reset();
       setIsDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      let errorMessage = 'Não foi possível completar o cadastro. Tente novamente.';
+      
+      // Verificar se há mensagem específica do servidor
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: 'Erro ao realizar cadastro',
-        description: 'Não foi possível completar o cadastro. Tente novamente.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -264,6 +375,58 @@ export default function Beneficiaries() {
     if (!selectedBeneficiary) return;
 
     try {
+      // Validações adicionais antes do envio
+      const errors: string[] = [];
+
+      // Validar nome
+      if (!data.name || data.name.trim().length < 2) {
+        errors.push('Nome deve ter pelo menos 2 caracteres');
+      }
+
+      // Validar CPF se preenchido
+      if (data.document) {
+        const numbers = data.document.replace(/\D/g, '');
+        if (numbers.length !== 11) {
+          errors.push('CPF deve conter exatamente 11 dígitos');
+        }
+      }
+
+      // Validar email se preenchido
+      if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        errors.push('Email deve ter um formato válido');
+      }
+
+      // Validar telefone principal se preenchido
+      if (data.contactInfo) {
+        const numbers = data.contactInfo.replace(/\D/g, '');
+        if (numbers.length < 10 || numbers.length > 11) {
+          errors.push('Telefone principal deve ter 10 ou 11 dígitos');
+        }
+      }
+
+      // Validar telefone de emergência se preenchido
+      if (data.emergencyContactPhone) {
+        const numbers = data.emergencyContactPhone.replace(/\D/g, '');
+        if (numbers.length < 10 || numbers.length > 11) {
+          errors.push('Telefone de emergência deve ter 10 ou 11 dígitos');
+        }
+      }
+
+      // Validar nome do contato de emergência se preenchido
+      if (data.emergencyContactName && data.emergencyContactName.length > 30) {
+        errors.push('Nome do contato de emergência deve ter no máximo 30 caracteres');
+      }
+
+      // Se houver erros, exibir mensagem
+      if (errors.length > 0) {
+        toast({
+          title: 'Erro de validação',
+          description: errors.join('; '),
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Converter campos de data vazios para null
       const cleanedData = {
         ...data,
@@ -274,8 +437,21 @@ export default function Beneficiaries() {
         id: selectedBeneficiary.id,
         data: cleanedData
       });
-    } catch (error) {
-      // Error is handled by the mutation
+    } catch (error: any) {
+      let errorMessage = 'Não foi possível salvar as alterações. Tente novamente.';
+      
+      // Verificar se há mensagem específica do servidor
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      toast({
+        title: 'Erro ao atualizar',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1140,20 +1316,6 @@ export default function Beneficiaries() {
                                   {...field} 
                                   type="email" 
                                   placeholder="email@exemplo.com"
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    field.onChange(value);
-
-                                    // Validar formato de email se não estiver vazio
-                                    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                                      editForm.setError('email', {
-                                        type: 'manual',
-                                        message: 'Por favor, insira um email válido'
-                                      });
-                                    } else {
-                                      editForm.clearErrors('email');
-                                    }
-                                  }}
                                 />
                               </FormControl>
                               <FormDescription>
