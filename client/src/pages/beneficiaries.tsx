@@ -14,7 +14,7 @@ import { insertBeneficiarySchema, type Beneficiary } from '@/../../shared/schema
 import { useBeneficiaries, useCreateBeneficiary } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { formatDate, getInitials, formatRelativeTime } from '@/lib/utils';
+import { formatDate, getInitials, formatRelativeTime, maskCPF } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -378,7 +378,14 @@ export default function Beneficiaries() {
                             <FormItem>
                               <FormLabel>CPF (opcional)</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="Apenas se desejar informar" />
+                                <Input 
+                                  {...field} 
+                                  placeholder="000.000.000-00"
+                                  onChange={(e) => {
+                                    const maskedValue = maskCPF(e.target.value);
+                                    field.onChange(maskedValue);
+                                  }}
+                                />
                               </FormControl>
                               <FormDescription>
                                 Informação opcional e protegida
@@ -972,7 +979,14 @@ export default function Beneficiaries() {
                             <FormItem>
                               <FormLabel>Documento de Identificação</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="RG, CPF ou outro documento (opcional)" />
+                                <Input 
+                                  {...field} 
+                                  placeholder="000.000.000-00 (CPF)"
+                                  onChange={(e) => {
+                                    const maskedValue = maskCPF(e.target.value);
+                                    field.onChange(maskedValue);
+                                  }}
+                                />
                               </FormControl>
                               <FormDescription>
                                 Apenas se necessário para atendimento
