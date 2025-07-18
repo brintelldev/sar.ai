@@ -236,7 +236,18 @@ export const insertUserRoleSchema = createInsertSchema(userRoles).omit({
   grantedAt: true
 });
 
-export const insertProjectSchema = createInsertSchema(projects).omit({
+export const insertProjectSchema = createInsertSchema(projects, {
+  budget: z.string().optional().transform((val) => {
+    if (!val || val === '') return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num.toString();
+  }),
+  spentAmount: z.string().optional().transform((val) => {
+    if (!val || val === '') return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num.toString();
+  })
+}).omit({
   id: true,
   organizationId: true,
   createdAt: true,

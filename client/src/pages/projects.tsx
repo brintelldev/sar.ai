@@ -202,11 +202,21 @@ export default function Projects() {
       });
       // Reset milestones list
       setMilestonesList([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating project:', error);
+      
+      // Melhor tratamento de erro baseado na resposta do servidor
+      let errorMessage = "Ocorreu um erro ao salvar o projeto. Tente novamente.";
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro ao criar projeto",
-        description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -234,11 +244,21 @@ export default function Projects() {
       setIsEditDialogOpen(false);
       editForm.reset();
       setSelectedProject(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating project:', error);
+      
+      // Melhor tratamento de erro baseado na resposta do servidor
+      let errorMessage = "Ocorreu um erro ao salvar o projeto. Tente novamente.";
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro ao atualizar projeto",
-        description: "Ocorreu um erro ao salvar o projeto. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

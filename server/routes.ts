@@ -854,7 +854,14 @@ Equipe Sar.ai
 
   app.post("/api/projects", requireAuth, requireOrganization, async (req, res) => {
     try {
-      const validatedData = insertProjectSchema.parse(req.body);
+      // Transformar strings vazias em null para campos numéricos
+      const processedData = {
+        ...req.body,
+        budget: req.body.budget === '' ? null : req.body.budget,
+        spentAmount: req.body.spentAmount === '' ? null : req.body.spentAmount
+      };
+      
+      const validatedData = insertProjectSchema.parse(processedData);
       const projectData = {
         ...validatedData,
         organizationId: req.session.organizationId!
@@ -864,7 +871,26 @@ Equipe Sar.ai
       res.status(201).json(project);
     } catch (error) {
       console.error("Create project error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      
+      // Tratamento de erro específico para campos numéricos
+      if (error instanceof Error) {
+        if (error.message.includes('invalid input syntax for type numeric')) {
+          return res.status(400).json({ 
+            message: "Erro de validação: Campos de orçamento e valor gasto devem ser números válidos ou estar vazios.",
+            details: "Verifique se os valores inseridos são números válidos."
+          });
+        }
+        
+        // Se for erro de validação do Zod
+        if (error.name === 'ZodError') {
+          return res.status(400).json({ 
+            message: "Erro de validação nos dados enviados.",
+            details: error.message
+          });
+        }
+      }
+      
+      res.status(500).json({ message: "Erro interno do servidor ao criar projeto." });
     }
   });
 
@@ -883,14 +909,40 @@ Equipe Sar.ai
 
   app.patch("/api/projects/:id", requireAuth, requireOrganization, async (req, res) => {
     try {
-      const project = await storage.updateProject(req.params.id, req.session.organizationId!, req.body);
+      // Transformar strings vazias em null para campos numéricos
+      const processedData = {
+        ...req.body,
+        budget: req.body.budget === '' ? null : req.body.budget,
+        spentAmount: req.body.spentAmount === '' ? null : req.body.spentAmount
+      };
+      
+      const project = await storage.updateProject(req.params.id, req.session.organizationId!, processedData);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
       res.json(project);
     } catch (error) {
       console.error("Update project error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      
+      // Tratamento de erro específico para campos numéricos
+      if (error instanceof Error) {
+        if (error.message.includes('invalid input syntax for type numeric')) {
+          return res.status(400).json({ 
+            message: "Erro de validação: Campos de orçamento e valor gasto devem ser números válidos ou estar vazios.",
+            details: "Verifique se os valores inseridos são números válidos."
+          });
+        }
+        
+        // Se for erro de validação do Zod
+        if (error.name === 'ZodError') {
+          return res.status(400).json({ 
+            message: "Erro de validação nos dados enviados.",
+            details: error.message
+          });
+        }
+      }
+      
+      res.status(500).json({ message: "Erro interno do servidor ao atualizar projeto." });
     }
   });
 
