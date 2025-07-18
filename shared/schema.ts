@@ -246,6 +246,14 @@ export const insertProjectSchema = createInsertSchema(projects, {
     if (!val || val === '' || val === null) return null;
     const num = parseFloat(val);
     return isNaN(num) ? null : num.toString();
+  }),
+  startDate: z.union([z.string(), z.null()]).optional().transform((val) => {
+    if (!val || val === '' || val === null) return null;
+    return val;
+  }),
+  endDate: z.union([z.string(), z.null()]).optional().transform((val) => {
+    if (!val || val === '' || val === null) return null;
+    return val;
   })
 }).omit({
   id: true,

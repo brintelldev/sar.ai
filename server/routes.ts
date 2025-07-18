@@ -854,11 +854,13 @@ Equipe Sar.ai
 
   app.post("/api/projects", requireAuth, requireOrganization, async (req, res) => {
     try {
-      // Transformar strings vazias em null para campos numéricos
+      // Transformar strings vazias em null para campos numéricos e de data
       const processedData = {
         ...req.body,
         budget: req.body.budget === '' ? null : req.body.budget,
-        spentAmount: req.body.spentAmount === '' ? null : req.body.spentAmount
+        spentAmount: req.body.spentAmount === '' ? null : req.body.spentAmount,
+        startDate: req.body.startDate === '' ? null : req.body.startDate,
+        endDate: req.body.endDate === '' ? null : req.body.endDate
       };
       
       const validatedData = insertProjectSchema.parse(processedData);
@@ -872,11 +874,17 @@ Equipe Sar.ai
     } catch (error) {
       console.error("Create project error:", error);
       
-      // Tratamento de erro específico para campos numéricos
+      // Tratamento de erro específico para campos numéricos e de data
       if (error instanceof Error) {
         if (error.message.includes('invalid input syntax for type numeric')) {
           return res.status(400).json({ 
             message: "Os campos de orçamento devem conter apenas números válidos ou estar vazios."
+          });
+        }
+        
+        if (error.message.includes('invalid input syntax for type date')) {
+          return res.status(400).json({ 
+            message: "As datas devem estar no formato correto ou estar vazias."
           });
         }
         
@@ -932,11 +940,13 @@ Equipe Sar.ai
 
   app.patch("/api/projects/:id", requireAuth, requireOrganization, async (req, res) => {
     try {
-      // Transformar strings vazias em null para campos numéricos
+      // Transformar strings vazias em null para campos numéricos e de data
       const processedData = {
         ...req.body,
         budget: req.body.budget === '' ? null : req.body.budget,
-        spentAmount: req.body.spentAmount === '' ? null : req.body.spentAmount
+        spentAmount: req.body.spentAmount === '' ? null : req.body.spentAmount,
+        startDate: req.body.startDate === '' ? null : req.body.startDate,
+        endDate: req.body.endDate === '' ? null : req.body.endDate
       };
       
       const project = await storage.updateProject(req.params.id, req.session.organizationId!, processedData);

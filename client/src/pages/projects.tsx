@@ -523,7 +523,7 @@ export default function Projects() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Status</FormLabel>
+                          <FormLabel>Status *</FormLabel>
                           <Select onValueChange={(value) => {
                             const startDate = createForm.getValues('startDate');
                             const endDate = createForm.getValues('endDate');
@@ -1235,7 +1235,7 @@ export default function Projects() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>Status *</FormLabel>
                         <Select onValueChange={(value) => {
                           const startDate = editForm.getValues('startDate');
                           const endDate = editForm.getValues('endDate');
