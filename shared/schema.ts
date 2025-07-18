@@ -248,24 +248,30 @@ export const insertDonorSchema = createInsertSchema(donors).omit({
   updatedAt: true
 });
 
-export const insertBeneficiarySchema = createInsertSchema(beneficiaries).omit({
+export const insertBeneficiarySchema = createInsertSchema(beneficiaries, {
+  name: z.string().min(1, "Nome é obrigatório").trim(),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  registrationNumber: z.string().min(1, "Número de registro é obrigatório"),
+  document: z.string().optional(),
+  contactInfo: z.string().optional(),
+  address: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  needs: z.string().optional(),
+  servicesReceived: z.string().optional(),
+  status: z.enum(["active", "inactive", "completed"]).default("active"),
+  birthDate: z.string().optional().or(z.literal("")),
+}).omit({
   id: true,
-  organizationId: true,
   createdAt: true,
-  updatedAt: true
-}).extend({
-  birthDate: z.string().nullable().optional().transform(val => {
-    if (!val || val === '') return null;
-    return val;
-  }),
-  dataRetentionUntil: z.string().nullable().optional().transform(val => {
-    if (!val || val === '') return null;
-    return val;
-  }),
-  anonymizationDate: z.string().nullable().optional().transform(val => {
-    if (!val || val === '') return null;
-    return val;
-  })
+  updatedAt: true,
+  organizationId: true,
+  userId: true,
+  socialVulnerabilityData: true,
+  consentRecords: true,
+  dataRetentionUntil: true,
+  anonymizationDate: true,
 });
 
 export const insertVolunteerSchema = createInsertSchema(volunteers).omit({
@@ -626,7 +632,7 @@ export const insertUserModuleProgressSchema = createInsertSchema(userModuleProgr
 });
 
 // Types for training module
-export type Course = typeof courses.$inferSelect;
+export type Course = typeofcourses.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 
 export type CourseModule = typeof courseModules.$inferSelect;
