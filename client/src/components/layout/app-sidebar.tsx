@@ -58,7 +58,7 @@ const volunteerNavigation = [
 
 // Navegação padrão para ONGs (admin, manager)
 const standardNavigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Painel Geral", href: "/", icon: LayoutDashboard },
   { name: "Projetos", href: "/projects", icon: FolderOpen },
   { name: "Beneficiários", href: "/beneficiaries", icon: Users },
   { name: "Voluntários", href: "/volunteers", icon: HandHeart },
