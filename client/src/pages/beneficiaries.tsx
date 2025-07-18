@@ -316,7 +316,7 @@ export default function Beneficiaries() {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Nome ou Nome Social</FormLabel>
+                              <FormLabel>Nome ou Nome Social *</FormLabel>
                               <FormControl>
                                 <Input {...field} placeholder="Nome pelo qual prefere ser chamada" />
                               </FormControl>
@@ -332,7 +332,7 @@ export default function Beneficiaries() {
                           name="registrationNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Código de Beneficiário</FormLabel>
+                              <FormLabel>Código de Beneficiário *</FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
