@@ -814,8 +814,7 @@ export default function Beneficiaries() {
               </div>
             )}
           </CardContent>
-        </Card>
-
+        </Card
         {/* Detail Dialog */}
         <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1040,21 +1039,39 @@ export default function Beneficiaries() {
 
                     <TabsContent value="contact" className="space-y-4">
                       <FormField
-                        control={editForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email (para acesso aos cursos)</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="email" placeholder="email@exemplo.com" />
-                            </FormControl>
-                            <FormDescription>
-                              Email para criar conta e acessar cursos de capacitação (opcional)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          control={editForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email (para acesso aos cursos)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  type="email" 
+                                  placeholder="email@exemplo.com"
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    field.onChange(value);
+
+                                    // Validar formato de email se não estiver vazio
+                                    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                                      editForm.setError('email', {
+                                        type: 'manual',
+                                        message: 'Por favor, insira um email válido'
+                                      });
+                                    } else {
+                                      editForm.clearErrors('email');
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Email para criar conta e acessar cursos de capacitação (opcional)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
                       <FormField
                         control={editForm.control}
