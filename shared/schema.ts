@@ -624,7 +624,7 @@ export const insertCourseInstructorSchema = createInsertSchema(courseInstructors
   assignedAt: true
 });
 
-export const insertCourseAttendanceSchema = createInsertSchema(courseAttendance).omit({```text
+export const insertCourseAttendanceSchema = createInsertSchema(courseAttendance).omit({
   id: true,
   markedAt: true
 });
@@ -634,7 +634,7 @@ export const insertUserModuleProgressSchema = createInsertSchema(userModuleProgr
 });
 
 // Types for training module
-export type Course = typeofcourses.$inferSelect;
+export type Course = typeof courses.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 
 export type CourseModule = typeof courseModules.$inferSelect;

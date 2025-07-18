@@ -11,6 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { insertBeneficiarySchema, type Beneficiary } from '@/../../shared/schema';
+import { z } from 'zod';
 import { useBeneficiaries, useCreateBeneficiary } from '@/hooks/use-organization';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -91,30 +92,30 @@ export default function Beneficiaries() {
 
   const form = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
-      name: insertBeneficiarySchema.shape.name
+      name: z.string()
         .min(1, 'Nome é obrigatório')
         .min(2, 'Nome deve ter pelo menos 2 caracteres'),
-      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de beneficiário é obrigatório'),
-      email: insertBeneficiarySchema.shape.email.optional().refine((val) => {
+      registrationNumber: z.string().min(1, 'Código de beneficiário é obrigatório'),
+      email: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
       }, 'Por favor, insira um email válido'),
-      document: insertBeneficiarySchema.shape.document.optional().refine((val) => {
+      document: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         const numbers = val.replace(/\D/g, '');
         return numbers.length === 11;
       }, 'CPF deve conter 11 dígitos'),
-      contactInfo: insertBeneficiarySchema.shape.contactInfo.optional().refine((val) => {
+      contactInfo: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         const numbers = val.replace(/\D/g, '');
         return numbers.length >= 10 && numbers.length <= 11;
       }, 'Telefone deve ter 10 ou 11 dígitos'),
-      emergencyContactPhone: insertBeneficiarySchema.shape.emergencyContactPhone.optional().refine((val) => {
+      emergencyContactPhone: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         const numbers = val.replace(/\D/g, '');
         return numbers.length >= 10 && numbers.length <= 11;
       }, 'Telefone deve ter 10 ou 11 dígitos'),
-      emergencyContactName: insertBeneficiarySchema.shape.emergencyContactName.optional().refine((val) => {
+      emergencyContactName: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         return val.length <= 30;
       }, 'Nome deve ter no máximo 30 caracteres'),
@@ -146,30 +147,30 @@ export default function Beneficiaries() {
   // Formulário separado para edição
   const editForm = useForm({
     resolver: zodResolver(insertBeneficiarySchema.extend({
-      name: insertBeneficiarySchema.shape.name
+      name: z.string()
         .min(1, 'Nome é obrigatório')
         .min(2, 'Nome deve ter pelo menos 2 caracteres'),
-      registrationNumber: insertBeneficiarySchema.shape.registrationNumber.min(1, 'Código de beneficiário é obrigatório'),
-      email: insertBeneficiarySchema.shape.email.optional().refine((val) => {
+      registrationNumber: z.string().min(1, 'Código de beneficiário é obrigatório'),
+      email: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
       }, 'Por favor, insira um email válido'),
-      document: insertBeneficiarySchema.shape.document.optional().refine((val) => {
+      document: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         const numbers = val.replace(/\D/g, '');
         return numbers.length === 11;
       }, 'CPF deve conter 11 dígitos'),
-      contactInfo: insertBeneficiarySchema.shape.contactInfo.optional().refine((val) => {
+      contactInfo: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         const numbers = val.replace(/\D/g, '');
         return numbers.length >= 10 && numbers.length <= 11;
       }, 'Telefone deve ter 10 ou 11 dígitos'),
-      emergencyContactPhone: insertBeneficiarySchema.shape.emergencyContactPhone.optional().refine((val) => {
+      emergencyContactPhone: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         const numbers = val.replace(/\D/g, '');
         return numbers.length >= 10 && numbers.length <= 11;
       }, 'Telefone deve ter 10 ou 11 dígitos'),
-      emergencyContactName: insertBeneficiarySchema.shape.emergencyContactName.optional().refine((val) => {
+      emergencyContactName: z.string().optional().refine((val) => {
         if (!val || val === '') return true; // Campo opcional
         return val.length <= 30;
       }, 'Nome deve ter no máximo 30 caracteres'),
