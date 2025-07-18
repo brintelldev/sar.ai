@@ -237,13 +237,13 @@ export const insertUserRoleSchema = createInsertSchema(userRoles).omit({
 });
 
 export const insertProjectSchema = createInsertSchema(projects, {
-  budget: z.string().optional().transform((val) => {
-    if (!val || val === '') return null;
+  budget: z.union([z.string(), z.null()]).optional().transform((val) => {
+    if (!val || val === '' || val === null) return null;
     const num = parseFloat(val);
     return isNaN(num) ? null : num.toString();
   }),
-  spentAmount: z.string().optional().transform((val) => {
-    if (!val || val === '') return null;
+  spentAmount: z.union([z.string(), z.null()]).optional().transform((val) => {
+    if (!val || val === '' || val === null) return null;
     const num = parseFloat(val);
     return isNaN(num) ? null : num.toString();
   })

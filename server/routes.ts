@@ -876,16 +876,39 @@ Equipe Sar.ai
       if (error instanceof Error) {
         if (error.message.includes('invalid input syntax for type numeric')) {
           return res.status(400).json({ 
-            message: "Erro de validação: Campos de orçamento e valor gasto devem ser números válidos ou estar vazios.",
-            details: "Verifique se os valores inseridos são números válidos."
+            message: "Os campos de orçamento devem conter apenas números válidos ou estar vazios."
           });
         }
         
         // Se for erro de validação do Zod
         if (error.name === 'ZodError') {
+          // Extrair mensagens de erro mais amigáveis
+          const zodError = error as any;
+          let friendlyMessage = "Alguns campos precisam ser corrigidos";
+          
+          if (zodError.issues && zodError.issues.length > 0) {
+            const issues = zodError.issues.map((issue: any) => {
+              const field = issue.path.join('.');
+              switch (field) {
+                case 'name':
+                  return 'O nome do projeto é obrigatório';
+                case 'budget':
+                  return 'O orçamento deve ser um número válido';
+                case 'spentAmount':
+                  return 'O valor gasto deve ser um número válido';
+                case 'startDate':
+                  return 'A data de início deve ser válida';
+                case 'endDate':
+                  return 'A data de término deve ser válida';
+                default:
+                  return `Campo ${field} inválido`;
+              }
+            });
+            friendlyMessage = issues.join(', ');
+          }
+          
           return res.status(400).json({ 
-            message: "Erro de validação nos dados enviados.",
-            details: error.message
+            message: friendlyMessage
           });
         }
       }
@@ -928,16 +951,39 @@ Equipe Sar.ai
       if (error instanceof Error) {
         if (error.message.includes('invalid input syntax for type numeric')) {
           return res.status(400).json({ 
-            message: "Erro de validação: Campos de orçamento e valor gasto devem ser números válidos ou estar vazios.",
-            details: "Verifique se os valores inseridos são números válidos."
+            message: "Os campos de orçamento devem conter apenas números válidos ou estar vazios."
           });
         }
         
         // Se for erro de validação do Zod
         if (error.name === 'ZodError') {
+          // Extrair mensagens de erro mais amigáveis
+          const zodError = error as any;
+          let friendlyMessage = "Alguns campos precisam ser corrigidos";
+          
+          if (zodError.issues && zodError.issues.length > 0) {
+            const issues = zodError.issues.map((issue: any) => {
+              const field = issue.path.join('.');
+              switch (field) {
+                case 'name':
+                  return 'O nome do projeto é obrigatório';
+                case 'budget':
+                  return 'O orçamento deve ser um número válido';
+                case 'spentAmount':
+                  return 'O valor gasto deve ser um número válido';
+                case 'startDate':
+                  return 'A data de início deve ser válida';
+                case 'endDate':
+                  return 'A data de término deve ser válida';
+                default:
+                  return `Campo ${field} inválido`;
+              }
+            });
+            friendlyMessage = issues.join(', ');
+          }
+          
           return res.status(400).json({ 
-            message: "Erro de validação nos dados enviados.",
-            details: error.message
+            message: friendlyMessage
           });
         }
       }
