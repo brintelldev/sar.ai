@@ -103,6 +103,8 @@ export default function Beneficiaries() {
       address: '',
       contactInfo: '',
       emergencyContact: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
       needs: '',
       servicesReceived: '',
       status: 'active',
@@ -131,6 +133,8 @@ export default function Beneficiaries() {
       address: '',
       contactInfo: '',
       emergencyContact: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
       needs: '',
       servicesReceived: '',
       status: 'active',
@@ -247,6 +251,8 @@ export default function Beneficiaries() {
       address: beneficiary.address || '',
       contactInfo: beneficiary.contactInfo || '',
       emergencyContact: beneficiary.emergencyContact || '',
+      emergencyContactName: beneficiary.emergencyContactName || '',
+      emergencyContactPhone: beneficiary.emergencyContactPhone || '',
       needs: beneficiary.needs || '',
       servicesReceived: beneficiary.servicesReceived || '',
       status: beneficiary.status || 'active',
@@ -452,7 +458,7 @@ export default function Beneficiaries() {
                                   const value = e.target.value;
                                   // Remover todos os caracteres não numéricos
                                   const numbers = value.replace(/\D/g, '');
-                                  
+
                                   // Aplicar máscara de telefone brasileiro
                                   let maskedValue = '';
                                   if (numbers.length <= 10) {
@@ -466,7 +472,7 @@ export default function Beneficiaries() {
                                     const limitedNumbers = numbers.substring(0, 11);
                                     maskedValue = limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
                                   }
-                                  
+
                                   // Aplicar máscara parcial se ainda não tem todos os dígitos
                                   if (numbers.length <= 2) {
                                     maskedValue = numbers.replace(/(\d{2})/, '($1');
@@ -475,7 +481,7 @@ export default function Beneficiaries() {
                                   } else if (numbers.length <= 10) {
                                     maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
                                   }
-                                  
+
                                   field.onChange(maskedValue);
                                 }}
                               />
@@ -488,22 +494,74 @@ export default function Beneficiaries() {
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="emergencyContact"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contato de Confiança</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Nome e telefone de pessoa de confiança" />
-                            </FormControl>
-                            <FormDescription>
-                              Pessoa de confiança para emergências (opcional)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="emergencyContactName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome do Contato de Confiança</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Nome da pessoa de confiança" maxLength={30} />
+                              </FormControl>
+                              <FormDescription>
+                                Nome da pessoa de confiança para emergências (opcional)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="emergencyContactPhone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefone do Contato de Confiança</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Telefone / WhatsApp"
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Remover todos os caracteres não numéricos
+                                    const numbers = value.replace(/\D/g, '');
+
+                                    // Aplicar máscara de telefone brasileiro
+                                    let maskedValue = '';
+                                    if (numbers.length <= 10) {
+                                      // Telefone fixo: (11) 1234-5678
+                                      maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                                    } else if (numbers.length <= 11) {
+                                      // Celular: (11) 91234-5678
+                                      maskedValue = numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                    } else {
+                                      // Limitar a 11 dígitos
+                                      const limitedNumbers = numbers.substring(0, 11);
+                                      maskedValue = limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                    }
+
+                                    // Aplicar máscara parcial se ainda não tem todos os dígitos
+                                    if (numbers.length <= 2) {
+                                      maskedValue = numbers.replace(/(\d{2})/, '($1');
+                                    } else if (numbers.length <= 6) {
+                                      maskedValue = numbers.replace(/(\d{2})(\d{1,4})/, '($1) $2');
+                                    } else if (numbers.length <= 10) {
+                                      maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+                                    }
+
+                                    field.onChange(maskedValue);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Telefone da pessoa de confiança para emergências (opcional)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <FormField
                         control={form.control}
@@ -1120,7 +1178,7 @@ export default function Beneficiaries() {
                                   const value = e.target.value;
                                   // Remover todos os caracteres não numéricos
                                   const numbers = value.replace(/\D/g, '');
-                                  
+
                                   // Aplicar máscara de telefone brasileiro
                                   let maskedValue = '';
                                   if (numbers.length <= 10) {
@@ -1134,7 +1192,7 @@ export default function Beneficiaries() {
                                     const limitedNumbers = numbers.substring(0, 11);
                                     maskedValue = limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
                                   }
-                                  
+
                                   // Aplicar máscara parcial se ainda não tem todos os dígitos
                                   if (numbers.length <= 2) {
                                     maskedValue = numbers.replace(/(\d{2})/, '($1');
@@ -1143,7 +1201,7 @@ export default function Beneficiaries() {
                                   } else if (numbers.length <= 10) {
                                     maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
                                   }
-                                  
+
                                   field.onChange(maskedValue);
                                 }}
                               />
@@ -1156,22 +1214,74 @@ export default function Beneficiaries() {
                         )}
                       />
 
-                      <FormField
-                        control={editForm.control}
-                        name="emergencyContact"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contato de Confiança</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Nome e telefone de pessoa de confiança" />
-                            </FormControl>
-                            <FormDescription>
-                              Pessoa de confiança para emergências (opcional)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={editForm.control}
+                          name="emergencyContactName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome do Contato de Confiança</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Nome da pessoa de confiança" maxLength={30} />
+                              </FormControl>
+                              <FormDescription>
+                                Nome da pessoa de confiança para emergências (opcional)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={editForm.control}
+                          name="emergencyContactPhone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefone do Contato de Confiança</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Telefone / WhatsApp"
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Remover todos os caracteres não numéricos
+                                    const numbers = value.replace(/\D/g, '');
+
+                                    // Aplicar máscara de telefone brasileiro
+                                    let maskedValue = '';
+                                    if (numbers.length <= 10) {
+                                      // Telefone fixo: (11) 1234-5678
+                                      maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                                    } else if (numbers.length <= 11) {
+                                      // Celular: (11) 91234-5678
+                                      maskedValue = numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                    } else {
+                                      // Limitar a 11 dígitos
+                                      const limitedNumbers = numbers.substring(0, 11);
+                                      maskedValue = limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                    }
+
+                                    // Aplicar máscara parcial se ainda não tem todos os dígitos
+                                    if (numbers.length <= 2) {
+                                      maskedValue = numbers.replace(/(\d{2})/, '($1');
+                                    } else if (numbers.length <= 6) {
+                                      maskedValue = numbers.replace(/(\d{2})(\d{1,4})/, '($1) $2');
+                                    } else if (numbers.length <= 10) {
+                                      maskedValue = numbers.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+                                    }
+
+                                    field.onChange(maskedValue);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Telefone da pessoa de confiança para emergências (opcional)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <FormField
                         control={editForm.control}
