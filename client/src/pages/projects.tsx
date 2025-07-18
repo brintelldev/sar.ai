@@ -495,7 +495,7 @@ export default function Projects() {
                       name="name"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
-                          <FormLabel>Nome do Projeto</FormLabel>
+                          <FormLabel>Nome do Projeto *</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Digite o nome do projeto" />
                           </FormControl>
@@ -1207,7 +1207,7 @@ export default function Projects() {
                     name="name"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
-                        <FormLabel>Nome do Projeto</FormLabel>
+                        <FormLabel>Nome do Projeto *</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Digite o nome do projeto" />
                         </FormControl>
