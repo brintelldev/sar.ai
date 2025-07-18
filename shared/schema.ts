@@ -253,6 +253,19 @@ export const insertBeneficiarySchema = createInsertSchema(beneficiaries).omit({
   organizationId: true,
   createdAt: true,
   updatedAt: true
+}).extend({
+  birthDate: z.string().nullable().optional().transform(val => {
+    if (!val || val === '') return null;
+    return val;
+  }),
+  dataRetentionUntil: z.string().nullable().optional().transform(val => {
+    if (!val || val === '') return null;
+    return val;
+  }),
+  anonymizationDate: z.string().nullable().optional().transform(val => {
+    if (!val || val === '') return null;
+    return val;
+  })
 });
 
 export const insertVolunteerSchema = createInsertSchema(volunteers).omit({

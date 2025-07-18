@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, FileText, Shield, Heart, Eye, Edit, Calendar, Phone, MapPin, AlertTriangle, Filter, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,7 +31,7 @@ export default function Beneficiaries() {
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
+
   // Estados dos filtros
   const [filters, setFilters] = useState({
     status: [] as string[],
@@ -62,12 +62,12 @@ export default function Beneficiaries() {
         },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Erro ao atualizar beneficiário');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -163,7 +163,7 @@ export default function Beneficiaries() {
     if (filters.dateRange !== 'all' && beneficiary.createdAt) {
       const beneficiaryDate = new Date(beneficiary.createdAt);
       const now = new Date();
-      
+
       switch (filters.dateRange) {
         case 'last30':
           const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -203,7 +203,7 @@ export default function Beneficiaries() {
   const onSubmit = async (data: any) => {
     try {
       const result = await createBeneficiaryMutation.mutateAsync(data);
-      
+
       let message = 'Pessoa cadastrada com sucesso.';
       if (data.email) {
         if (result.userAccountCreated) {
@@ -214,7 +214,7 @@ export default function Beneficiaries() {
       } else {
         message += ' Para acessar cursos, adicione um email posteriormente.';
       }
-      
+
       toast({
         title: 'Cadastro realizado',
         description: message,
@@ -256,11 +256,17 @@ export default function Beneficiaries() {
 
   const onEditSubmit = async (data: any) => {
     if (!selectedBeneficiary) return;
-    
+
     try {
+      // Converter campos de data vazios para null
+      const cleanedData = {
+        ...data,
+        birthDate: data.birthDate === '' ? null : data.birthDate,
+      };
+
       await updateBeneficiaryMutation.mutateAsync({
         id: selectedBeneficiary.id,
-        data: data
+        data: cleanedData
       });
     } catch (error) {
       // Error is handled by the mutation
@@ -292,7 +298,7 @@ export default function Beneficiaries() {
                   Todas as informações são protegidas pela LGPD.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
@@ -308,7 +314,7 @@ export default function Beneficiaries() {
                       <TabsTrigger value="contact">Contato</TabsTrigger>
                       <TabsTrigger value="support">Apoio Necessário</TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="basic" className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
